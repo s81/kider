@@ -133,6 +133,7 @@ describe('User-defined functions', () => {
       exprStmt(call('f', [numLit(1)])),  // too few args
     );
     expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+    expect(() => interpret(prog)).toThrow(/expects/);
   });
 
   it('throws when calling a non-function', () => {
@@ -144,6 +145,7 @@ describe('User-defined functions', () => {
     const initialEnv = new Map([['notaFn', { kind: 'number' as const, value: 5 }]]);
     const prog = program(exprStmt(call('notaFn', [])));
     expect(() => interpret(prog, initialEnv)).toThrow(SproutRuntimeError);
+    expect(() => interpret(prog, initialEnv)).toThrow(/not a function/);
   });
 });
 
@@ -170,17 +172,17 @@ describe('RepeatExpr', () => {
     }
   });
 
-  it('produces EMPTY sequence for repeat 0', () => {
+  it('produces EMPTY for repeat 0', () => {
     const prog = program(
       exprStmt(repeat(numLit(0), [exprStmt(call('forward', [numLit(10)]))])),
     );
     const result = interpret(prog);
-    // repeat 0 → mkSequence([]) → { kind: 'sequence', steps: [] }
+    // repeat 0 → EMPTY (identity element, not mkSequence([]))
     expect(result.kind).toBe('sequence');
     if (result.kind === 'sequence') {
       expect(result.steps).toHaveLength(1);
       const repeatResult = result.steps[0];
-      expect(repeatResult).toEqual(mkSequence([]));
+      expect(repeatResult).toEqual(EMPTY);
     }
   });
 });
@@ -197,11 +199,13 @@ describe('forward built-in', () => {
   it('throws on wrong argument type', () => {
     const prog = program(exprStmt(call('forward', [strLit('hello')])));
     expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+    expect(() => interpret(prog)).toThrow(/forward/);
   });
 
   it('throws on wrong arity', () => {
     const prog = program(exprStmt(call('forward', [numLit(1), numLit(2)])));
     expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+    expect(() => interpret(prog)).toThrow(/forward/);
   });
 });
 
@@ -248,6 +252,7 @@ describe('beside built-in', () => {
       exprStmt(call('beside', [numLit(1), call('forward', [numLit(10)])])),
     );
     expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+    expect(() => interpret(prog)).toThrow(/beside/);
   });
 });
 
@@ -289,6 +294,7 @@ describe('Unbound identifier', () => {
   it('throws SproutRuntimeError when calling unbound function', () => {
     const prog = program(exprStmt(call('noSuchFn', [])));
     expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+    expect(() => interpret(prog)).toThrow(/noSuchFn|Unbound/);
   });
 });
 

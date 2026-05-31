@@ -53,18 +53,14 @@ export class SproutRuntimeError extends Error {
 // ---------------------------------------------------------------------------
 
 function isDrawing(v: SproutValue): v is Drawing {
-  const k = v.kind;
-  return (
-    k === 'forward' ||
-    k === 'turn' ||
-    k === 'penUp' ||
-    k === 'penDown' ||
-    k === 'sequence' ||
-    k === 'beside' ||
-    k === 'above' ||
-    k === 'scale' ||
-    k === 'empty'
-  );
+  // Must stay in sync with the Drawing union in values.ts
+  switch (v.kind) {
+    case 'forward': case 'turn': case 'penUp': case 'penDown':
+    case 'sequence': case 'beside': case 'above': case 'scale': case 'empty':
+      return true;
+    default:
+      return false;
+  }
 }
 
 function assertNumber(v: SproutValue, context: string): SproutNumber {
@@ -219,8 +215,8 @@ function evalExpr(expr: Expr, env: Env): SproutValue {
 }
 
 function evalInfix(expr: InfixExpr, env: Env): SproutValue {
-  const left = assertNumber(evalExpr(expr.left, env), 'infix left operand');
-  const right = assertNumber(evalExpr(expr.right, env), 'infix right operand');
+  const left = assertNumber(evalExpr(expr.left, env), `(${expr.op}) left operand`);
+  const right = assertNumber(evalExpr(expr.right, env), `(${expr.op}) right operand`);
   switch (expr.op) {
     case '+': return { kind: 'number', value: left.value + right.value };
     case '-': return { kind: 'number', value: left.value - right.value };
@@ -253,10 +249,14 @@ function evalRepeat(expr: RepeatExpr, env: Env): Drawing {
     const d = evalBlock(expr.body, env);
     drawings.push(d);
   }
-  return mkSequence(drawings);
+  return drawings.length === 0 ? EMPTY : mkSequence(drawings);
 }
 
 function evalCall(expr: CallExpr, env: Env): SproutValue {
+  if (expr.block !== null) {
+    throw new SproutRuntimeError(`${expr.callee}: trailing do...end blocks are not supported in Phase 1`);
+  }
+
   // Check built-ins first.
   const builtin = BUILTINS.get(expr.callee);
   if (builtin !== undefined) {
@@ -292,13 +292,8 @@ function evalCall(expr: CallExpr, env: Env): SproutValue {
   return evalExpr(fn.body, childEnv);
 }
 
-function evalOn(expr: OnExpr, env: Env): Drawing {
-  // MVP: register handler in env under ':' + event.name.
-  // The interpreter cannot mutate env, so OnExpr's side-effect of registration
-  // is handled at the statement level via evalStmt returning an updated env.
-  // Here we just return EMPTY — the registration happens in evalProgram.
-  void expr; void env;
-  return EMPTY;
+function evalOn(_expr: OnExpr, _env: Env): Drawing {
+  throw new SproutRuntimeError('on(...) may only appear as a top-level statement');
 }
 
 /**
