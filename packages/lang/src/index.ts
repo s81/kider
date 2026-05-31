@@ -37,11 +37,12 @@ export {
   // Drawing constructors
   mkForward,
   mkTurn,
-  mkPenUp,
-  mkPenDown,
   mkSequence,
   mkBeside,
   mkAbove,
   mkScale,
-  mkEmpty,
+  // Drawing singleton constants (zero-arg constructors replaced by constants)
+  PEN_UP,
+  PEN_DOWN,
+  EMPTY,
 } from './values.js';

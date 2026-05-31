@@ -43,6 +43,7 @@ export interface Ident {
 /** Binary arithmetic expression */
 export interface InfixExpr {
   readonly kind: 'InfixExpr';
+  // Phase 1: arithmetic only. Comparison/boolean ops deferred to a later phase.
   readonly op: '+' | '-' | '*' | '/';
   readonly left: Expr;
   readonly right: Expr;
@@ -76,6 +77,8 @@ export interface RepeatExpr {
 /** Event handler: `on :<event> do ... end` */
 export interface OnExpr {
   readonly kind: 'OnExpr';
+  // Full SymbolLit node (not just the name string) to preserve source fidelity.
+  // Interpreter should use event.name for the string key.
   readonly event: SymbolLit;
   readonly body: BlockExpr;
 }

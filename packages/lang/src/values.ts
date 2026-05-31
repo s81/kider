@@ -9,7 +9,7 @@ import type { Expr } from './ast.js';
 // ---------------------------------------------------------------------------
 
 /** The interpreter's lexical environment */
-export type Env = Map<string, SproutValue>;
+export type Env = ReadonlyMap<string, SproutValue>;
 
 // ---------------------------------------------------------------------------
 // Scalar / function values
@@ -74,6 +74,8 @@ export type Drawing =
 // SproutValue — top-level value union
 // ---------------------------------------------------------------------------
 
+// INVARIANT: Drawing.kind values ('forward','turn','penUp','penDown','sequence',
+// 'beside','above','scale','empty') must never match SproutNumber/String/Symbol/Bool/Function kinds.
 export type SproutValue =
   | SproutNumber
   | SproutString
@@ -93,11 +95,9 @@ export const mkForward = (distance: number): Drawing =>
 export const mkTurn = (degrees: number): Drawing =>
   ({ kind: 'turn', degrees });
 
-export const mkPenUp = (): Drawing =>
-  ({ kind: 'penUp' });
+export const PEN_UP: Drawing = { kind: 'penUp' };
 
-export const mkPenDown = (): Drawing =>
-  ({ kind: 'penDown' });
+export const PEN_DOWN: Drawing = { kind: 'penDown' };
 
 export const mkSequence = (steps: readonly Drawing[]): Drawing =>
   ({ kind: 'sequence', steps });
@@ -111,5 +111,4 @@ export const mkAbove = (top: Drawing, bottom: Drawing): Drawing =>
 export const mkScale = (factor: number, drawing: Drawing): Drawing =>
   ({ kind: 'scale', factor, drawing });
 
-export const mkEmpty = (): Drawing =>
-  ({ kind: 'empty' });
+export const EMPTY: Drawing = { kind: 'empty' };
