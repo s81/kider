@@ -46,3 +46,5 @@ export {
   PEN_DOWN,
   EMPTY,
 } from './values.js';
+
+export { interpret, SproutRuntimeError } from './interpreter.js';
