@@ -49,5 +49,7 @@ export {
 
 export { interpret, SproutRuntimeError } from './interpreter.js';
 
+export { serialize, serializeExpr, serializeStmt } from './serializer.js';
+
 export type { CanvasCommand } from './renderer.js';
 export { render, measure } from './renderer.js';
