@@ -48,3 +48,6 @@ export {
 } from './values.js';
 
 export { interpret, SproutRuntimeError } from './interpreter.js';
+
+export type { CanvasCommand } from './renderer.js';
+export { render, measure } from './renderer.js';
