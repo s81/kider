@@ -15,6 +15,7 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@sprout/lang": "workspace:*"
+    "@sprout/lang": "workspace:*",
+    "blockly": "^12.5.1"
   }
 }
