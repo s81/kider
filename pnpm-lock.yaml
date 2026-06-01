@@ -29,6 +29,9 @@ importers:
       '@sprout/lang':
         specifier: workspace:*
         version: link:../../packages/lang
+      blockly:
+        specifier: ^12.5.1
+        version: 12.5.1
       react:
         specifier: ^19.1.0
         version: 19.2.6
