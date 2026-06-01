@@ -182,21 +182,53 @@ describe('penUp + penDown round-trip', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Additional: render(above(top, bottom)) — bottom starts after top's bounding height
+// Additional: render(above(top, bottom)) — bottom starts at maxY of top from origin
 // ---------------------------------------------------------------------------
 describe('render(above(top, bottom))', () => {
-  it('bottom drawing starts at y = top bounding height', () => {
-    // top: forward north 50 → ends at (0,-50); height=50
+  it('bottom drawing starts at y = maxY of top (downward extent from origin)', () => {
+    // top: turn 180 (south) + forward 50 → ends at (0, 50); maxY=50
+    // bottomOffset = max(0, maxY=50) = 50
+    // bottom starts at (0, 50) with heading=180 (south, carried from top).
+    // bottom: turn(-90) → heading=90 (east); forward 30 → lineTo(30, 50)
+    const top = mkSequence([mkTurn(180), mkForward(50)]);
+    const bottom = mkSequence([mkTurn(-90), mkForward(30)]);
+    const drawing = mkAbove(top, bottom);
+    const result = roundCmds(render(drawing));
+    expect(result).toEqual([
+      lineTo(0, 50),   // top: south 50 from origin
+      lineTo(30, 50),  // bottom: east 30 from (0, 50)
+    ]);
+  });
+
+  it('above with top going north only: bottom starts at origin y (maxY=0)', () => {
+    // top: forward 50 north → ends at (0,-50); maxY stays 0 (never went down)
+    // bottomOffset = max(0, 0) = 0 → bottom starts at y=0 (origin)
+    // heading 0 carries over from top. bottom: turn(90) east, forward 30 → lineTo(30, 0)
     const top = mkForward(50);
-    // bottom: turn east + forward 30, starting from (0, 50) in canvas coords
-    //   (originY + topHeight = 0 + 50 = 50; turtle y reset to 50)
-    //   turn east: heading=90; forward 30 → dx=30, dy=0 → lineTo(30, 50)
     const bottom = mkSequence([mkTurn(90), mkForward(30)]);
     const drawing = mkAbove(top, bottom);
     const result = roundCmds(render(drawing));
     expect(result).toEqual([
-      lineTo(0, -50),  // top forward north
-      lineTo(30, 50),  // bottom: east from (0, 50)
+      lineTo(0, -50), // top: north 50
+      lineTo(30, 0),  // bottom: east 30 from (0, 0) — maxY of top is 0
+    ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Additional: beside bug fix — left going north has maxX=0, right starts at origin x
+// ---------------------------------------------------------------------------
+describe('beside: left child going north (maxX=0)', () => {
+  it('right child starts at x=0 when left only goes north', () => {
+    // left: forward 100 north → ends at (0, -100); maxX = 0
+    // rightOffset = max(0, maxX=0) = 0 → right starts at x=0, y=0, heading=0 (carried)
+    // right: turn(90) east + forward 50 → heading=90, forward 50 → lineTo(50, 0)
+    const left = mkForward(100);
+    const right = mkSequence([mkTurn(90), mkForward(50)]);
+    const result = roundCmds(render(mkBeside(left, right)));
+    expect(result).toEqual([
+      lineTo(0, -100), // left: north 100
+      lineTo(50, 0),   // right: east 50 from (0, 0) — maxX of left is 0
     ]);
   });
 });

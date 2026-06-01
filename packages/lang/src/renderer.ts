@@ -111,12 +111,13 @@ function renderInto(
       // Render left, threading state through.
       renderInto(drawing.left, state, out);
 
-      // Measure the bounding width of the left drawing.
-      const { width: leftWidth } = measure(drawing.left);
+      // Offset right child by the rightward extent of left (maxX from origin),
+      // not the total width — a drawing that goes left-of-origin has maxX=0 so right child starts at origin.
+      // Heading and pen state carry over from end of left into right (intentional — see DESIGN.md).
+      const { maxX: leftMaxX } = measureBbox(drawing.left);
+      const rightOffset = Math.max(0, leftMaxX);
 
-      // Place the right child so its left edge aligns with origin.x + leftWidth.
-      // Preserve heading and penDown from end of left's rendering.
-      state.x = originX + leftWidth;
+      state.x = originX + rightOffset;
       state.y = originY;
       renderInto(drawing.right, state, out);
       return;
@@ -128,10 +129,12 @@ function renderInto(
 
       renderInto(drawing.top, state, out);
 
-      const { height: topHeight } = measure(drawing.top);
+      // Offset bottom child by the downward extent of top (maxY from origin), not total height.
+      const { maxY: topMaxY } = measureBbox(drawing.top);
+      const bottomOffset = Math.max(0, topMaxY);
 
       state.x = originX;
-      state.y = originY + topHeight;
+      state.y = originY + bottomOffset;
       renderInto(drawing.bottom, state, out);
       return;
     }
@@ -143,7 +146,10 @@ function renderInto(
 }
 
 // ---------------------------------------------------------------------------
-// measure — bounding box without emitting commands
+// measureBbox / measure — bounding box without emitting commands
+//
+// TODO: renderInto and measureBbox share turtle-step math. Consider extracting
+// a shared step function to prevent drift.
 // ---------------------------------------------------------------------------
 
 type BBox = { minX: number; maxX: number; minY: number; maxY: number };
@@ -184,9 +190,10 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
 
       measureInto(drawing.left, state, bbox);
 
-      const { width: leftWidth } = measure(drawing.left);
+      const { maxX: leftMaxX } = measureBbox(drawing.left);
+      const rightOffset = Math.max(0, leftMaxX);
 
-      state.x = originX + leftWidth;
+      state.x = originX + rightOffset;
       state.y = originY;
       measureInto(drawing.right, state, bbox);
       return;
@@ -198,10 +205,11 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
 
       measureInto(drawing.top, state, bbox);
 
-      const { height: topHeight } = measure(drawing.top);
+      const { maxY: topMaxY } = measureBbox(drawing.top);
+      const bottomOffset = Math.max(0, topMaxY);
 
       state.x = originX;
-      state.y = originY + topHeight;
+      state.y = originY + bottomOffset;
       measureInto(drawing.bottom, state, bbox);
       return;
     }
@@ -212,13 +220,19 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
   }
 }
 
-export function measure(drawing: Drawing): { width: number; height: number } {
+/** Returns the raw bounding box of a drawing measured from origin (0, 0). */
+function measureBbox(drawing: Drawing): BBox {
   const state: TurtleState = { x: 0, y: 0, heading: 0, penDown: true };
   const bbox: BBox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
   measureInto(drawing, state, bbox);
+  return bbox;
+}
+
+export function measure(drawing: Drawing): { width: number; height: number } {
+  const { minX, maxX, minY, maxY } = measureBbox(drawing);
   return {
-    width: Math.max(0, bbox.maxX - bbox.minX),
-    height: Math.max(0, bbox.maxY - bbox.minY),
+    width:  Math.max(0, maxX - minX),
+    height: Math.max(0, maxY - minY),
   };
 }
 
