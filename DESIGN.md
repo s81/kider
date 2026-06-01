@@ -180,7 +180,7 @@ polygon(6, 80)
   [ end ]
 [ end ]
 
-[ beside ] ( [ square ] , [ square ] )
+[ beside ] ( [ square ]() , [ square ]() )
 ```
 
 **Generated text**
@@ -192,8 +192,10 @@ def square
   end
 end
 
-beside(square, square)
+beside(square(), square())
 ```
+
+> Note: `square` is a zero-argument function. Calling it as `square()` evaluates it to a Drawing value. Bare name references (`square` without `()`) produce a function value, which cannot be passed to `beside`. In Phase 2, the block compiler will generate a call block for zero-arg functions in expression position.
 
 ---
 

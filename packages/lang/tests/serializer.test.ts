@@ -277,10 +277,13 @@ describe('Program serialization — 5 examples', () => {
           exprStmt(call('turn', [numLit(90)])),
         ]),
       ),
-      exprStmt(call('beside', [ident('square'), ident('square')])),
+      exprStmt(call('beside', [
+        { kind: 'CallExpr' as const, callee: 'square', args: [], block: null },
+        { kind: 'CallExpr' as const, callee: 'square', args: [], block: null },
+      ])),
     );
     expect(serialize(prog)).toBe(
-      'def square\n  repeat 4 do\n    forward(100)\n    turn(90)\n  end\nend\n\nbeside(square, square)',
+      'def square\n  repeat 4 do\n    forward(100)\n    turn(90)\n  end\nend\n\nbeside(square(), square())',
     );
   });
 
