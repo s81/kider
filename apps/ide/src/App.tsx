@@ -3,15 +3,17 @@ import type * as Blockly from 'blockly';
 import { compileWorkspace } from '@sprout/blocks';
 import { interpret, render, SproutRuntimeError } from '@sprout/lang';
 import type { CanvasCommand } from '@sprout/lang';
-import { BlockWorkspace } from './BlockWorkspace';
-import { TextPanel } from './TextPanel';
-import { Stage } from './Stage';
+import { BlockWorkspace } from './BlockWorkspace.js';
+import { TextPanel } from './TextPanel.js';
+import { Stage } from './Stage.js';
 
 export function App() {
   const wsRef = useRef<Blockly.Workspace | null>(null);
   const [programText, setProgramText] = useState('');
   const [commands, setCommands] = useState<CanvasCommand[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [animated, setAnimated] = useState(false);
+  const [stepsPerFrame, setStepsPerFrame] = useState(3);
 
   function handleRun() {
     const ws = wsRef.current;
@@ -65,9 +67,35 @@ export function App() {
           ▶ Run
         </button>
 
+        {/* Animation controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={animated}
+              onChange={e => setAnimated(e.target.checked)}
+            />
+            Animate
+          </label>
+          {animated && (
+            <>
+              <span>Speed:</span>
+              <input
+                type="range"
+                min={1}
+                max={20}
+                value={stepsPerFrame}
+                onChange={e => setStepsPerFrame(Number(e.target.value))}
+                style={{ flex: 1 }}
+              />
+              <span style={{ minWidth: 20, textAlign: 'right' }}>{stepsPerFrame}</span>
+            </>
+          )}
+        </div>
+
         <TextPanel text={programText} />
 
-        <Stage commands={commands} />
+        <Stage commands={commands} animated={animated} stepsPerFrame={stepsPerFrame} />
 
         {error && (
           <pre
