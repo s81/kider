@@ -6,6 +6,7 @@ export default defineConfig({
     alias: {
       '@sprout/lang': path.resolve('./packages/lang/src/index.ts'),
       '@sprout/blocks': path.resolve('./packages/blocks/src/index.ts'),
+      '@sprout/parser': path.resolve('./packages/parser/src/index.ts'),
     },
   },
   test: {
