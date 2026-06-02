@@ -38,7 +38,11 @@ export function BlockWorkspace({ onTextChange, onWorkspaceReady }: Props) {
 
     const listener = (e: Blockly.Events.Abstract) => {
       if (e.isUiEvent) return;
-      onTextChange(generateText(ws));
+      try {
+        onTextChange(generateText(ws));
+      } catch {
+        // Workspace is partially assembled (e.g. required input not yet connected); skip update.
+      }
     };
     ws.addChangeListener(listener);
 

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import * as Blockly from 'blockly';
+import type * as Blockly from 'blockly';
 import { compileWorkspace } from '@sprout/blocks';
 import { interpret, render, SproutRuntimeError } from '@sprout/lang';
 import type { CanvasCommand } from '@sprout/lang';
