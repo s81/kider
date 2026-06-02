@@ -100,7 +100,7 @@ function compileExprBlock(block: Blockly.Block): Expr {
     case 'sprout_on_event':
       return compileOnExpr(block);
     case 'sprout_call_stmt':
-      return compileCallFromBlock(block);
+      return compileCallBlock(block);
     case 'sprout_beside': {
       const left = compileExpr(mustGetInput(block, 'LEFT'));
       const right = compileExpr(mustGetInput(block, 'RIGHT'));
@@ -136,7 +136,7 @@ function compileOnExpr(block: Blockly.Block): OnExpr {
   return { kind: 'OnExpr', event, body };
 }
 
-function compileCallFromBlock(block: Blockly.Block): CallExpr {
+function compileCallBlock(block: Blockly.Block): CallExpr {
   const callee = block.getFieldValue('CALLEE') as string;
   const args: Expr[] = [];
   const arg0 = block.getInputTargetBlock('ARG0');
@@ -149,7 +149,7 @@ function compileCallFromBlock(block: Blockly.Block): CallExpr {
 function compileExpr(block: Blockly.Block): Expr {
   switch (block.type) {
     case 'sprout_number': {
-      const value = parseFloat(block.getFieldValue('NUM') as string);
+      const value = Number(block.getFieldValue('NUM'));
       const lit: NumberLit = { kind: 'NumberLit', value };
       return lit;
     }
@@ -166,21 +166,10 @@ function compileExpr(block: Blockly.Block): Expr {
       return infix;
     }
     case 'sprout_call_expr':
-      return compileCallExprValue(block);
+      return compileCallBlock(block);
     default:
-      // Statement-typed blocks that also produce expressions (repeat, on, etc.)
-      return compileExprBlock(block);
+      throw new Error(`Unknown value block type: ${block.type}`);
   }
-}
-
-function compileCallExprValue(block: Blockly.Block): CallExpr {
-  const callee = block.getFieldValue('CALLEE') as string;
-  const args: Expr[] = [];
-  const arg0 = block.getInputTargetBlock('ARG0');
-  if (arg0) args.push(compileExpr(arg0));
-  const arg1 = block.getInputTargetBlock('ARG1');
-  if (arg1) args.push(compileExpr(arg1));
-  return { kind: 'CallExpr', callee, args, block: null };
 }
 
 function mustGetInput(block: Blockly.Block, inputName: string): Blockly.Block {
