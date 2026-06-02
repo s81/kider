@@ -1,5 +1,28 @@
 import { describe, it, expect } from 'vitest';
 import { tokenize, ParseError } from '../src/lexer.js';
+import { parse } from '../src/parser.js';
+import type { Program } from '@sprout/lang';
+
+// Shorthand builders for expected AST values
+const num = (n: number) => ({ kind: 'NumberLit' as const, value: n });
+const str = (s: string) => ({ kind: 'StringLit' as const, value: s });
+const sym = (n: string) => ({ kind: 'SymbolLit' as const, name: n });
+const bool_ = (v: boolean) => ({ kind: 'BoolLit' as const, value: v });
+const id = (n: string) => ({ kind: 'Ident' as const, name: n });
+const infix = (op: string, l: object, r: object) =>
+  ({ kind: 'InfixExpr' as const, op, left: l, right: r });
+const callE = (callee: string, args: object[], block = null) =>
+  ({ kind: 'CallExpr' as const, callee, args, block });
+const blockE = (body: object[]) => ({ kind: 'BlockExpr' as const, body });
+const repeatE = (count: object, body: object[]) =>
+  ({ kind: 'RepeatExpr' as const, count, body: blockE(body) });
+const onE = (name: string, body: object[]) =>
+  ({ kind: 'OnExpr' as const, event: sym(name), body: blockE(body) });
+const exprS = (expr: object) => ({ kind: 'ExprStmt' as const, expr });
+const defS = (name: string, params: string[], body: object) =>
+  ({ kind: 'DefStmt' as const, name, params, body });
+const prog = (...stmts: object[]): Program =>
+  ({ kind: 'Program', stmts: stmts as Program['stmts'] });
 
 describe('tokenize', () => {
   it('tokenizes an integer number', () => {
@@ -82,5 +105,203 @@ describe('tokenize', () => {
       { kind: 'RPAREN' },
       { kind: 'EOF' },
     ]);
+  });
+});
+
+describe('parse — literals', () => {
+  it('parses integer', () => {
+    expect(parse('42')).toEqual(prog(exprS(num(42))));
+  });
+
+  it('parses float', () => {
+    expect(parse('3.14')).toEqual(prog(exprS(num(3.14))));
+  });
+
+  it('parses string', () => {
+    expect(parse('"hello"')).toEqual(prog(exprS(str('hello'))));
+  });
+
+  it('parses symbol', () => {
+    expect(parse(':click')).toEqual(prog(exprS(sym('click'))));
+  });
+
+  it('parses true', () => {
+    expect(parse('true')).toEqual(prog(exprS(bool_(true))));
+  });
+
+  it('parses false', () => {
+    expect(parse('false')).toEqual(prog(exprS(bool_(false))));
+  });
+
+  it('parses bare identifier', () => {
+    expect(parse('n')).toEqual(prog(exprS(id('n'))));
+  });
+});
+
+describe('parse — function calls', () => {
+  it('parses zero-arg call', () => {
+    expect(parse('square()')).toEqual(prog(exprS(callE('square', []))));
+  });
+
+  it('parses single-arg call', () => {
+    expect(parse('forward(100)')).toEqual(
+      prog(exprS(callE('forward', [num(100)])))
+    );
+  });
+
+  it('parses multi-arg call', () => {
+    expect(parse('polygon(6, 80)')).toEqual(
+      prog(exprS(callE('polygon', [num(6), num(80)])))
+    );
+  });
+});
+
+describe('parse — infix expressions', () => {
+  it('parses addition', () => {
+    expect(parse('1 + 2')).toEqual(
+      prog(exprS(infix('+', num(1), num(2))))
+    );
+  });
+
+  it('parses subtraction', () => {
+    expect(parse('10 - 3')).toEqual(
+      prog(exprS(infix('-', num(10), num(3))))
+    );
+  });
+
+  it('gives * higher precedence than +', () => {
+    expect(parse('2 + 3 * 4')).toEqual(
+      prog(exprS(infix('+', num(2), infix('*', num(3), num(4)))))
+    );
+  });
+
+  it('gives / higher precedence than -', () => {
+    expect(parse('10 - 6 / 2')).toEqual(
+      prog(exprS(infix('-', num(10), infix('/', num(6), num(2)))))
+    );
+  });
+
+  it('left-associates same-precedence operators', () => {
+    expect(parse('1 + 2 + 3')).toEqual(
+      prog(exprS(infix('+', infix('+', num(1), num(2)), num(3))))
+    );
+  });
+
+  it('parses parenthesized expression overriding precedence', () => {
+    expect(parse('(1 + 2) * 3')).toEqual(
+      prog(exprS(infix('*', infix('+', num(1), num(2)), num(3))))
+    );
+  });
+
+  it('parses infix inside call arg', () => {
+    expect(parse('turn(360 / 4)')).toEqual(
+      prog(exprS(callE('turn', [infix('/', num(360), num(4))])))
+    );
+  });
+});
+
+describe('parse — repeat', () => {
+  it('parses repeat with number count', () => {
+    expect(parse('repeat 4 do\n  forward(100)\nend')).toEqual(
+      prog(exprS(repeatE(num(4), [exprS(callE('forward', [num(100)]))])))
+    );
+  });
+
+  it('parses repeat with identifier count', () => {
+    expect(parse('repeat sides do\n  forward(size)\nend')).toEqual(
+      prog(exprS(repeatE(id('sides'), [exprS(callE('forward', [id('size')]))])))
+    );
+  });
+
+  it('parses repeat with infix count', () => {
+    expect(parse('repeat 2 * 4 do\n  forward(10)\nend')).toEqual(
+      prog(exprS(repeatE(
+        infix('*', num(2), num(4)),
+        [exprS(callE('forward', [num(10)]))]
+      )))
+    );
+  });
+
+  it('parses nested repeat', () => {
+    const src = 'repeat 4 do\n  repeat 4 do\n    forward(10)\n  end\nend';
+    const inner = repeatE(num(4), [exprS(callE('forward', [num(10)]))]);
+    const outer = repeatE(num(4), [exprS(inner)]);
+    expect(parse(src)).toEqual(prog(exprS(outer)));
+  });
+});
+
+describe('parse — on event', () => {
+  it('parses on :click do...end', () => {
+    expect(parse('on :click do\n  forward(20)\nend')).toEqual(
+      prog(exprS(onE('click', [exprS(callE('forward', [num(20)]))])))
+    );
+  });
+});
+
+describe('parse — def statement', () => {
+  it('parses single-line def with = expr', () => {
+    expect(parse('def side = 100')).toEqual(
+      prog(defS('side', [], num(100)))
+    );
+  });
+
+  it('parses def with block body (no params)', () => {
+    const src = 'def square\n  repeat 4 do\n    forward(100)\n    turn(90)\n  end\nend';
+    const body = blockE([
+      exprS(repeatE(num(4), [
+        exprS(callE('forward', [num(100)])),
+        exprS(callE('turn', [num(90)])),
+      ]))
+    ]);
+    expect(parse(src)).toEqual(prog(defS('square', [], body)));
+  });
+
+  it('parses def with params and block body', () => {
+    const src = 'def polygon(sides, size)\n  repeat sides do\n    forward(size)\n    turn(360 / sides)\n  end\nend';
+    const body = blockE([
+      exprS(repeatE(id('sides'), [
+        exprS(callE('forward', [id('size')])),
+        exprS(callE('turn', [infix('/', num(360), id('sides'))])),
+      ]))
+    ]);
+    expect(parse(src)).toEqual(prog(defS('polygon', ['sides', 'size'], body)));
+  });
+
+  it('parses single-line def with params', () => {
+    expect(parse('def double(x) = x + x')).toEqual(
+      prog(defS('double', ['x'], infix('+', id('x'), id('x'))))
+    );
+  });
+});
+
+describe('parse — multi-statement program', () => {
+  it('parses two statements in sequence', () => {
+    expect(parse('forward(100)\nturn(90)')).toEqual(
+      prog(
+        exprS(callE('forward', [num(100)])),
+        exprS(callE('turn', [num(90)])),
+      )
+    );
+  });
+
+  it('parses def followed by call', () => {
+    const src = 'def sq\n  forward(50)\nend\nsq()';
+    const body = blockE([exprS(callE('forward', [num(50)]))]);
+    expect(parse(src)).toEqual(
+      prog(
+        defS('sq', [], body),
+        exprS(callE('sq', [])),
+      )
+    );
+  });
+});
+
+describe('parse — error cases', () => {
+  it('throws ParseError on unterminated string', () => {
+    expect(() => parse('"oops')).toThrow(ParseError);
+  });
+
+  it('throws ParseError on unexpected EOF in call args', () => {
+    expect(() => parse('forward(')).toThrow(ParseError);
   });
 });
