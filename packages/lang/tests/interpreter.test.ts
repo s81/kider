@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { interpret, SproutRuntimeError } from '../src/interpreter.js';
+import { interpret, interpretFull, callHandler, SproutRuntimeError } from '../src/interpreter.js';
 import {
   EMPTY,
   mkForward,
@@ -447,5 +447,92 @@ describe('Integration', () => {
         }
       }
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Additional builder for OnExpr
+// ---------------------------------------------------------------------------
+const onExpr = (eventName: string, bodyStmts: Stmt[]): Expr => ({
+  kind: 'OnExpr',
+  event: { kind: 'SymbolLit', name: eventName },
+  body: { kind: 'BlockExpr', body: bodyStmts },
+});
+
+// ---------------------------------------------------------------------------
+// interpretFull
+// ---------------------------------------------------------------------------
+describe('interpretFull', () => {
+  it('returns the same drawing as interpret() when there are no handlers', () => {
+    const prog = program(exprStmt(call('forward', [numLit(100)])));
+    const { drawing, handlers } = interpretFull(prog);
+    expect(drawing).toEqual(interpret(prog));
+    expect(handlers.size).toBe(0);
+  });
+
+  it('exposes a :click handler registered with on :click do...end', () => {
+    const prog = program(
+      exprStmt(onExpr('click', [exprStmt(call('forward', [numLit(20)]))])),
+    );
+    const { drawing, handlers } = interpretFull(prog);
+    expect(drawing).toEqual(EMPTY);
+    expect(handlers.has(':click')).toBe(true);
+    expect(handlers.get(':click')!.kind).toBe('function');
+  });
+
+  it('drawing from interpretFull excludes the on-expr visual output', () => {
+    const prog = program(
+      exprStmt(call('forward', [numLit(50)])),
+      exprStmt(onExpr('click', [exprStmt(call('turn', [numLit(90)]))])),
+    );
+    const { drawing, handlers } = interpretFull(prog);
+    expect(drawing).toEqual(mkSequence([mkForward(50)]));
+    expect(handlers.has(':click')).toBe(true);
+  });
+
+  it('handles multiple different event names', () => {
+    const prog = program(
+      exprStmt(onExpr('click', [exprStmt(call('forward', [numLit(10)]))])),
+      exprStmt(onExpr('load', [exprStmt(call('turn', [numLit(45)]))])),
+    );
+    const { handlers } = interpretFull(prog);
+    expect(handlers.has(':click')).toBe(true);
+    expect(handlers.has(':load')).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// callHandler
+// ---------------------------------------------------------------------------
+describe('callHandler', () => {
+  it('evaluates handler body and returns a Drawing', () => {
+    const prog = program(
+      exprStmt(onExpr('click', [exprStmt(call('forward', [numLit(30)]))])),
+    );
+    const { handlers } = interpretFull(prog);
+    const fn = handlers.get(':click')!;
+    const delta = callHandler(fn);
+    expect(delta).toEqual(mkSequence([mkForward(30)]));
+  });
+
+  it('returns EMPTY when handler body produces no drawing', () => {
+    const prog = program(
+      exprStmt(onExpr('click', [exprStmt(call('puts', [numLit(1)]))])),
+    );
+    const { handlers } = interpretFull(prog);
+    const fn = handlers.get(':click')!;
+    const delta = callHandler(fn);
+    expect(delta).toEqual(mkSequence([EMPTY]));
+  });
+
+  it('handler closure captures variables defined before the on-expr', () => {
+    const prog = program(
+      defStmt('step', [], call('forward', [numLit(5)])),
+      exprStmt(onExpr('click', [exprStmt(call('step', []))])),
+    );
+    const { handlers } = interpretFull(prog);
+    const fn = handlers.get(':click')!;
+    const delta = callHandler(fn);
+    expect(delta).toEqual(mkSequence([mkForward(5)]));
   });
 });

@@ -369,3 +369,44 @@ export function interpret(program: Program, initialEnv: Env = EMPTY_ENV): Drawin
 
   return drawings.length === 0 ? EMPTY : mkSequence(drawings);
 }
+
+/**
+ * Like `interpret`, but also returns the event handlers registered by
+ * `on :eventName do...end` statements, keyed by `':eventName'`.
+ */
+export function interpretFull(
+  program: Program,
+  initialEnv: Env = EMPTY_ENV,
+): { drawing: Drawing; handlers: Map<string, SproutFunction> } {
+  let env: Env = initialEnv;
+  const drawings: Drawing[] = [];
+
+  for (const stmt of program.stmts) {
+    const [val, newEnv] = evalStmtWithEnv(stmt, env);
+    env = newEnv;
+    if (val !== null && isDrawing(val)) {
+      drawings.push(val);
+    }
+  }
+
+  const handlers = new Map<string, SproutFunction>();
+  for (const [key, val] of env) {
+    if (key.startsWith(':') && val.kind === 'function') {
+      handlers.set(key, val as SproutFunction);
+    }
+  }
+
+  return {
+    drawing: drawings.length === 0 ? EMPTY : mkSequence(drawings),
+    handlers,
+  };
+}
+
+/**
+ * Invoke a zero-parameter event handler closure and return the Drawing it
+ * produces.  Returns EMPTY if the body produces a non-Drawing value.
+ */
+export function callHandler(fn: SproutFunction): Drawing {
+  const result = evalExpr(fn.body, fn.env);
+  return isDrawing(result) ? result : EMPTY;
+}
