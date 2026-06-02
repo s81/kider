@@ -3,11 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "types": "./dist/index.d.ts",
+  "types": "./src/index.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./src/index.ts"
     }
   },
   "scripts": {
@@ -15,6 +15,7 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@sprout/lang": "workspace:*"
+    "@sprout/lang": "workspace:*",
+    "blockly": "*"
   }
 }
