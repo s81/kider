@@ -10,7 +10,8 @@
     "noEmit": true,
     "paths": {
       "blockly": ["../../packages/blocks/node_modules/blockly/index.d.ts"],
-      "blockly/node": ["../../packages/blocks/node_modules/blockly/index.d.ts"]
+      "blockly/node": ["../../packages/blocks/node_modules/blockly/index.d.ts"],
+      "@sprout/parser": ["../../packages/parser/src/index.ts"]
     }
   },
   "include": ["src"]

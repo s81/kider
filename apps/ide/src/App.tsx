@@ -8,35 +8,48 @@ import {
   mkSequence,
   SproutRuntimeError,
 } from '@sprout/lang';
+import { parse, ParseError } from '@sprout/parser';
 import type { CanvasCommand, Drawing, SproutFunction } from '@sprout/lang';
 import { BlockWorkspace } from './BlockWorkspace.js';
 import { TextPanel } from './TextPanel.js';
 import { Stage } from './Stage.js';
 
+type SourceMode = 'blocks' | 'editor';
+
 export function App() {
   const wsRef = useRef<Blockly.Workspace | null>(null);
   const [programText, setProgramText] = useState('');
+  const [editorText, setEditorText] = useState('');
+  const [sourceMode, setSourceMode] = useState<SourceMode>('blocks');
   const [commands, setCommands] = useState<CanvasCommand[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [animated, setAnimated] = useState(false);
   const [stepsPerFrame, setStepsPerFrame] = useState(3);
 
-  // Accumulated drawing state for click handler compositing
   const accDrawingRef = useRef<Drawing | null>(null);
   const [handlers, setHandlers] = useState<Map<string, SproutFunction>>(new Map());
 
   function handleRun() {
-    const ws = wsRef.current;
-    if (!ws) return;
     try {
       setError(null);
-      const program = compileWorkspace(ws);
+      let program;
+      if (sourceMode === 'blocks') {
+        const ws = wsRef.current;
+        if (!ws) return;
+        program = compileWorkspace(ws);
+      } else {
+        program = parse(editorText);
+      }
       const { drawing, handlers: h } = interpretFull(program);
       accDrawingRef.current = drawing;
       setHandlers(h);
       setCommands(render(drawing));
     } catch (e) {
-      setError(e instanceof SproutRuntimeError ? e.message : String(e));
+      if (e instanceof SproutRuntimeError || e instanceof ParseError) {
+        setError(e.message);
+      } else {
+        setError(String(e));
+      }
       setCommands([]);
       setHandlers(new Map());
       accDrawingRef.current = null;
@@ -56,6 +69,11 @@ export function App() {
     }
   }
 
+  function handleSwitchToEditor() {
+    setEditorText(programText);
+    setSourceMode('editor');
+  }
+
   const hasClickHandler = handlers.has(':click');
 
   return (
@@ -68,7 +86,7 @@ export function App() {
         />
       </div>
 
-      {/* Right: controls + text panel + stage */}
+      {/* Right panel */}
       <div
         style={{
           width: 524,
@@ -95,6 +113,38 @@ export function App() {
         >
           ▶ Run
         </button>
+
+        {/* Source mode tabs */}
+        <div style={{ display: 'flex', gap: 4, fontSize: 13 }}>
+          <button
+            onClick={() => setSourceMode('blocks')}
+            style={{
+              padding: '4px 12px',
+              borderRadius: 4,
+              border: '1px solid #cbd5e1',
+              background: sourceMode === 'blocks' ? '#2563eb' : '#fff',
+              color: sourceMode === 'blocks' ? '#fff' : '#334155',
+              cursor: 'pointer',
+              fontWeight: sourceMode === 'blocks' ? 600 : 400,
+            }}
+          >
+            Blocks
+          </button>
+          <button
+            onClick={handleSwitchToEditor}
+            style={{
+              padding: '4px 12px',
+              borderRadius: 4,
+              border: '1px solid #cbd5e1',
+              background: sourceMode === 'editor' ? '#2563eb' : '#fff',
+              color: sourceMode === 'editor' ? '#fff' : '#334155',
+              cursor: 'pointer',
+              fontWeight: sourceMode === 'editor' ? 600 : 400,
+            }}
+          >
+            Text
+          </button>
+        </div>
 
         {/* Animation controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569' }}>
@@ -128,7 +178,11 @@ export function App() {
           </div>
         )}
 
-        <TextPanel text={programText} />
+        <TextPanel
+          text={sourceMode === 'blocks' ? programText : editorText}
+          editable={sourceMode === 'editor'}
+          onChange={setEditorText}
+        />
 
         <Stage
           commands={commands}
