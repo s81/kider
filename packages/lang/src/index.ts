@@ -47,7 +47,7 @@ export {
   EMPTY,
 } from './values.js';
 
-export { interpret, SproutRuntimeError } from './interpreter.js';
+export { interpret, interpretFull, callHandler, SproutRuntimeError } from './interpreter.js';
 
 export { serialize, serializeExpr, serializeStmt } from './serializer.js';
 
