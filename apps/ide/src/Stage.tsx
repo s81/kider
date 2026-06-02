@@ -1,57 +1,53 @@
 import { useEffect, useRef } from 'react';
 import type { CanvasCommand } from '@sprout/lang';
-
-const W = 500;
-const H = 500;
+import { drawUpTo, STAGE_W, STAGE_H } from './stage-utils.js';
 
 interface Props {
   commands: CanvasCommand[];
+  animated?: boolean;
+  stepsPerFrame?: number;
+  onClick?: () => void;
 }
 
-export function Stage({ commands }: Props) {
+export function Stage({ commands, animated = false, stepsPerFrame = 3, onClick }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext('2d')!;
-    ctx.clearRect(0, 0, W, H);
-    if (commands.length === 0) return;
 
-    ctx.strokeStyle = '#2563eb';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    // Turtle origin is (0,0); map to canvas center.
-    ctx.moveTo(W / 2, H / 2);
+    if (!animated || commands.length === 0) {
+      drawUpTo(ctx, commands, commands.length);
+      return;
+    }
 
-    for (const cmd of commands) {
-      switch (cmd.kind) {
-        case 'moveTo':
-          ctx.moveTo(W / 2 + cmd.x, H / 2 + cmd.y);
-          break;
-        case 'lineTo':
-          ctx.lineTo(W / 2 + cmd.x, H / 2 + cmd.y);
-          break;
-        case 'penDown':
-        case 'penUp':
-          // moveTo/lineTo already encode pen state; these commands are no-ops for canvas.
-          break;
+    let step = 0;
+    let rafId: number;
+
+    function tick() {
+      step = Math.min(step + stepsPerFrame, commands.length);
+      drawUpTo(ctx, commands, step);
+      if (step < commands.length) {
+        rafId = requestAnimationFrame(tick);
       }
     }
-    ctx.stroke();
-  }, [commands]);
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [commands, animated, stepsPerFrame]);
 
   return (
     <canvas
       ref={canvasRef}
-      width={W}
-      height={H}
+      width={STAGE_W}
+      height={STAGE_H}
+      onClick={onClick}
       style={{
         border: '1px solid #e2e8f0',
         borderRadius: 4,
         background: '#fff',
         display: 'block',
+        cursor: onClick ? 'crosshair' : 'default',
       }}
     />
   );
