@@ -1,8 +1,14 @@
 import { useRef, useState } from 'react';
 import type * as Blockly from 'blockly';
 import { compileWorkspace } from '@sprout/blocks';
-import { interpret, render, SproutRuntimeError } from '@sprout/lang';
-import type { CanvasCommand } from '@sprout/lang';
+import {
+  interpretFull,
+  callHandler,
+  render,
+  mkSequence,
+  SproutRuntimeError,
+} from '@sprout/lang';
+import type { CanvasCommand, Drawing, SproutFunction } from '@sprout/lang';
 import { BlockWorkspace } from './BlockWorkspace.js';
 import { TextPanel } from './TextPanel.js';
 import { Stage } from './Stage.js';
@@ -15,19 +21,42 @@ export function App() {
   const [animated, setAnimated] = useState(false);
   const [stepsPerFrame, setStepsPerFrame] = useState(3);
 
+  // Accumulated drawing state for click handler compositing
+  const accDrawingRef = useRef<Drawing | null>(null);
+  const [handlers, setHandlers] = useState<Map<string, SproutFunction>>(new Map());
+
   function handleRun() {
     const ws = wsRef.current;
     if (!ws) return;
     try {
       setError(null);
       const program = compileWorkspace(ws);
-      const drawing = interpret(program);
+      const { drawing, handlers: h } = interpretFull(program);
+      accDrawingRef.current = drawing;
+      setHandlers(h);
       setCommands(render(drawing));
     } catch (e) {
       setError(e instanceof SproutRuntimeError ? e.message : String(e));
       setCommands([]);
+      setHandlers(new Map());
+      accDrawingRef.current = null;
     }
   }
+
+  function handleCanvasClick() {
+    const clickFn = handlers.get(':click');
+    if (!clickFn || accDrawingRef.current === null) return;
+    try {
+      const delta = callHandler(clickFn);
+      const next = mkSequence([accDrawingRef.current, delta]);
+      accDrawingRef.current = next;
+      setCommands(render(next));
+    } catch (e) {
+      setError(e instanceof SproutRuntimeError ? e.message : String(e));
+    }
+  }
+
+  const hasClickHandler = handlers.has(':click');
 
   return (
     <div style={{ display: 'flex', height: '100%', fontFamily: 'sans-serif' }}>
@@ -93,9 +122,20 @@ export function App() {
           )}
         </div>
 
+        {hasClickHandler && (
+          <div style={{ fontSize: 12, color: '#64748b', textAlign: 'center' }}>
+            Click the canvas to fire the :click handler
+          </div>
+        )}
+
         <TextPanel text={programText} />
 
-        <Stage commands={commands} animated={animated} stepsPerFrame={stepsPerFrame} />
+        <Stage
+          commands={commands}
+          animated={animated}
+          stepsPerFrame={stepsPerFrame}
+          onClick={hasClickHandler ? handleCanvasClick : undefined}
+        />
 
         {error && (
           <pre
