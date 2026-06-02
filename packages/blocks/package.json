@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "@sprout/lang": "workspace:*",
-    "blockly": "*"
+    "blockly": "^10.4.3"
   }
 }

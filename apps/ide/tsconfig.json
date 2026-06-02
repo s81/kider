@@ -9,7 +9,8 @@
     "rootDir": "./src",
     "noEmit": true,
     "paths": {
-      "blockly": ["../../packages/blocks/node_modules/blockly/index.d.ts"]
+      "blockly": ["../../packages/blocks/node_modules/blockly/index.d.ts"],
+      "blockly/node": ["../../packages/blocks/node_modules/blockly/index.d.ts"]
     }
   },
   "include": ["src"]
