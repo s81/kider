@@ -22,7 +22,7 @@ export function Stage({ commands, animated = false, stepsPerFrame = 3, onClick }
     }
 
     let step = 0;
-    let rafId: number;
+    let rafId = 0;
 
     function tick() {
       step = Math.min(step + stepsPerFrame, commands.length);
