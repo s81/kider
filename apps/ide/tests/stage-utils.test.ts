@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { drawUpTo } from '../src/stage-utils.js';
+import { drawUpTo, getTurtleState } from '../src/stage-utils.js';
 import type { CanvasCommand } from '@sprout/lang';
 
 function makeMockCtx() {
@@ -120,5 +120,84 @@ describe('drawUpTo', () => {
     drawUpTo(ctx, commands, 1);
     expect(ctx.stroke).toHaveBeenCalledTimes(1);
     expect(ctx.lineWidth).toBe(2); // default lineWidth unchanged
+  });
+});
+
+describe('getTurtleState', () => {
+  it('returns default state for empty commands', () => {
+    expect(getTurtleState([], 0)).toEqual({ x: 0, y: 0, heading: 0 });
+  });
+
+  it('returns default state for limit 0', () => {
+    const cmds: CanvasCommand[] = [{ kind: 'moveTo', x: 50, y: 50 }];
+    expect(getTurtleState(cmds, 0)).toEqual({ x: 0, y: 0, heading: 0 });
+  });
+
+  it('moveTo to same position does not change heading', () => {
+    const cmds: CanvasCommand[] = [{ kind: 'moveTo', x: 0, y: 0 }];
+    expect(getTurtleState(cmds, 1)).toEqual({ x: 0, y: 0, heading: 0 });
+  });
+
+  it('lineTo moving up (y decreases) sets heading to 0', () => {
+    const cmds: CanvasCommand[] = [
+      { kind: 'moveTo', x: 0, y: 0 },
+      { kind: 'lineTo', x: 0, y: -50 },
+    ];
+    expect(getTurtleState(cmds, 2)).toEqual({ x: 0, y: -50, heading: 0 });
+  });
+
+  it('lineTo moving right (x increases) sets heading to 90', () => {
+    const cmds: CanvasCommand[] = [
+      { kind: 'moveTo', x: 0, y: 0 },
+      { kind: 'lineTo', x: 50, y: 0 },
+    ];
+    expect(getTurtleState(cmds, 2)).toEqual({ x: 50, y: 0, heading: 90 });
+  });
+
+  it('lineTo moving down (y increases) sets heading to 180', () => {
+    const cmds: CanvasCommand[] = [
+      { kind: 'moveTo', x: 0, y: 0 },
+      { kind: 'lineTo', x: 0, y: 50 },
+    ];
+    expect(getTurtleState(cmds, 2)).toEqual({ x: 0, y: 50, heading: 180 });
+  });
+
+  it('limit is respected — stops before later commands', () => {
+    const cmds: CanvasCommand[] = [
+      { kind: 'moveTo', x: 0, y: 0 },
+      { kind: 'lineTo', x: 50, y: 0 },
+      { kind: 'lineTo', x: 50, y: -50 },
+    ];
+    // limit=2: only first two commands processed, turtle at (50, 0) heading 90
+    expect(getTurtleState(cmds, 2)).toEqual({ x: 50, y: 0, heading: 90 });
+  });
+
+  it('penUp and penDown do not affect position or heading', () => {
+    const cmds: CanvasCommand[] = [
+      { kind: 'moveTo', x: 0, y: 0 },
+      { kind: 'penUp' },
+      { kind: 'lineTo', x: 0, y: -50 },
+      { kind: 'penDown' },
+    ];
+    expect(getTurtleState(cmds, 4)).toEqual({ x: 0, y: -50, heading: 0 });
+  });
+
+  it('setColor and setLineWidth do not affect position or heading', () => {
+    const cmds: CanvasCommand[] = [
+      { kind: 'setColor', color: 'red' },
+      { kind: 'setLineWidth', width: 5 },
+      { kind: 'moveTo', x: 0, y: 0 },
+      { kind: 'lineTo', x: 30, y: 0 },
+    ];
+    expect(getTurtleState(cmds, 4)).toEqual({ x: 30, y: 0, heading: 90 });
+  });
+
+  it('heading is retained when position does not change (pen up move)', () => {
+    const cmds: CanvasCommand[] = [
+      { kind: 'moveTo', x: 0, y: 0 },
+      { kind: 'lineTo', x: 50, y: 0 },   // heading becomes 90
+      { kind: 'moveTo', x: 50, y: 0 },   // same position — heading stays 90
+    ];
+    expect(getTurtleState(cmds, 3)).toEqual({ x: 50, y: 0, heading: 90 });
   });
 });
