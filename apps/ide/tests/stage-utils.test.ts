@@ -69,4 +69,32 @@ describe('drawUpTo', () => {
     // Only lineTo emits a ctx call (beyond the initial moveTo from beginPath setup)
     expect(ctx.lineTo).toHaveBeenCalledTimes(1);
   });
+
+  it('setColor flushes current path and begins a new one with new strokeStyle', () => {
+    const commands: CanvasCommand[] = [
+      { kind: 'lineTo', x: 0, y: -100 },
+      { kind: 'setColor', color: '#dc2626' },
+      { kind: 'moveTo', x: 0, y: -100 },
+      { kind: 'lineTo', x: 100, y: -100 },
+    ];
+    drawUpTo(ctx, commands, 4);
+    // stroke called twice: once on setColor, once at end
+    expect(ctx.stroke).toHaveBeenCalledTimes(2);
+    // beginPath called twice: once initial setup, once on setColor
+    expect(ctx.beginPath).toHaveBeenCalledTimes(2);
+    // strokeStyle ends with the new color
+    expect(ctx.strokeStyle).toBe('#dc2626');
+  });
+
+  it('setColor at limit boundary stops before flushing if not reached', () => {
+    const commands: CanvasCommand[] = [
+      { kind: 'lineTo', x: 0, y: -100 },
+      { kind: 'setColor', color: '#dc2626' },
+      { kind: 'lineTo', x: 100, y: -100 },
+    ];
+    // limit=1: only the first lineTo, no setColor
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.stroke).toHaveBeenCalledTimes(1); // only final stroke
+    expect(ctx.strokeStyle).toBe('#2563eb'); // default color unchanged
+  });
 });

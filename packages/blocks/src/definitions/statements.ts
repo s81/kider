@@ -46,6 +46,29 @@ export function registerStatementBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_color'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('color')
+        .appendField(
+          new Blockly.FieldDropdown([
+            ['red',    'red'],
+            ['blue',   'blue'],
+            ['green',  'green'],
+            ['orange', 'orange'],
+            ['purple', 'purple'],
+            ['black',  'black'],
+            ['yellow', 'yellow'],
+            ['pink',   'pink'],
+          ]) as unknown as Blockly.Field,
+          'COLOR',
+        );
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(20);
+    },
+  };
+
   Blockly.Blocks['sprout_repeat'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('COUNT').setCheck('Number').appendField('repeat');

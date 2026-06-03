@@ -10,6 +10,7 @@ import {
   mkBeside,
   mkAbove,
   mkScale,
+  mkColor,
 } from '../src/values.js';
 import type { CanvasCommand } from '../src/renderer.js';
 
@@ -273,5 +274,50 @@ describe('heading wraps at 360', () => {
     const drawing = mkSequence([mkTurn(-90), mkForward(100)]);
     const result = roundCmds(render(drawing));
     expect(result).toEqual([lineTo(-100, 0)]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// color Drawing node in renderer
+// ---------------------------------------------------------------------------
+describe('render(color)', () => {
+  it('color alone emits setColor + moveTo at origin', () => {
+    expect(render(mkColor('#dc2626'))).toEqual([
+      { kind: 'setColor', color: '#dc2626' },
+      { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+
+  it('forward + color + forward emits setColor and moveTo re-anchor', () => {
+    const drawing = mkSequence([
+      mkForward(100),
+      mkColor('#dc2626'),
+      mkForward(50),
+    ]);
+    const result = roundCmds(render(drawing));
+    expect(result).toEqual([
+      lineTo(0, -100),
+      { kind: 'setColor', color: '#dc2626' },
+      { kind: 'moveTo', x: 0, y: -100 },
+      lineTo(0, -150),
+    ]);
+  });
+
+  it('color does not affect bounding box — measure ignores it', () => {
+    const drawing = mkSequence([mkColor('#dc2626'), mkForward(100)]);
+    const result = measure(drawing);
+    expect(result.height).toBeCloseTo(100, 10);
+    expect(result.width).toBeCloseTo(0, 10);
+  });
+
+  it('scale passes color through unchanged', () => {
+    const drawing = mkScale(2, mkSequence([mkForward(10), mkColor('#dc2626'), mkForward(10)]));
+    const result = roundCmds(render(drawing));
+    expect(result).toEqual([
+      lineTo(0, -20),
+      { kind: 'setColor', color: '#dc2626' },
+      { kind: 'moveTo', x: 0, y: -20 },
+      lineTo(0, -40),
+    ]);
   });
 });

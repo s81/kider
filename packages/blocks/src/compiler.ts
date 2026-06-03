@@ -26,6 +26,7 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_turn':
     case 'sprout_pen_up':
     case 'sprout_pen_down':
+    case 'sprout_color':
     case 'sprout_puts':
     case 'sprout_repeat':
     case 'sprout_on_event':
@@ -91,6 +92,15 @@ function compileExprBlock(block: Blockly.Block): Expr {
       return { kind: 'CallExpr', callee: 'penUp', args: [], block: null };
     case 'sprout_pen_down':
       return { kind: 'CallExpr', callee: 'penDown', args: [], block: null };
+    case 'sprout_color': {
+      const colorName = block.getFieldValue('COLOR') as string;
+      return {
+        kind: 'CallExpr',
+        callee: 'color',
+        args: [{ kind: 'SymbolLit', name: colorName }],
+        block: null,
+      };
+    }
     case 'sprout_puts': {
       const val = compileExpr(mustGetInput(block, 'VALUE'));
       return { kind: 'CallExpr', callee: 'puts', args: [val], block: null };

@@ -32,6 +32,7 @@ import {
   mkBeside,
   mkAbove,
   mkScale,
+  mkColor,
   PEN_UP,
   PEN_DOWN,
   EMPTY,
@@ -56,7 +57,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   // Must stay in sync with the Drawing union in values.ts
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
-    case 'sequence': case 'beside': case 'above': case 'scale': case 'empty':
+    case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'empty':
       return true;
     default:
       return false;
@@ -95,6 +96,18 @@ function envExtend(base: Env, bindings: Iterable<[string, SproutValue]>): Env {
 
 type BuiltinFn = (args: SproutValue[]) => SproutValue;
 
+const COLOR_MAP: Readonly<Record<string, string>> = {
+  red:    '#dc2626',
+  blue:   '#2563eb',
+  green:  '#16a34a',
+  orange: '#ea580c',
+  purple: '#9333ea',
+  black:  '#000000',
+  white:  '#ffffff',
+  yellow: '#ca8a04',
+  pink:   '#db2777',
+};
+
 const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
   ['forward', (args) => {
     if (args.length !== 1) throw new SproutRuntimeError(`forward expects 1 argument, got ${args.length}`);
@@ -131,6 +144,20 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     const factor = assertNumber(args[0], 'scale (factor)');
     const drawing = assertDrawing(args[1], 'scale (drawing)');
     return mkScale(factor.value, drawing);
+  }],
+  ['color', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`color expects 1 argument, got ${args.length}`);
+    const sym = args[0];
+    if (sym.kind !== 'symbol') {
+      throw new SproutRuntimeError(`color expects a symbol like :red, got ${sym.kind}`);
+    }
+    const hex = COLOR_MAP[sym.name];
+    if (hex === undefined) {
+      throw new SproutRuntimeError(
+        `Unknown color: :${sym.name}. Available: ${Object.keys(COLOR_MAP).map(k => ':' + k).join(', ')}`
+      );
+    }
+    return mkColor(hex);
   }],
   ['puts', (args) => {
     // Side-effect for kids: print to console (best-effort) and return EMPTY.

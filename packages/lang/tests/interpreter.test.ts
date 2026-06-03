@@ -8,6 +8,7 @@ import {
   mkBeside,
   mkAbove,
   mkScale,
+  mkColor,
   PEN_UP,
   PEN_DOWN,
 } from '../src/values.js';
@@ -534,5 +535,45 @@ describe('callHandler', () => {
     const fn = handlers.get(':click')!;
     const delta = callHandler(fn);
     expect(delta).toEqual(mkSequence([mkForward(5)]));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// color builtin
+// ---------------------------------------------------------------------------
+describe('color builtin', () => {
+  it('color(:red) returns a color Drawing with hex #dc2626', () => {
+    const prog = program(exprStmt(call('color', [{ kind: 'SymbolLit' as const, name: 'red' }])));
+    const result = interpret(prog);
+    expect(result).toEqual(mkSequence([mkColor('#dc2626')]));
+  });
+
+  it('color(:blue) returns #2563eb', () => {
+    const prog = program(exprStmt(call('color', [{ kind: 'SymbolLit' as const, name: 'blue' }])));
+    expect(interpret(prog)).toEqual(mkSequence([mkColor('#2563eb')]));
+  });
+
+  it('color with unknown symbol throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('color', [{ kind: 'SymbolLit' as const, name: 'turquoise' }])));
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('color with non-symbol argument throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('color', [numLit(1)])));
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('color inside a sequence composes correctly', () => {
+    const prog = program(
+      exprStmt(call('forward', [numLit(100)])),
+      exprStmt(call('color', [{ kind: 'SymbolLit' as const, name: 'red' }])),
+      exprStmt(call('forward', [numLit(50)])),
+    );
+    const result = interpret(prog);
+    expect(result).toEqual(mkSequence([
+      mkForward(100),
+      mkColor('#dc2626'),
+      mkForward(50),
+    ]));
   });
 });

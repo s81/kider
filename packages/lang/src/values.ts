@@ -56,6 +56,7 @@ export interface SproutFunction {
 // `beside`   places two drawings horizontally adjacent.
 // `above`    places two drawings vertically adjacent.
 // `scale`    uniformly scales a drawing.
+// `color`    sets the stroke color for subsequent drawing commands.
 // `empty`    is the identity element for composition.
 // ---------------------------------------------------------------------------
 
@@ -68,6 +69,7 @@ export type Drawing =
   | { readonly kind: 'beside';   readonly left: Drawing; readonly right: Drawing }
   | { readonly kind: 'above';    readonly top: Drawing; readonly bottom: Drawing }
   | { readonly kind: 'scale';    readonly factor: number; readonly drawing: Drawing }
+  | { readonly kind: 'color';    readonly color: string }
   | { readonly kind: 'empty' };
 
 // ---------------------------------------------------------------------------
@@ -75,7 +77,7 @@ export type Drawing =
 // ---------------------------------------------------------------------------
 
 // INVARIANT: Drawing.kind values ('forward','turn','penUp','penDown','sequence',
-// 'beside','above','scale','empty') must never match SproutNumber/String/Symbol/Bool/Function kinds.
+// 'beside','above','scale','color','empty') must never match SproutNumber/String/Symbol/Bool/Function kinds.
 export type SproutValue =
   | SproutNumber
   | SproutString
@@ -110,5 +112,8 @@ export const mkAbove = (top: Drawing, bottom: Drawing): Drawing =>
 
 export const mkScale = (factor: number, drawing: Drawing): Drawing =>
   ({ kind: 'scale', factor, drawing });
+
+export const mkColor = (color: string): Drawing =>
+  ({ kind: 'color', color });
 
 export const EMPTY: Drawing = { kind: 'empty' };

@@ -205,4 +205,26 @@ describe('compileWorkspace', () => {
     expect(compileWorkspace(ws)).toEqual(clickProgram);
     ws.dispose();
   });
+
+  it('compiles sprout_color block to color(:red) CallExpr', () => {
+    const ws = makeWorkspace();
+    const block = ws.newBlock('sprout_color');
+    block.setFieldValue('red', 'COLOR');
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [block];
+
+    const result = compileWorkspace(ws);
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr',
+          callee: 'color',
+          args: [{ kind: 'SymbolLit', name: 'red' }],
+          block: null,
+        },
+      }],
+    });
+    ws.dispose();
+  });
 });

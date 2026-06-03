@@ -27,6 +27,11 @@ export function drawUpTo(
       case 'lineTo':
         ctx.lineTo(STAGE_W / 2 + cmd.x, STAGE_H / 2 + cmd.y);
         break;
+      case 'setColor':
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.strokeStyle = cmd.color;
+        break;
       case 'penDown':
       case 'penUp':
         break;

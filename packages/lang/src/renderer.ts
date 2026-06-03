@@ -13,7 +13,8 @@ export type CanvasCommand =
   | { readonly kind: 'moveTo'; readonly x: number; readonly y: number }
   | { readonly kind: 'lineTo'; readonly x: number; readonly y: number }
   | { readonly kind: 'penDown' }
-  | { readonly kind: 'penUp' };
+  | { readonly kind: 'penUp' }
+  | { readonly kind: 'setColor'; readonly color: string };
 
 // ---------------------------------------------------------------------------
 // Turtle state (internal)
@@ -40,6 +41,7 @@ function scaleDrawing(factor: number, d: Drawing): Drawing {
     case 'turn':
     case 'penUp':
     case 'penDown':
+    case 'color':
     case 'empty':
       return d;
     case 'sequence':
@@ -77,6 +79,11 @@ function renderInto(
     case 'penDown':
       out.push({ kind: 'penDown' });
       state.penDown = true;
+      return;
+
+    case 'color':
+      out.push({ kind: 'setColor', color: drawing.color });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y });
       return;
 
     case 'turn':
@@ -159,6 +166,7 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
     case 'empty':
     case 'penUp':
     case 'penDown':
+    case 'color':
       return;
 
     case 'turn':
