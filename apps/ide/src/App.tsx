@@ -28,6 +28,7 @@ export function App() {
   const [editorParseError, setEditorParseError] = useState<string | null>(null);
 
   useEffect(() => {
+    setError(null);
     if (sourceMode !== 'editor') {
       setEditorParseError(null);
       return;
@@ -38,6 +39,8 @@ export function App() {
     } catch (e) {
       if (e instanceof ParseError) {
         setEditorParseError(e.message);
+      } else {
+        throw e;
       }
     }
   }, [editorText, sourceMode]);
