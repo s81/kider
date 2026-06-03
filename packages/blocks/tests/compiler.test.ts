@@ -2,6 +2,7 @@ import * as Blockly from 'blockly/node';
 import { describe, it, expect, beforeAll } from 'vitest';
 import { registerAllBlocks } from '../src/definitions/index.js';
 import { compileWorkspace } from '../src/compiler.js';
+import type { LetStmt, AssignStmt, WhileExpr } from '@sprout/lang';
 import { program as squareProgram } from '../../../examples/square.fixture.js';
 import { program as polygonProgram } from '../../../examples/polygon.fixture.js';
 import { program as besideProgram } from '../../../examples/beside.fixture.js';
@@ -424,6 +425,64 @@ describe('compileWorkspace', () => {
     const result = compileWorkspace(ws);
     const ifExpr = (result.stmts[0] as { kind: 'ExprStmt'; expr: { kind: 'IfExpr'; cond: unknown } }).expr;
     expect(ifExpr.cond).toEqual({ kind: 'BoolLit', value: false });
+    ws.dispose();
+  });
+
+  it('sprout_let compiles to LetStmt', () => {
+    const ws = makeWorkspace();
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('x', 'NAME');
+    const numBlock = ws.newBlock('sprout_number');
+    numBlock.setFieldValue('5', 'NUM');
+    letBlock.getInput('INIT')!.connection!.connect(numBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    const expected: LetStmt = { kind: 'LetStmt', name: 'x', init: { kind: 'NumberLit', value: 5 } };
+    expect(result).toEqual({ kind: 'Program', stmts: [expected] });
+    ws.dispose();
+  });
+
+  it('sprout_set compiles to AssignStmt', () => {
+    const ws = makeWorkspace();
+    const setBlock = ws.newBlock('sprout_set');
+    setBlock.setFieldValue('x', 'NAME');
+    const numBlock = ws.newBlock('sprout_number');
+    numBlock.setFieldValue('99', 'NUM');
+    setBlock.getInput('VALUE')!.connection!.connect(numBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    const expected: AssignStmt = { kind: 'AssignStmt', name: 'x', value: { kind: 'NumberLit', value: 99 } };
+    expect(result).toEqual({ kind: 'Program', stmts: [expected] });
+    ws.dispose();
+  });
+
+  it('sprout_while compiles to ExprStmt wrapping WhileExpr', () => {
+    const ws = makeWorkspace();
+    const whileBlock = ws.newBlock('sprout_while');
+
+    const boolBlock = ws.newBlock('sprout_bool');
+    boolBlock.setFieldValue('true', 'VALUE');
+    whileBlock.getInput('COND')!.connection!.connect(boolBlock.outputConnection!);
+
+    const fwdBlock = ws.newBlock('sprout_forward');
+    const distBlock = ws.newBlock('sprout_number');
+    distBlock.setFieldValue('10', 'NUM');
+    fwdBlock.getInput('DISTANCE')!.connection!.connect(distBlock.outputConnection!);
+    whileBlock.getInput('BODY')!.connection!.connect(fwdBlock.previousConnection!);
+
+    const result = compileWorkspace(ws);
+    const expected: WhileExpr = {
+      kind: 'WhileExpr',
+      cond: { kind: 'BoolLit', value: true },
+      body: {
+        kind: 'BlockExpr',
+        body: [{
+          kind: 'ExprStmt',
+          expr: { kind: 'CallExpr', callee: 'forward', args: [{ kind: 'NumberLit', value: 10 }], block: null },
+        }],
+      },
+    };
+    expect(result).toEqual({ kind: 'Program', stmts: [{ kind: 'ExprStmt', expr: expected }] });
     ws.dispose();
   });
 });

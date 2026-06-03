@@ -2,8 +2,9 @@ import * as Blockly from 'blockly/node';
 import type {
   Program, Stmt, Expr,
   DefStmt, ExprStmt,
+  LetStmt, AssignStmt,
   NumberLit, Ident, InfixExpr, UnaryExpr, CallExpr,
-  BlockExpr, RepeatExpr, OnExpr, IfExpr, SymbolLit, BoolLit,
+  BlockExpr, RepeatExpr, OnExpr, IfExpr, WhileExpr, SymbolLit, BoolLit,
 } from '@sprout/lang';
 
 export function compileWorkspace(ws: Blockly.Workspace): Program {
@@ -36,7 +37,12 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_above':
     case 'sprout_scale':
     case 'sprout_if':
+    case 'sprout_while':
       return { kind: 'ExprStmt', expr: compileExprBlock(block) };
+    case 'sprout_let':
+      return compileLet(block);
+    case 'sprout_set':
+      return compileSet(block);
     default:
       throw new Error(`Unknown statement block type: ${block.type}`);
   }
@@ -52,6 +58,18 @@ function compileDef(block: Blockly.Block): DefStmt {
   const firstBodyBlock = block.getInputTargetBlock('BODY');
   const body = compileDefBody(firstBodyBlock);
   return { kind: 'DefStmt', name, params: rawParams, body };
+}
+
+function compileLet(block: Blockly.Block): LetStmt {
+  const name = block.getFieldValue('NAME') as string;
+  const init = compileExpr(mustGetInput(block, 'INIT'));
+  return { kind: 'LetStmt', name, init };
+}
+
+function compileSet(block: Blockly.Block): AssignStmt {
+  const name = block.getFieldValue('NAME') as string;
+  const value = compileExpr(mustGetInput(block, 'VALUE'));
+  return { kind: 'AssignStmt', name, value };
 }
 
 /**
@@ -140,6 +158,13 @@ function compileExprBlock(block: Blockly.Block): Expr {
       const elseBlock: BlockExpr | null = elseFirst ? compileBlockExpr(elseFirst) : null;
       const ifExpr: IfExpr = { kind: 'IfExpr', cond, then: thenBlock, else: elseBlock };
       return ifExpr;
+    }
+    case 'sprout_while': {
+      const cond = compileExpr(mustGetInput(block, 'COND'));
+      const firstBodyBlock = block.getInputTargetBlock('BODY');
+      const body = compileBlockExpr(firstBodyBlock);
+      const whileExpr: WhileExpr = { kind: 'WhileExpr', cond, body };
+      return whileExpr;
     }
     default:
       throw new Error(`Block type cannot be compiled as expression: ${block.type}`);
