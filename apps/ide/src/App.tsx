@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type * as Blockly from 'blockly';
 import { compileWorkspace } from '@sprout/blocks';
 import {
@@ -25,6 +25,22 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [animated, setAnimated] = useState(false);
   const [stepsPerFrame, setStepsPerFrame] = useState(3);
+  const [editorParseError, setEditorParseError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (sourceMode !== 'editor') {
+      setEditorParseError(null);
+      return;
+    }
+    try {
+      parse(editorText);
+      setEditorParseError(null);
+    } catch (e) {
+      if (e instanceof ParseError) {
+        setEditorParseError(e.message);
+      }
+    }
+  }, [editorText, sourceMode]);
 
   const accDrawingRef = useRef<Drawing | null>(null);
   const [handlers, setHandlers] = useState<Map<string, SproutFunction>>(new Map());
@@ -182,6 +198,7 @@ export function App() {
           text={sourceMode === 'blocks' ? programText : editorText}
           editable={sourceMode === 'editor'}
           onChange={setEditorText}
+          error={sourceMode === 'editor' ? editorParseError : null}
         />
 
         <Stage
