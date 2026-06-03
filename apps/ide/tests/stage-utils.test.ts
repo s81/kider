@@ -97,4 +97,28 @@ describe('drawUpTo', () => {
     expect(ctx.stroke).toHaveBeenCalledTimes(1); // only final stroke
     expect(ctx.strokeStyle).toBe('#2563eb'); // default color unchanged
   });
+
+  it('setLineWidth flushes current path and begins a new one with new lineWidth', () => {
+    const commands: CanvasCommand[] = [
+      { kind: 'lineTo', x: 0, y: -100 },
+      { kind: 'setLineWidth', width: 4 },
+      { kind: 'moveTo', x: 0, y: -100 },
+      { kind: 'lineTo', x: 100, y: -100 },
+    ];
+    drawUpTo(ctx, commands, 4);
+    expect(ctx.stroke).toHaveBeenCalledTimes(2);
+    expect(ctx.beginPath).toHaveBeenCalledTimes(2);
+    expect(ctx.lineWidth).toBe(4);
+  });
+
+  it('setLineWidth at limit boundary stops before flushing if not reached', () => {
+    const commands: CanvasCommand[] = [
+      { kind: 'lineTo', x: 0, y: -100 },
+      { kind: 'setLineWidth', width: 4 },
+      { kind: 'lineTo', x: 100, y: -100 },
+    ];
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.stroke).toHaveBeenCalledTimes(1);
+    expect(ctx.lineWidth).toBe(2); // default lineWidth unchanged
+  });
 });

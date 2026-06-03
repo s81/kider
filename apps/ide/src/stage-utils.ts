@@ -32,6 +32,11 @@ export function drawUpTo(
         ctx.beginPath();
         ctx.strokeStyle = cmd.color;
         break;
+      case 'setLineWidth':
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.lineWidth = cmd.width;
+        break;
       case 'penDown':
       case 'penUp':
         break;
