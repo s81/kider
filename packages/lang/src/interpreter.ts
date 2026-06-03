@@ -33,6 +33,7 @@ import {
   mkAbove,
   mkScale,
   mkColor,
+  mkPenWidth,
   PEN_UP,
   PEN_DOWN,
   EMPTY,
@@ -57,7 +58,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   // Must stay in sync with the Drawing union in values.ts
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
-    case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'empty':
+    case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'penWidth': case 'empty':
       return true;
     default:
       return false;
@@ -144,6 +145,12 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     const factor = assertNumber(args[0], 'scale (factor)');
     const drawing = assertDrawing(args[1], 'scale (drawing)');
     return mkScale(factor.value, drawing);
+  }],
+  ['penWidth', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`penWidth expects 1 argument, got ${args.length}`);
+    const w = assertNumber(args[0], 'penWidth');
+    if (w.value <= 0) throw new SproutRuntimeError(`penWidth: width must be > 0, got ${w.value}`);
+    return mkPenWidth(w.value);
   }],
   ['color', (args) => {
     if (args.length !== 1) throw new SproutRuntimeError(`color expects 1 argument, got ${args.length}`);

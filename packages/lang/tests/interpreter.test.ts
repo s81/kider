@@ -9,6 +9,7 @@ import {
   mkAbove,
   mkScale,
   mkColor,
+  mkPenWidth,
   PEN_UP,
   PEN_DOWN,
 } from '../src/values.js';
@@ -535,6 +536,54 @@ describe('callHandler', () => {
     const fn = handlers.get(':click')!;
     const delta = callHandler(fn);
     expect(delta).toEqual(mkSequence([mkForward(5)]));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// penWidth builtin
+// ---------------------------------------------------------------------------
+describe('penWidth builtin', () => {
+  it('penWidth(3) returns a penWidth Drawing', () => {
+    const prog = program(exprStmt(call('penWidth', [numLit(3)])));
+    expect(interpret(prog)).toEqual(mkSequence([mkPenWidth(3)]));
+  });
+
+  it('penWidth(0.5) returns a penWidth Drawing with fractional width', () => {
+    const prog = program(exprStmt(call('penWidth', [numLit(0.5)])));
+    expect(interpret(prog)).toEqual(mkSequence([mkPenWidth(0.5)]));
+  });
+
+  it('penWidth with wrong arg count throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('penWidth', [])));
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('penWidth with non-number argument throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('penWidth', [{ kind: 'SymbolLit' as const, name: 'thick' }])));
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('penWidth(0) throws SproutRuntimeError — width must be > 0', () => {
+    const prog = program(exprStmt(call('penWidth', [numLit(0)])));
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('penWidth(-1) throws SproutRuntimeError — width must be > 0', () => {
+    const prog = program(exprStmt(call('penWidth', [numLit(-1)])));
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('penWidth inside a sequence composes correctly', () => {
+    const prog = program(
+      exprStmt(call('forward', [numLit(100)])),
+      exprStmt(call('penWidth', [numLit(5)])),
+      exprStmt(call('forward', [numLit(50)])),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([
+      mkForward(100),
+      mkPenWidth(5),
+      mkForward(50),
+    ]));
   });
 });
 
