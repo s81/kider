@@ -21,7 +21,7 @@ interface Props {
 export function TextPanel({ text, editable = false, onChange, error = null }: Props) {
   if (editable) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '1 1 0', minWidth: 0 }}>
         <textarea
           value={text}
           onChange={e => onChange?.(e.target.value)}
