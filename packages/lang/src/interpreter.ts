@@ -40,6 +40,10 @@ import {
   mkScale,
   mkColor,
   mkPenWidth,
+  mkCircle,
+  mkRect,
+  mkEllipse,
+  mkTriangle,
   PEN_UP,
   PEN_DOWN,
   EMPTY,
@@ -65,6 +69,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
     case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'penWidth': case 'empty':
+    case 'circle': case 'rect': case 'ellipse': case 'triangle':
       return true;
     default:
       return false;
@@ -269,6 +274,29 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
   ['pi', (args) => {
     if (args.length !== 0) throw new SproutRuntimeError(`pi expects 0 arguments, got ${args.length}`);
     return { kind: 'number', value: Math.PI } satisfies SproutNumber;
+  }],
+  // --- Shape builtins ---
+  ['circle', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`circle expects 1 argument, got ${args.length}`);
+    const r = assertNumber(args[0], 'circle');
+    return mkCircle(r.value);
+  }],
+  ['rect', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`rect expects 2 arguments, got ${args.length}`);
+    const w = assertNumber(args[0], 'rect (width)');
+    const h = assertNumber(args[1], 'rect (height)');
+    return mkRect(w.value, h.value);
+  }],
+  ['ellipse', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`ellipse expects 2 arguments, got ${args.length}`);
+    const rx = assertNumber(args[0], 'ellipse (rx)');
+    const ry = assertNumber(args[1], 'ellipse (ry)');
+    return mkEllipse(rx.value, ry.value);
+  }],
+  ['triangle', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`triangle expects 1 argument, got ${args.length}`);
+    const size = assertNumber(args[0], 'triangle');
+    return mkTriangle(size.value);
   }],
 ]);
 

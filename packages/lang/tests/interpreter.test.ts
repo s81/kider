@@ -1021,3 +1021,34 @@ describe('math builtins', () => {
     expect(() => interpret(program(exprStmt(call('pi', [numLit(1)]))))).toThrow(SproutRuntimeError);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Shape builtins
+// ---------------------------------------------------------------------------
+
+describe('shape builtins', () => {
+  it('circle(50) returns circle Drawing', () => {
+    expect(interpret(program(exprStmt(call('circle', [numLit(50)]))))).toEqual(mkSequence([{ kind: 'circle', radius: 50 }]));
+  });
+  it('rect(80, 40) returns rect Drawing', () => {
+    expect(interpret(program(exprStmt(call('rect', [numLit(80), numLit(40)]))))).toEqual(mkSequence([{ kind: 'rect', width: 80, height: 40 }]));
+  });
+  it('ellipse(60, 30) returns ellipse Drawing', () => {
+    expect(interpret(program(exprStmt(call('ellipse', [numLit(60), numLit(30)]))))).toEqual(mkSequence([{ kind: 'ellipse', rx: 60, ry: 30 }]));
+  });
+  it('triangle(50) returns triangle Drawing', () => {
+    expect(interpret(program(exprStmt(call('triangle', [numLit(50)]))))).toEqual(mkSequence([{ kind: 'triangle', size: 50 }]));
+  });
+  it('circle throws with 0 args', () => {
+    expect(() => interpret(program(exprStmt(call('circle', []))))).toThrow(SproutRuntimeError);
+  });
+  it('rect throws with 1 arg', () => {
+    expect(() => interpret(program(exprStmt(call('rect', [numLit(100)]))))).toThrow(SproutRuntimeError);
+  });
+  it('ellipse throws with 1 arg', () => {
+    expect(() => interpret(program(exprStmt(call('ellipse', [numLit(10)]))))).toThrow(SproutRuntimeError);
+  });
+  it('triangle throws with 0 args', () => {
+    expect(() => interpret(program(exprStmt(call('triangle', []))))).toThrow(SproutRuntimeError);
+  });
+});
