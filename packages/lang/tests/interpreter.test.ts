@@ -1041,14 +1041,30 @@ describe('shape builtins', () => {
   });
   it('circle throws with 0 args', () => {
     expect(() => interpret(program(exprStmt(call('circle', []))))).toThrow(SproutRuntimeError);
+    expect(() => interpret(program(exprStmt(call('circle', []))))).toThrow(/circle/);
   });
   it('rect throws with 1 arg', () => {
     expect(() => interpret(program(exprStmt(call('rect', [numLit(100)]))))).toThrow(SproutRuntimeError);
+    expect(() => interpret(program(exprStmt(call('rect', [numLit(100)]))))).toThrow(/rect/);
   });
   it('ellipse throws with 1 arg', () => {
     expect(() => interpret(program(exprStmt(call('ellipse', [numLit(10)]))))).toThrow(SproutRuntimeError);
+    expect(() => interpret(program(exprStmt(call('ellipse', [numLit(10)]))))).toThrow(/ellipse/);
   });
   it('triangle throws with 0 args', () => {
     expect(() => interpret(program(exprStmt(call('triangle', []))))).toThrow(SproutRuntimeError);
+    expect(() => interpret(program(exprStmt(call('triangle', []))))).toThrow(/triangle/);
+  });
+  it('circle throws with non-number arg', () => {
+    expect(() => interpret(program(exprStmt(call('circle', [boolLit(true)]))))).toThrow(SproutRuntimeError);
+  });
+  it('rect throws with non-number first arg', () => {
+    expect(() => interpret(program(exprStmt(call('rect', [boolLit(true), numLit(40)]))))).toThrow(SproutRuntimeError);
+  });
+  it('ellipse throws with non-number second arg', () => {
+    expect(() => interpret(program(exprStmt(call('ellipse', [numLit(60), boolLit(true)]))))).toThrow(SproutRuntimeError);
+  });
+  it('triangle throws with non-number arg', () => {
+    expect(() => interpret(program(exprStmt(call('triangle', [boolLit(true)]))))).toThrow(SproutRuntimeError);
   });
 });
