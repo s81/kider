@@ -32,6 +32,28 @@ export function getTurtleState(commands: CanvasCommand[], limit: number): Turtle
   return { x, y, heading };
 }
 
+const TURTLE_SIZE = 10;
+
+export function drawTurtle(ctx: CanvasRenderingContext2D, state: TurtleState): void {
+  const cx = STAGE_W / 2 + state.x;
+  const cy = STAGE_H / 2 + state.y;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(state.heading * Math.PI / 180);
+
+  ctx.beginPath();
+  ctx.moveTo(0, -TURTLE_SIZE);                          // tip (up)
+  ctx.lineTo(TURTLE_SIZE * 0.6, TURTLE_SIZE * 0.7);    // bottom-right
+  ctx.lineTo(-TURTLE_SIZE * 0.6, TURTLE_SIZE * 0.7);   // bottom-left
+  ctx.closePath();
+
+  ctx.fillStyle = '#20c997';
+  ctx.fill();
+
+  ctx.restore();
+}
+
 export function drawUpTo(
   ctx: CanvasRenderingContext2D,
   commands: CanvasCommand[],
