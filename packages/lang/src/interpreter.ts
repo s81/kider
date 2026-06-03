@@ -191,6 +191,85 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     }
     return EMPTY;
   }],
+  // --- Math builtins ---
+  ['sin', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`sin expects 1 argument, got ${args.length}`);
+    const x = assertNumber(args[0], 'sin');
+    return { kind: 'number', value: Math.sin(x.value * Math.PI / 180) } satisfies SproutNumber;
+  }],
+  ['cos', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`cos expects 1 argument, got ${args.length}`);
+    const x = assertNumber(args[0], 'cos');
+    return { kind: 'number', value: Math.cos(x.value * Math.PI / 180) } satisfies SproutNumber;
+  }],
+  ['tan', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`tan expects 1 argument, got ${args.length}`);
+    const x = assertNumber(args[0], 'tan');
+    return { kind: 'number', value: Math.tan(x.value * Math.PI / 180) } satisfies SproutNumber;
+  }],
+  ['abs', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`abs expects 1 argument, got ${args.length}`);
+    const x = assertNumber(args[0], 'abs');
+    return { kind: 'number', value: Math.abs(x.value) } satisfies SproutNumber;
+  }],
+  ['sqrt', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`sqrt expects 1 argument, got ${args.length}`);
+    const x = assertNumber(args[0], 'sqrt');
+    return { kind: 'number', value: Math.sqrt(x.value) } satisfies SproutNumber;
+  }],
+  ['pow', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`pow expects 2 arguments, got ${args.length}`);
+    const base = assertNumber(args[0], 'pow (base)');
+    const exp = assertNumber(args[1], 'pow (exp)');
+    return { kind: 'number', value: Math.pow(base.value, exp.value) } satisfies SproutNumber;
+  }],
+  ['mod', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`mod expects 2 arguments, got ${args.length}`);
+    const a = assertNumber(args[0], 'mod (a)');
+    const b = assertNumber(args[1], 'mod (b)');
+    return { kind: 'number', value: a.value % b.value } satisfies SproutNumber;
+  }],
+  ['log', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`log expects 1 argument, got ${args.length}`);
+    const x = assertNumber(args[0], 'log');
+    return { kind: 'number', value: Math.log(x.value) } satisfies SproutNumber;
+  }],
+  ['floor', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`floor expects 1 argument, got ${args.length}`);
+    const x = assertNumber(args[0], 'floor');
+    return { kind: 'number', value: Math.floor(x.value) } satisfies SproutNumber;
+  }],
+  ['ceil', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`ceil expects 1 argument, got ${args.length}`);
+    const x = assertNumber(args[0], 'ceil');
+    return { kind: 'number', value: Math.ceil(x.value) } satisfies SproutNumber;
+  }],
+  ['round', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`round expects 1 argument, got ${args.length}`);
+    const x = assertNumber(args[0], 'round');
+    return { kind: 'number', value: Math.round(x.value) } satisfies SproutNumber;
+  }],
+  ['max', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`max expects 2 arguments, got ${args.length}`);
+    const a = assertNumber(args[0], 'max (a)');
+    const b = assertNumber(args[1], 'max (b)');
+    return { kind: 'number', value: Math.max(a.value, b.value) } satisfies SproutNumber;
+  }],
+  ['min', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`min expects 2 arguments, got ${args.length}`);
+    const a = assertNumber(args[0], 'min (a)');
+    const b = assertNumber(args[1], 'min (b)');
+    return { kind: 'number', value: Math.min(a.value, b.value) } satisfies SproutNumber;
+  }],
+  ['random', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`random expects 1 argument, got ${args.length}`);
+    const n = assertNumber(args[0], 'random');
+    return { kind: 'number', value: Math.random() * n.value } satisfies SproutNumber;
+  }],
+  ['pi', (args) => {
+    if (args.length !== 0) throw new SproutRuntimeError(`pi expects 0 arguments, got ${args.length}`);
+    return { kind: 'number', value: Math.PI } satisfies SproutNumber;
+  }],
 ]);
 
 // ---------------------------------------------------------------------------

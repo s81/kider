@@ -929,3 +929,95 @@ describe('while loop', () => {
     expect(() => interpret(prog)).toThrow('while: condition must be bool');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Math builtins
+// ---------------------------------------------------------------------------
+
+describe('math builtins', () => {
+  // --- trig (degrees) ---
+  it('sin(0) = 0', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('sin', [numLit(0)])]))))).toEqual(mkSequence([mkForward(0)]));
+  });
+  it('sin(90) = 1', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('sin', [numLit(90)])]))))).toEqual(mkSequence([mkForward(1)]));
+  });
+  it('cos(0) = 1', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('cos', [numLit(0)])]))))).toEqual(mkSequence([mkForward(1)]));
+  });
+  it('tan(0) = 0', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('tan', [numLit(0)])]))))).toEqual(mkSequence([mkForward(0)]));
+  });
+
+  // --- arithmetic ---
+  it('abs(-5) = 5', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('abs', [numLit(-5)])]))))).toEqual(mkSequence([mkForward(5)]));
+  });
+  it('abs(0) = 0', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('abs', [numLit(0)])]))))).toEqual(mkSequence([mkForward(0)]));
+  });
+  it('sqrt(4) = 2', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('sqrt', [numLit(4)])]))))).toEqual(mkSequence([mkForward(2)]));
+  });
+  it('sqrt(0) = 0', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('sqrt', [numLit(0)])]))))).toEqual(mkSequence([mkForward(0)]));
+  });
+  it('pow(2, 3) = 8', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('pow', [numLit(2), numLit(3)])]))))).toEqual(mkSequence([mkForward(8)]));
+  });
+  it('mod(7, 3) = 1', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('mod', [numLit(7), numLit(3)])]))))).toEqual(mkSequence([mkForward(1)]));
+  });
+  it('log(1) = 0', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('log', [numLit(1)])]))))).toEqual(mkSequence([mkForward(0)]));
+  });
+
+  // --- rounding ---
+  it('floor(3.7) = 3', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('floor', [numLit(3.7)])]))))).toEqual(mkSequence([mkForward(3)]));
+  });
+  it('floor(-1.5) = -2', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('floor', [numLit(-1.5)])]))))).toEqual(mkSequence([mkForward(-2)]));
+  });
+  it('ceil(3.2) = 4', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('ceil', [numLit(3.2)])]))))).toEqual(mkSequence([mkForward(4)]));
+  });
+  it('ceil(-1.5) = -1', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('ceil', [numLit(-1.5)])]))))).toEqual(mkSequence([mkForward(-1)]));
+  });
+  it('round(3.5) = 4', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('round', [numLit(3.5)])]))))).toEqual(mkSequence([mkForward(4)]));
+  });
+
+  // --- extrema ---
+  it('max(3, 7) = 7', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('max', [numLit(3), numLit(7)])]))))).toEqual(mkSequence([mkForward(7)]));
+  });
+  it('min(3, 7) = 3', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('min', [numLit(3), numLit(7)])]))))).toEqual(mkSequence([mkForward(3)]));
+  });
+
+  // --- random ---
+  it('random(0) = 0', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('random', [numLit(0)])]))))).toEqual(mkSequence([mkForward(0)]));
+  });
+
+  // --- pi ---
+  it('pi() = Math.PI', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('pi', [])]))))).toEqual(mkSequence([mkForward(Math.PI)]));
+  });
+
+  // --- arity errors ---
+  it('sin throws with 0 args', () => {
+    expect(() => interpret(program(exprStmt(call('sin', []))))).toThrow(SproutRuntimeError);
+  });
+  it('sin throws with 2 args', () => {
+    expect(() => interpret(program(exprStmt(call('sin', [numLit(0), numLit(0)]))))).toThrow(SproutRuntimeError);
+  });
+  it('pow throws with 1 arg', () => {
+    expect(() => interpret(program(exprStmt(call('pow', [numLit(2)]))))).toThrow(SproutRuntimeError);
+  });
+  it('pi throws with 1 arg', () => {
+    expect(() => interpret(program(exprStmt(call('pi', [numLit(1)]))))).toThrow(SproutRuntimeError);
+  });
+});
