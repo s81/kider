@@ -69,6 +69,15 @@ export function registerStatementBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_pen_width'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('WIDTH').setCheck('Number').appendField('pen width');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(20);
+    },
+  };
+
   Blockly.Blocks['sprout_repeat'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('COUNT').setCheck('Number').appendField('repeat');

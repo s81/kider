@@ -27,6 +27,7 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_pen_up':
     case 'sprout_pen_down':
     case 'sprout_color':
+    case 'sprout_pen_width':
     case 'sprout_puts':
     case 'sprout_repeat':
     case 'sprout_on_event':
@@ -100,6 +101,10 @@ function compileExprBlock(block: Blockly.Block): Expr {
         args: [{ kind: 'SymbolLit', name: colorName }],
         block: null,
       };
+    }
+    case 'sprout_pen_width': {
+      const width = compileExpr(mustGetInput(block, 'WIDTH'));
+      return { kind: 'CallExpr', callee: 'penWidth', args: [width], block: null };
     }
     case 'sprout_puts': {
       const val = compileExpr(mustGetInput(block, 'VALUE'));

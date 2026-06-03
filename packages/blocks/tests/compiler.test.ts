@@ -227,4 +227,28 @@ describe('compileWorkspace', () => {
     });
     ws.dispose();
   });
+
+  it('compiles sprout_pen_width block to penWidth(3) CallExpr', () => {
+    const ws = makeWorkspace();
+    const block = ws.newBlock('sprout_pen_width');
+    const numBlock = ws.newBlock('sprout_number');
+    numBlock.setFieldValue('3', 'NUM');
+    block.getInput('WIDTH')!.connection!.connect(numBlock.outputConnection!);
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [block];
+
+    const result = compileWorkspace(ws);
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr',
+          callee: 'penWidth',
+          args: [{ kind: 'NumberLit', value: 3 }],
+          block: null,
+        },
+      }],
+    });
+    ws.dispose();
+  });
 });
