@@ -8,6 +8,8 @@ import type {
   Expr,
   DefStmt,
   ExprStmt,
+  LetStmt,
+  AssignStmt,
   NumberLit,
   StringLit,
   SymbolLit,
@@ -20,11 +22,13 @@ import type {
   RepeatExpr,
   OnExpr,
   IfExpr,
+  WhileExpr,
 } from './ast.js';
 
 import {
   type SproutValue,
   type SproutNumber,
+  type SproutVar,
   type SproutFunction,
   type Drawing,
   type Env,
@@ -214,7 +218,7 @@ function evalExpr(expr: Expr, env: Env): SproutValue {
       if (val === undefined) {
         throw new SproutRuntimeError(`Unbound identifier: '${expr.name}'`);
       }
-      return val;
+      return val.kind === 'var' ? val.cell.value : val;
     }
 
     // --- Infix arithmetic ---
@@ -261,6 +265,10 @@ function evalExpr(expr: Expr, env: Env): SproutValue {
       }
       return { kind: 'bool', value: !v.value };
     }
+
+    // --- While loop ---
+    case 'WhileExpr':
+      return evalWhile(expr, env);
 
     default: {
       // TypeScript exhaustiveness check
@@ -319,13 +327,13 @@ function evalInfix(expr: InfixExpr, env: Env): SproutValue {
   }
 }
 
-/** Evaluate a BlockExpr: collect Drawing results, discard non-Drawing values. */
+/** Evaluate a BlockExpr: collect Drawing results, thread env for let/set. */
 function evalBlock(block: BlockExpr, env: Env): Drawing {
   const drawings: Drawing[] = [];
+  let currentEnv = env;
   for (const stmt of block.body) {
-    const val = evalStmt(stmt, env);
-    // null means no visual contribution (DefStmt/OnExpr).
-    // Non-null, non-Drawing values (numbers, strings, etc.) are also discarded.
+    const [val, newEnv] = evalStmtWithEnv(stmt, currentEnv);
+    currentEnv = newEnv;
     if (val !== null && isDrawing(val)) {
       drawings.push(val);
     }
@@ -384,6 +392,19 @@ function evalCall(expr: CallExpr, env: Env): SproutValue {
   return evalExpr(fn.body, childEnv);
 }
 
+function evalWhile(expr: WhileExpr, env: Env): Drawing {
+  const drawings: Drawing[] = [];
+  while (true) {
+    const cond = evalExpr(expr.cond, env);
+    if (cond.kind !== 'bool') {
+      throw new SproutRuntimeError(`while: condition must be bool, got ${cond.kind}`);
+    }
+    if (!cond.value) break;
+    drawings.push(evalBlock(expr.body, env));
+  }
+  return drawings.length === 0 ? EMPTY : mkSequence(drawings);
+}
+
 function evalOn(_expr: OnExpr, _env: Env): Drawing {
   throw new SproutRuntimeError('on(...) may only appear as a top-level statement');
 }
@@ -425,13 +446,24 @@ function evalStmtWithEnv(stmt: Stmt, env: Env): [SproutValue | null, Env] {
       const val = evalExpr(stmt.expr, env);
       return [val, env];
     }
+    case 'LetStmt': {
+      const initVal = evalExpr(stmt.init, env);
+      const varCell: SproutVar = { kind: 'var', cell: { value: initVal } };
+      const newEnv = envExtend(env, [[stmt.name, varCell]]);
+      return [null, newEnv];
+    }
+    case 'AssignStmt': {
+      const existing = env.get(stmt.name);
+      if (existing === undefined) {
+        throw new SproutRuntimeError(`set: '${stmt.name}' is not declared`);
+      }
+      if (existing.kind !== 'var') {
+        throw new SproutRuntimeError(`set: '${stmt.name}' is not a variable`);
+      }
+      existing.cell.value = evalExpr(stmt.value, env);
+      return [null, env];
+    }
   }
-}
-
-/** evalStmt used inside block/repeat: env mutations don't escape the block. */
-function evalStmt(stmt: Stmt, env: Env): SproutValue | null {
-  const [val] = evalStmtWithEnv(stmt, env);
-  return val;
 }
 
 // ---------------------------------------------------------------------------

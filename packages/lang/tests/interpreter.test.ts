@@ -13,7 +13,7 @@ import {
   PEN_UP,
   PEN_DOWN,
 } from '../src/values.js';
-import type { Program, Expr, Stmt, InfixExpr } from '../src/ast.js';
+import type { Program, Expr, Stmt, InfixExpr, LetStmt, AssignStmt, WhileExpr } from '../src/ast.js';
 
 // ---------------------------------------------------------------------------
 // AST builder helpers (keep tests readable)
@@ -44,6 +44,15 @@ const unary = (op: 'not', operand: Expr): Expr =>
 const exprStmt = (expr: Expr): Stmt => ({ kind: 'ExprStmt', expr });
 const defStmt = (name: string, params: string[], body: Expr): Stmt =>
   ({ kind: 'DefStmt', name, params, body });
+const letStmt = (name: string, init: Expr): LetStmt =>
+  ({ kind: 'LetStmt', name, init });
+const assignStmt = (name: string, value: Expr): AssignStmt =>
+  ({ kind: 'AssignStmt', name, value });
+const whileExpr = (cond: Expr, body: Stmt[]): WhileExpr => ({
+  kind: 'WhileExpr',
+  cond,
+  body: { kind: 'BlockExpr', body },
+});
 
 const program = (...stmts: Stmt[]): Program => ({ kind: 'Program', stmts });
 
@@ -351,22 +360,15 @@ describe('BlockExpr', () => {
     }
   });
 
-  it('DefStmt inside block does not produce a Drawing', () => {
-    // A def statement inside a block should not contribute to the drawing sequence.
+  it('DefStmt inside block extends env for subsequent statements in the same block', () => {
+    // evalBlock threads env, so def f inside a block is visible to subsequent statements.
     const prog = program(
       exprStmt(block([
         defStmt('f', [], call('forward', [numLit(5)])),
-        exprStmt(call('f', [])),  // calls the function defined above
+        exprStmt(call('f', [])),
       ])),
     );
-    // Note: DefStmt inside a block updates the env only within evalStmt (not propagated back),
-    // so this tests that DefStmt's EMPTY return isn't collected, and the call to f()
-    // works if the env is threaded correctly inside the block.
-    // Actually, evalBlock uses evalStmt which doesn't thread env for DefStmt —
-    // so this will fail with "Unbound identifier: 'f'" unless we thread env in blocks.
-    // This is a known limitation: DefStmt inside BlockExpr doesn't extend outer env.
-    // For now, test that it throws (expected behavior for MVP).
-    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(5)])]));
   });
 
   it('top-level DefStmt properly extends env for subsequent statements', () => {
@@ -828,5 +830,102 @@ describe('and / or short-circuit', () => {
     );
     expect(() => interpret(prog)).toThrow(SproutRuntimeError);
     expect(() => interpret(prog)).toThrow('and: expected bool');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Variables — let / set
+// ---------------------------------------------------------------------------
+describe('variables — let / set', () => {
+  it('let x = 5 then forward(x) draws forward(5)', () => {
+    const prog = program(
+      letStmt('x', numLit(5)),
+      exprStmt(call('forward', [ident('x')])),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkForward(5)]));
+  });
+
+  it('set updates the variable value', () => {
+    const prog = program(
+      letStmt('x', numLit(1)),
+      assignStmt('x', numLit(99)),
+      exprStmt(call('forward', [ident('x')])),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkForward(99)]));
+  });
+
+  it('let inside a while body is re-created each iteration', () => {
+    const prog = program(
+      letStmt('i', numLit(0)),
+      exprStmt(whileExpr(
+        infix('<', ident('i'), numLit(2)),
+        [
+          letStmt('y', numLit(10)),
+          exprStmt(call('forward', [ident('y')])),
+          assignStmt('i', infix('+', ident('i'), numLit(1))),
+        ],
+      )),
+    );
+    const iterDrawing = mkSequence([mkForward(10)]);
+    expect(interpret(prog)).toEqual(
+      mkSequence([mkSequence([iterDrawing, iterDrawing])])
+    );
+  });
+
+  it('throws on set of undeclared variable', () => {
+    const prog = program(assignStmt('z', numLit(1)));
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+    expect(() => interpret(prog)).toThrow("set: 'z' is not declared");
+  });
+
+  it('throws on set of a def-bound name (not a var)', () => {
+    const prog = program(
+      defStmt('f', [], numLit(1)),
+      assignStmt('f', numLit(2)),
+    );
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+    expect(() => interpret(prog)).toThrow("set: 'f' is not a variable");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// While loop
+// ---------------------------------------------------------------------------
+describe('while loop', () => {
+  it('does not execute when condition is false from the start', () => {
+    const prog = program(
+      letStmt('x', numLit(0)),
+      exprStmt(whileExpr(
+        infix('<', ident('x'), numLit(0)),
+        [exprStmt(call('forward', [numLit(10)]))],
+      )),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([EMPTY]));
+  });
+
+  it('counts to 3 and collects drawings from each iteration', () => {
+    const prog = program(
+      letStmt('x', numLit(0)),
+      exprStmt(whileExpr(
+        infix('<', ident('x'), numLit(3)),
+        [
+          exprStmt(call('forward', [numLit(10)])),
+          assignStmt('x', infix('+', ident('x'), numLit(1))),
+        ],
+      )),
+    );
+    const iterDrawing = mkSequence([mkForward(10)]);
+    expect(interpret(prog)).toEqual(
+      mkSequence([mkSequence([iterDrawing, iterDrawing, iterDrawing])])
+    );
+  });
+
+  it('throws when condition is not a bool', () => {
+    const prog = program(
+      letStmt('x', numLit(0)),
+      exprStmt(whileExpr(numLit(1), [assignStmt('x', numLit(1))])),
+    );
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+    expect(() => interpret(prog)).toThrow('while: condition must be bool');
   });
 });
