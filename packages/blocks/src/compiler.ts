@@ -2,8 +2,8 @@ import * as Blockly from 'blockly/node';
 import type {
   Program, Stmt, Expr,
   DefStmt, ExprStmt,
-  NumberLit, Ident, InfixExpr, CallExpr,
-  BlockExpr, RepeatExpr, OnExpr, SymbolLit,
+  NumberLit, Ident, InfixExpr, UnaryExpr, CallExpr,
+  BlockExpr, RepeatExpr, OnExpr, IfExpr, SymbolLit, BoolLit,
 } from '@sprout/lang';
 
 export function compileWorkspace(ws: Blockly.Workspace): Program {
@@ -35,6 +35,7 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_beside':
     case 'sprout_above':
     case 'sprout_scale':
+    case 'sprout_if':
       return { kind: 'ExprStmt', expr: compileExprBlock(block) };
     default:
       throw new Error(`Unknown statement block type: ${block.type}`);
@@ -131,6 +132,15 @@ function compileExprBlock(block: Blockly.Block): Expr {
       const drawing = compileExpr(mustGetInput(block, 'DRAWING'));
       return { kind: 'CallExpr', callee: 'scale', args: [factor, drawing], block: null };
     }
+    case 'sprout_if': {
+      const cond = compileExpr(mustGetInput(block, 'COND'));
+      const thenFirst = block.getInputTargetBlock('THEN');
+      const thenBlock = compileBlockExpr(thenFirst);
+      const elseFirst = block.getInputTargetBlock('ELSE');
+      const elseBlock: BlockExpr | null = elseFirst ? compileBlockExpr(elseFirst) : null;
+      const ifExpr: IfExpr = { kind: 'IfExpr', cond, then: thenBlock, else: elseBlock };
+      return ifExpr;
+    }
     default:
       throw new Error(`Block type cannot be compiled as expression: ${block.type}`);
   }
@@ -182,6 +192,35 @@ function compileExpr(block: Blockly.Block): Expr {
     }
     case 'sprout_call_expr':
       return compileCallBlock(block);
+    case 'sprout_bool': {
+      const raw = block.getFieldValue('VALUE') as string;
+      const lit: BoolLit = { kind: 'BoolLit', value: raw === 'true' };
+      return lit;
+    }
+    case 'sprout_compare': {
+      const op = block.getFieldValue('OP') as InfixExpr['op'];
+      const left = compileExpr(mustGetInput(block, 'LEFT'));
+      const right = compileExpr(mustGetInput(block, 'RIGHT'));
+      const infix: InfixExpr = { kind: 'InfixExpr', op, left, right };
+      return infix;
+    }
+    case 'sprout_not': {
+      const operand = compileExpr(mustGetInput(block, 'OPERAND'));
+      const unary: UnaryExpr = { kind: 'UnaryExpr', op: 'not', operand };
+      return unary;
+    }
+    case 'sprout_and': {
+      const left = compileExpr(mustGetInput(block, 'LEFT'));
+      const right = compileExpr(mustGetInput(block, 'RIGHT'));
+      const infix: InfixExpr = { kind: 'InfixExpr', op: 'and', left, right };
+      return infix;
+    }
+    case 'sprout_or': {
+      const left = compileExpr(mustGetInput(block, 'LEFT'));
+      const right = compileExpr(mustGetInput(block, 'RIGHT'));
+      const infix: InfixExpr = { kind: 'InfixExpr', op: 'or', left, right };
+      return infix;
+    }
     default:
       throw new Error(`Unknown value block type: ${block.type}`);
   }

@@ -251,4 +251,179 @@ describe('compileWorkspace', () => {
     });
     ws.dispose();
   });
+
+  it('compiles sprout_if (no else) to IfExpr', () => {
+    const ws = makeWorkspace();
+    const ifBlock = ws.newBlock('sprout_if');
+
+    const condBlock = ws.newBlock('sprout_bool');
+    condBlock.setFieldValue('true', 'VALUE');
+    ifBlock.getInput('COND')!.connection!.connect(condBlock.outputConnection!);
+
+    const fwdBlock = ws.newBlock('sprout_forward');
+    const fwd20 = ws.newBlock('sprout_number');
+    fwd20.setFieldValue('20', 'NUM');
+    fwdBlock.getInput('DISTANCE')!.connection!.connect(fwd20.outputConnection!);
+    ifBlock.getInput('THEN')!.connection!.connect(fwdBlock.previousConnection!);
+
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [ifBlock];
+    const result = compileWorkspace(ws);
+
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'IfExpr',
+          cond: { kind: 'BoolLit', value: true },
+          then: {
+            kind: 'BlockExpr',
+            body: [{
+              kind: 'ExprStmt',
+              expr: { kind: 'CallExpr', callee: 'forward', args: [{ kind: 'NumberLit', value: 20 }], block: null },
+            }],
+          },
+          else: null,
+        },
+      }],
+    });
+    ws.dispose();
+  });
+
+  it('compiles sprout_if with else to IfExpr with else branch', () => {
+    const ws = makeWorkspace();
+    const ifBlock = ws.newBlock('sprout_if');
+
+    const condBlock = ws.newBlock('sprout_bool');
+    condBlock.setFieldValue('false', 'VALUE');
+    ifBlock.getInput('COND')!.connection!.connect(condBlock.outputConnection!);
+
+    const thenFwd = ws.newBlock('sprout_forward');
+    const thenNum = ws.newBlock('sprout_number');
+    thenNum.setFieldValue('10', 'NUM');
+    thenFwd.getInput('DISTANCE')!.connection!.connect(thenNum.outputConnection!);
+    ifBlock.getInput('THEN')!.connection!.connect(thenFwd.previousConnection!);
+
+    const elseTurn = ws.newBlock('sprout_turn');
+    const elseNum = ws.newBlock('sprout_number');
+    elseNum.setFieldValue('90', 'NUM');
+    elseTurn.getInput('DEGREES')!.connection!.connect(elseNum.outputConnection!);
+    ifBlock.getInput('ELSE')!.connection!.connect(elseTurn.previousConnection!);
+
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [ifBlock];
+    const result = compileWorkspace(ws);
+
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'IfExpr',
+          cond: { kind: 'BoolLit', value: false },
+          then: {
+            kind: 'BlockExpr',
+            body: [{
+              kind: 'ExprStmt',
+              expr: { kind: 'CallExpr', callee: 'forward', args: [{ kind: 'NumberLit', value: 10 }], block: null },
+            }],
+          },
+          else: {
+            kind: 'BlockExpr',
+            body: [{
+              kind: 'ExprStmt',
+              expr: { kind: 'CallExpr', callee: 'turn', args: [{ kind: 'NumberLit', value: 90 }], block: null },
+            }],
+          },
+        },
+      }],
+    });
+    ws.dispose();
+  });
+
+  it('compiles sprout_compare to InfixExpr', () => {
+    const ws = makeWorkspace();
+    const cmpBlock = ws.newBlock('sprout_compare');
+    cmpBlock.setFieldValue('<', 'OP');
+    const left = ws.newBlock('sprout_number');
+    left.setFieldValue('3', 'NUM');
+    const right = ws.newBlock('sprout_number');
+    right.setFieldValue('10', 'NUM');
+    cmpBlock.getInput('LEFT')!.connection!.connect(left.outputConnection!);
+    cmpBlock.getInput('RIGHT')!.connection!.connect(right.outputConnection!);
+
+    const ifBlock = ws.newBlock('sprout_if');
+    ifBlock.getInput('COND')!.connection!.connect(cmpBlock.outputConnection!);
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [ifBlock];
+
+    const result = compileWorkspace(ws);
+    const ifExpr = (result.stmts[0] as { kind: 'ExprStmt'; expr: { kind: 'IfExpr'; cond: unknown } }).expr;
+    expect(ifExpr.cond).toEqual({
+      kind: 'InfixExpr',
+      op: '<',
+      left: { kind: 'NumberLit', value: 3 },
+      right: { kind: 'NumberLit', value: 10 },
+    });
+    ws.dispose();
+  });
+
+  it('compiles sprout_not to UnaryExpr', () => {
+    const ws = makeWorkspace();
+    const notBlock = ws.newBlock('sprout_not');
+    const boolBlock = ws.newBlock('sprout_bool');
+    boolBlock.setFieldValue('true', 'VALUE');
+    notBlock.getInput('OPERAND')!.connection!.connect(boolBlock.outputConnection!);
+
+    const ifBlock = ws.newBlock('sprout_if');
+    ifBlock.getInput('COND')!.connection!.connect(notBlock.outputConnection!);
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [ifBlock];
+
+    const result = compileWorkspace(ws);
+    const ifExpr = (result.stmts[0] as { kind: 'ExprStmt'; expr: { kind: 'IfExpr'; cond: unknown } }).expr;
+    expect(ifExpr.cond).toEqual({
+      kind: 'UnaryExpr',
+      op: 'not',
+      operand: { kind: 'BoolLit', value: true },
+    });
+    ws.dispose();
+  });
+
+  it('compiles sprout_and to InfixExpr', () => {
+    const ws = makeWorkspace();
+    const andBlock = ws.newBlock('sprout_and');
+    const left = ws.newBlock('sprout_bool');
+    left.setFieldValue('true', 'VALUE');
+    const right = ws.newBlock('sprout_bool');
+    right.setFieldValue('false', 'VALUE');
+    andBlock.getInput('LEFT')!.connection!.connect(left.outputConnection!);
+    andBlock.getInput('RIGHT')!.connection!.connect(right.outputConnection!);
+
+    const ifBlock = ws.newBlock('sprout_if');
+    ifBlock.getInput('COND')!.connection!.connect(andBlock.outputConnection!);
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [ifBlock];
+
+    const result = compileWorkspace(ws);
+    const ifExpr = (result.stmts[0] as { kind: 'ExprStmt'; expr: { kind: 'IfExpr'; cond: unknown } }).expr;
+    expect(ifExpr.cond).toEqual({
+      kind: 'InfixExpr',
+      op: 'and',
+      left: { kind: 'BoolLit', value: true },
+      right: { kind: 'BoolLit', value: false },
+    });
+    ws.dispose();
+  });
+
+  it('compiles sprout_bool block to BoolLit', () => {
+    const ws = makeWorkspace();
+    const boolBlock = ws.newBlock('sprout_bool');
+    boolBlock.setFieldValue('false', 'VALUE');
+
+    const ifBlock = ws.newBlock('sprout_if');
+    ifBlock.getInput('COND')!.connection!.connect(boolBlock.outputConnection!);
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [ifBlock];
+
+    const result = compileWorkspace(ws);
+    const ifExpr = (result.stmts[0] as { kind: 'ExprStmt'; expr: { kind: 'IfExpr'; cond: unknown } }).expr;
+    expect(ifExpr.cond).toEqual({ kind: 'BoolLit', value: false });
+    ws.dispose();
+  });
 });
