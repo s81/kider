@@ -232,7 +232,7 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
   ['log', (args) => {
     if (args.length !== 1) throw new SproutRuntimeError(`log expects 1 argument, got ${args.length}`);
     const x = assertNumber(args[0], 'log');
-    return { kind: 'number', value: Math.log(x.value) } satisfies SproutNumber;
+    return { kind: 'number', value: Math.log(x.value) } satisfies SproutNumber; // natural log (ln), not log₁₀
   }],
   ['floor', (args) => {
     if (args.length !== 1) throw new SproutRuntimeError(`floor expects 1 argument, got ${args.length}`);

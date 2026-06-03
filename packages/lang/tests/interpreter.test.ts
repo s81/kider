@@ -939,8 +939,8 @@ describe('math builtins', () => {
   it('sin(0) = 0', () => {
     expect(interpret(program(exprStmt(call('forward', [call('sin', [numLit(0)])]))))).toEqual(mkSequence([mkForward(0)]));
   });
-  it('sin(90) = 1', () => {
-    expect(interpret(program(exprStmt(call('forward', [call('sin', [numLit(90)])]))))).toEqual(mkSequence([mkForward(1)]));
+  it('cos(180) = -1', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('cos', [numLit(180)])]))))).toEqual(mkSequence([mkForward(-1)]));
   });
   it('cos(0) = 1', () => {
     expect(interpret(program(exprStmt(call('forward', [call('cos', [numLit(0)])]))))).toEqual(mkSequence([mkForward(1)]));
