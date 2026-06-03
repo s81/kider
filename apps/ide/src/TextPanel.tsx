@@ -28,6 +28,7 @@ export function TextPanel({ text, editable = false, onChange, error = null }: Pr
           spellCheck={false}
           style={{
             ...SHARED_STYLE,
+            flex: '1 1 0',
             resize: 'none',
             border: 'none',
             outline: '2px solid #2563eb',

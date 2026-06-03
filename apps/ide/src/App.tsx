@@ -28,6 +28,7 @@ export function App() {
   const [editorParseError, setEditorParseError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Clear any stale runtime error from a previous Run when the user edits.
     setError(null);
     if (sourceMode !== 'editor') {
       setEditorParseError(null);
