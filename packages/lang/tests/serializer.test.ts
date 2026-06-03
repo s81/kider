@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { serialize, serializeExpr, serializeStmt } from '../src/serializer.js';
-import type { Program, Expr, Stmt, InfixExpr } from '../src/ast.js';
+import type { Program, Expr, Stmt, InfixExpr, LetStmt, AssignStmt, WhileExpr } from '../src/ast.js';
 
 // ---------------------------------------------------------------------------
 // AST builder helpers
@@ -25,6 +25,15 @@ const onExpr = (event: string, bodyStmts: Stmt[]): Expr =>
 const exprStmt = (expr: Expr): Stmt => ({ kind: 'ExprStmt', expr });
 const defStmt = (name: string, params: string[], body: Expr): Stmt =>
   ({ kind: 'DefStmt', name, params, body });
+const letStmt = (name: string, init: Expr): LetStmt =>
+  ({ kind: 'LetStmt', name, init });
+const assignStmt = (name: string, value: Expr): AssignStmt =>
+  ({ kind: 'AssignStmt', name, value });
+const whileExpr = (cond: Expr, body: Stmt[]): WhileExpr => ({
+  kind: 'WhileExpr',
+  cond,
+  body: { kind: 'BlockExpr', body },
+});
 
 const program = (...stmts: Stmt[]): Program => ({ kind: 'Program', stmts });
 
@@ -407,5 +416,46 @@ describe('UnaryExpr serialization', () => {
 
   it('serializes not with nested comparison', () => {
     expect(serializeExpr(unary('not', infix('==', numLit(1), numLit(2))))).toBe('not 1 == 2');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// LetStmt / AssignStmt / WhileExpr serialization
+// ---------------------------------------------------------------------------
+describe('LetStmt / AssignStmt / WhileExpr serialization', () => {
+  it('serializes let statement', () => {
+    expect(serializeStmt(letStmt('x', numLit(5)))).toBe('let x = 5');
+  });
+
+  it('serializes set statement', () => {
+    expect(serializeStmt(assignStmt('x', infix('+', ident('x'), numLit(1))))).toBe('set x = x + 1');
+  });
+
+  it('serializes while expression', () => {
+    const expr = whileExpr(
+      infix('<', ident('x'), numLit(10)),
+      [exprStmt(call('forward', [ident('x')]))],
+    );
+    expect(serializeExpr(expr)).toBe('while x < 10 do\n  forward(x)\nend');
+  });
+
+  it('serializes canonical counting pattern', () => {
+    const prog = program(
+      letStmt('x', numLit(0)),
+      exprStmt(whileExpr(
+        infix('<', ident('x'), numLit(3)),
+        [
+          exprStmt(call('forward', [ident('x')])),
+          assignStmt('x', infix('+', ident('x'), numLit(1))),
+        ],
+      )),
+    );
+    expect(serialize(prog)).toBe(
+      'let x = 0\n' +
+      'while x < 3 do\n' +
+      '  forward(x)\n' +
+      '  set x = x + 1\n' +
+      'end'
+    );
   });
 });

@@ -91,6 +91,12 @@ export function serializeExpr(expr: Expr, indentLevel = 0): string {
     case 'UnaryExpr':
       return `not ${serializeExpr(expr.operand, indentLevel)}`;
 
+    case 'WhileExpr': {
+      const condStr = serializeExpr(expr.cond, indentLevel);
+      const body = serializeBlock(expr.body, indentLevel + 1);
+      return `while ${condStr} do\n${body}\n${indent(indentLevel)}end`;
+    }
+
     default: {
       // Exhaustiveness check
       const _never: never = expr;
@@ -103,6 +109,12 @@ export function serializeStmt(stmt: Stmt, indentLevel = 0): string {
   switch (stmt.kind) {
     case 'ExprStmt':
       return serializeExpr(stmt.expr, indentLevel);
+
+    case 'LetStmt':
+      return `let ${stmt.name} = ${serializeExpr(stmt.init, indentLevel)}`;
+
+    case 'AssignStmt':
+      return `set ${stmt.name} = ${serializeExpr(stmt.value, indentLevel)}`;
 
     case 'DefStmt': {
       const { name, params, body } = stmt;
