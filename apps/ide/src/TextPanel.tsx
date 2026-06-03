@@ -15,24 +15,41 @@ interface Props {
   text: string;
   editable?: boolean;
   onChange?: (text: string) => void;
+  error?: string | null;
 }
 
-export function TextPanel({ text, editable = false, onChange }: Props) {
+export function TextPanel({ text, editable = false, onChange, error = null }: Props) {
   if (editable) {
     return (
-      <textarea
-        value={text}
-        onChange={e => onChange?.(e.target.value)}
-        spellCheck={false}
-        style={{
-          ...SHARED_STYLE,
-          resize: 'none',
-          border: 'none',
-          outline: '2px solid #2563eb',
-          cursor: 'text',
-          userSelect: 'text',
-        }}
-      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <textarea
+          value={text}
+          onChange={e => onChange?.(e.target.value)}
+          spellCheck={false}
+          style={{
+            ...SHARED_STYLE,
+            resize: 'none',
+            border: 'none',
+            outline: '2px solid #2563eb',
+            cursor: 'text',
+            userSelect: 'text',
+          }}
+        />
+        {error && (
+          <div
+            style={{
+              background: '#fef2f2',
+              color: '#dc2626',
+              padding: 8,
+              borderRadius: 4,
+              fontSize: 12,
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            {error}
+          </div>
+        )}
+      </div>
     );
   }
 
