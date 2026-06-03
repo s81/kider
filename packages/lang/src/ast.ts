@@ -97,6 +97,13 @@ export interface IfExpr {
   readonly else: BlockExpr | null;
 }
 
+/** `while <cond> do ... end` */
+export interface WhileExpr {
+  readonly kind: 'WhileExpr';
+  readonly cond: Expr;
+  readonly body: BlockExpr;
+}
+
 // ---------------------------------------------------------------------------
 // Expr union
 // ---------------------------------------------------------------------------
@@ -113,7 +120,8 @@ export type Expr =
   | BlockExpr
   | RepeatExpr
   | OnExpr
-  | IfExpr;
+  | IfExpr
+  | WhileExpr;
 
 // ---------------------------------------------------------------------------
 // Statement nodes
@@ -133,11 +141,25 @@ export interface ExprStmt {
   readonly expr: Expr;
 }
 
+/** `let name = expr` — declares a mutable variable */
+export interface LetStmt {
+  readonly kind: 'LetStmt';
+  readonly name: string;
+  readonly init: Expr;
+}
+
+/** `set name = expr` — assigns to an existing mutable variable */
+export interface AssignStmt {
+  readonly kind: 'AssignStmt';
+  readonly name: string;
+  readonly value: Expr;
+}
+
 // ---------------------------------------------------------------------------
 // Stmt union
 // ---------------------------------------------------------------------------
 
-export type Stmt = DefStmt | ExprStmt;
+export type Stmt = DefStmt | ExprStmt | LetStmt | AssignStmt;
 
 // ---------------------------------------------------------------------------
 // Top-level program

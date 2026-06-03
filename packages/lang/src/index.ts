@@ -5,6 +5,8 @@ export type {
   Program,
   DefStmt,
   ExprStmt,
+  LetStmt,
+  AssignStmt,
   NumberLit,
   StringLit,
   SymbolLit,
@@ -17,6 +19,7 @@ export type {
   RepeatExpr,
   OnExpr,
   IfExpr,
+  WhileExpr,
   // Unions
   Expr,
   Stmt,
