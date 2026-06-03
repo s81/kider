@@ -11,6 +11,12 @@ export type Token =
   | { kind: 'RPAREN' }
   | { kind: 'COMMA' }
   | { kind: 'EQ' }
+  | { kind: 'EQEQ' }
+  | { kind: 'LT' }
+  | { kind: 'GT' }
+  | { kind: 'LTE' }
+  | { kind: 'GTE' }
+  | { kind: 'NEQ' }
   | { kind: 'EOF' };
 
 export class ParseError extends Error {
@@ -80,6 +86,12 @@ export function tokenize(source: string): Token[] {
       continue;
     }
 
+    // Two-character tokens — must be checked before single-character
+    if (ch === '<' && source[i + 1] === '=') { tokens.push({ kind: 'LTE' });  i += 2; continue; }
+    if (ch === '>' && source[i + 1] === '=') { tokens.push({ kind: 'GTE' });  i += 2; continue; }
+    if (ch === '=' && source[i + 1] === '=') { tokens.push({ kind: 'EQEQ' }); i += 2; continue; }
+    if (ch === '!' && source[i + 1] === '=') { tokens.push({ kind: 'NEQ' });  i += 2; continue; }
+
     // Single-character tokens
     switch (ch) {
       case '+': tokens.push({ kind: 'PLUS' });   i++; break;
@@ -90,6 +102,8 @@ export function tokenize(source: string): Token[] {
       case ')': tokens.push({ kind: 'RPAREN' }); i++; break;
       case ',': tokens.push({ kind: 'COMMA' });  i++; break;
       case '=': tokens.push({ kind: 'EQ' });     i++; break;
+      case '<': tokens.push({ kind: 'LT' });     i++; break;
+      case '>': tokens.push({ kind: 'GT' });     i++; break;
       default:
         throw new ParseError(`Unexpected character: '${ch}' at position ${i}`);
     }

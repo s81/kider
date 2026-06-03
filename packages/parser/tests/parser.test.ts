@@ -106,6 +106,28 @@ describe('tokenize', () => {
       { kind: 'EOF' },
     ]);
   });
+
+  it('tokenizes < and >', () => {
+    expect(tokenize('< >')).toEqual([{ kind: 'LT' }, { kind: 'GT' }, { kind: 'EOF' }]);
+  });
+
+  it('tokenizes <= and >=', () => {
+    expect(tokenize('<= >=')).toEqual([{ kind: 'LTE' }, { kind: 'GTE' }, { kind: 'EOF' }]);
+  });
+
+  it('tokenizes == and !=', () => {
+    expect(tokenize('== !=')).toEqual([{ kind: 'EQEQ' }, { kind: 'NEQ' }, { kind: 'EOF' }]);
+  });
+
+  it('does not confuse = with ==', () => {
+    expect(tokenize('=')).toEqual([{ kind: 'EQ' }, { kind: 'EOF' }]);
+    expect(tokenize('==')).toEqual([{ kind: 'EQEQ' }, { kind: 'EOF' }]);
+  });
+
+  it('does not confuse < with <=', () => {
+    expect(tokenize('<')).toEqual([{ kind: 'LT' }, { kind: 'EOF' }]);
+    expect(tokenize('<=')).toEqual([{ kind: 'LTE' }, { kind: 'EOF' }]);
+  });
 });
 
 describe('parse — literals', () => {
