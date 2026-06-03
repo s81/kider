@@ -5,21 +5,41 @@ import { registerAllBlocks, generateText } from '@sprout/blocks';
 const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
   kind: 'flyoutToolbox',
   contents: [
+    // Motion
     { kind: 'block', type: 'sprout_forward' },
     { kind: 'block', type: 'sprout_turn' },
+    // Pen
     { kind: 'block', type: 'sprout_pen_up' },
     { kind: 'block', type: 'sprout_pen_down' },
+    { kind: 'block', type: 'sprout_color' },
+    { kind: 'block', type: 'sprout_pen_width' },
+    // Control
     { kind: 'block', type: 'sprout_repeat' },
+    { kind: 'block', type: 'sprout_if' },
+    { kind: 'block', type: 'sprout_while' },
+    { kind: 'block', type: 'sprout_on_event' },
+    // Variables
+    { kind: 'block', type: 'sprout_let' },
+    { kind: 'block', type: 'sprout_set' },
+    // Functions
     { kind: 'block', type: 'sprout_def' },
     { kind: 'block', type: 'sprout_call_stmt' },
+    // Composition
     { kind: 'block', type: 'sprout_beside' },
     { kind: 'block', type: 'sprout_above' },
     { kind: 'block', type: 'sprout_scale' },
-    { kind: 'block', type: 'sprout_on_event' },
+    // Values
     { kind: 'block', type: 'sprout_number' },
+    { kind: 'block', type: 'sprout_bool' },
     { kind: 'block', type: 'sprout_ident' },
     { kind: 'block', type: 'sprout_infix' },
+    { kind: 'block', type: 'sprout_compare' },
+    { kind: 'block', type: 'sprout_not' },
+    { kind: 'block', type: 'sprout_and' },
+    { kind: 'block', type: 'sprout_or' },
     { kind: 'block', type: 'sprout_call_expr' },
+    // Output
+    { kind: 'block', type: 'sprout_puts' },
   ],
 };
 
