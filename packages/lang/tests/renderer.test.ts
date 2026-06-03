@@ -33,6 +33,10 @@ function roundCmd(c: CanvasCommand): CanvasCommand {
   if (c.kind === 'lineTo' || c.kind === 'moveTo') {
     return { kind: c.kind, x: roundNum(c.x), y: roundNum(c.y) };
   }
+  if (c.kind === 'drawCircle')   return { ...c, x: roundNum(c.x), y: roundNum(c.y) };
+  if (c.kind === 'drawRect')     return { ...c, x: roundNum(c.x), y: roundNum(c.y) };
+  if (c.kind === 'drawEllipse')  return { ...c, x: roundNum(c.x), y: roundNum(c.y) };
+  if (c.kind === 'drawTriangle') return { ...c, x: roundNum(c.x), y: roundNum(c.y) };
   return c;
 }
 const roundCmds = (cmds: CanvasCommand[]) => cmds.map(roundCmd);
@@ -415,6 +419,17 @@ describe('shape rendering', () => {
 
   it('measure(rect(80, 40)) → { width: 80, height: 40 }', () => {
     expect(measure({ kind: 'rect', width: 80, height: 40 })).toEqual({ width: 80, height: 40 });
+  });
+
+  it('measure(ellipse(60, 30)) → { width: 120, height: 60 }', () => {
+    expect(measure({ kind: 'ellipse', rx: 60, ry: 30 })).toEqual({ width: 120, height: 60 });
+  });
+
+  it('measure(triangle(60)) → correct width and height', () => {
+    const size = 60;
+    const result = measure({ kind: 'triangle', size });
+    expect(result.width).toBeCloseTo(size, 5);
+    expect(result.height).toBeCloseTo(size * Math.sqrt(3) / 2, 5);
   });
 
   it('scale(2) doubles circle radius', () => {
