@@ -1,7 +1,7 @@
 import { tokenize, type Token, ParseError } from './lexer.js';
 import type {
   Program, Stmt, Expr, DefStmt,
-  BlockExpr, RepeatExpr, OnExpr, CallExpr,
+  BlockExpr, RepeatExpr, OnExpr, CallExpr, IfExpr, UnaryExpr,
 } from '@sprout/lang';
 
 class Parser {
@@ -92,23 +92,28 @@ class Parser {
       return { kind: 'DefStmt', name, params, body };
     }
 
-    const bodyStmts = this.parseBodyUntilEnd();
+    const bodyStmts = this.parseBodyUntil(['end']);
+    this.eatIdent('end');
     const body: BlockExpr = { kind: 'BlockExpr', body: bodyStmts };
     return { kind: 'DefStmt', name, params, body };
   }
 
-  private parseBodyUntilEnd(): Stmt[] {
+  /**
+   * Parse statements until one of the stop-word identifiers is encountered.
+   * Does NOT consume the stop word — caller must eatIdent it.
+   */
+  private parseBodyUntil(stops: string[]): Stmt[] {
     const stmts: Stmt[] = [];
-    while (!this.checkIdent('end') && !this.check('EOF')) {
+    while (!stops.some(s => this.checkIdent(s)) && !this.check('EOF')) {
       stmts.push(this.parseStmt());
     }
-    this.eatIdent('end');
     return stmts;
   }
 
   private parseDoBlock(): BlockExpr {
     this.eatIdent('do');
-    const stmts = this.parseBodyUntilEnd();
+    const stmts = this.parseBodyUntil(['end']);
+    this.eatIdent('end');
     return { kind: 'BlockExpr', body: stmts };
   }
 
@@ -130,7 +135,7 @@ class Parser {
       const right = this.parseInfix(prec);
       left = {
         kind: 'InfixExpr',
-        op: op as '+' | '-' | '*' | '/',
+        op: op as '+' | '-' | '*' | '/' | '<' | '>' | '<=' | '>=' | '==' | '!=' | 'and' | 'or',
         left,
         right,
       };
@@ -140,12 +145,23 @@ class Parser {
   }
 
   private peekOp(): [string | null, number] {
-    switch (this.peek().kind) {
-      case 'PLUS':  return ['+', 1];
-      case 'MINUS': return ['-', 1];
-      case 'STAR':  return ['*', 2];
-      case 'SLASH': return ['/', 2];
-      default:      return [null, 0];
+    const t = this.peek();
+    switch (t.kind) {
+      case 'PLUS':  return ['+', 4];
+      case 'MINUS': return ['-', 4];
+      case 'STAR':  return ['*', 5];
+      case 'SLASH': return ['/', 5];
+      case 'LT':    return ['<',  3];
+      case 'GT':    return ['>',  3];
+      case 'LTE':   return ['<=', 3];
+      case 'GTE':   return ['>=', 3];
+      case 'EQEQ':  return ['==', 3];
+      case 'NEQ':   return ['!=', 3];
+      case 'IDENT':
+        if (t.name === 'and') return ['and', 2];
+        if (t.name === 'or')  return ['or',  1];
+        return [null, 0];
+      default: return [null, 0];
     }
   }
 
@@ -179,6 +195,28 @@ class Parser {
 
       if (name === 'true')  { this.advance(); return { kind: 'BoolLit', value: true }; }
       if (name === 'false') { this.advance(); return { kind: 'BoolLit', value: false }; }
+
+      if (name === 'not') {
+        this.advance();
+        const operand = this.parseAtom();
+        return { kind: 'UnaryExpr', op: 'not', operand } satisfies UnaryExpr;
+      }
+
+      if (name === 'if') {
+        this.advance();
+        const cond = this.parseExpr();
+        this.eatIdent('do');
+        const thenStmts = this.parseBodyUntil(['else', 'end']);
+        const thenBlock: BlockExpr = { kind: 'BlockExpr', body: thenStmts };
+        let elseBlock: BlockExpr | null = null;
+        if (this.checkIdent('else')) {
+          this.advance();
+          const elseStmts = this.parseBodyUntil(['end']);
+          elseBlock = { kind: 'BlockExpr', body: elseStmts };
+        }
+        this.eatIdent('end');
+        return { kind: 'IfExpr', cond, then: thenBlock, else: elseBlock } satisfies IfExpr;
+      }
 
       if (name === 'repeat') {
         this.advance();

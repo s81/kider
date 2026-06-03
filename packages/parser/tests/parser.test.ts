@@ -23,6 +23,14 @@ const defS = (name: string, params: string[], body: object) =>
   ({ kind: 'DefStmt' as const, name, params, body });
 const prog = (...stmts: object[]): Program =>
   ({ kind: 'Program', stmts: stmts as Program['stmts'] });
+const ifE = (cond: object, thenBody: object[], elseBody: object[] | null = null) => ({
+  kind: 'IfExpr' as const,
+  cond,
+  then: blockE(thenBody),
+  else: elseBody !== null ? blockE(elseBody) : null,
+});
+const unaryE = (op: 'not', operand: object) =>
+  ({ kind: 'UnaryExpr' as const, op, operand });
 
 describe('tokenize', () => {
   it('tokenizes an integer number', () => {
@@ -325,5 +333,96 @@ describe('parse — error cases', () => {
 
   it('throws ParseError on unexpected EOF in call args', () => {
     expect(() => parse('forward(')).toThrow(ParseError);
+  });
+});
+
+describe('parse — comparison operators', () => {
+  it('parses x < y', () => {
+    expect(parse('3 < 10')).toEqual(prog(exprS(infix('<', num(3), num(10)))));
+  });
+
+  it('parses x > y', () => {
+    expect(parse('10 > 3')).toEqual(prog(exprS(infix('>', num(10), num(3)))));
+  });
+
+  it('parses x <= y', () => {
+    expect(parse('4 <= 4')).toEqual(prog(exprS(infix('<=', num(4), num(4)))));
+  });
+
+  it('parses x >= y', () => {
+    expect(parse('5 >= 3')).toEqual(prog(exprS(infix('>=', num(5), num(3)))));
+  });
+
+  it('parses x == y', () => {
+    expect(parse('7 == 7')).toEqual(prog(exprS(infix('==', num(7), num(7)))));
+  });
+
+  it('parses x != y', () => {
+    expect(parse('7 != 8')).toEqual(prog(exprS(infix('!=', num(7), num(8)))));
+  });
+});
+
+describe('parse — boolean operators', () => {
+  it('parses not expr', () => {
+    expect(parse('not true')).toEqual(prog(exprS(unaryE('not', bool_(true)))));
+  });
+
+  it('parses a and b', () => {
+    expect(parse('true and false')).toEqual(
+      prog(exprS(infix('and', bool_(true), bool_(false))))
+    );
+  });
+
+  it('parses a or b', () => {
+    expect(parse('false or true')).toEqual(
+      prog(exprS(infix('or', bool_(false), bool_(true))))
+    );
+  });
+
+  it('and has higher precedence than or', () => {
+    // false or true and false  →  false or (true and false)
+    expect(parse('false or true and false')).toEqual(
+      prog(exprS(infix('or', bool_(false), infix('and', bool_(true), bool_(false)))))
+    );
+  });
+
+  it('comparison has higher precedence than and', () => {
+    // 3 < 10 and 5 > 0  →  (3 < 10) and (5 > 0)
+    expect(parse('3 < 10 and 5 > 0')).toEqual(
+      prog(exprS(infix('and', infix('<', num(3), num(10)), infix('>', num(5), num(0)))))
+    );
+  });
+});
+
+describe('parse — if expression', () => {
+  it('parses if without else', () => {
+    expect(parse('if true do\n  forward(50)\nend')).toEqual(
+      prog(exprS(ifE(bool_(true), [exprS(callE('forward', [num(50)]))])))
+    );
+  });
+
+  it('parses if with else', () => {
+    expect(parse('if false do\n  forward(50)\nelse\n  turn(90)\nend')).toEqual(
+      prog(exprS(ifE(
+        bool_(false),
+        [exprS(callE('forward', [num(50)]))],
+        [exprS(callE('turn', [num(90)]))],
+      )))
+    );
+  });
+
+  it('parses if with comparison condition', () => {
+    expect(parse('if 3 < 10 do\n  forward(1)\nend')).toEqual(
+      prog(exprS(ifE(infix('<', num(3), num(10)), [exprS(callE('forward', [num(1)]))])))
+    );
+  });
+
+  it('parses nested if inside if body', () => {
+    expect(parse('if true do\n  if false do\n    forward(1)\n  end\nend')).toEqual(
+      prog(exprS(ifE(
+        bool_(true),
+        [exprS(ifE(bool_(false), [exprS(callE('forward', [num(1)]))]))]
+      )))
+    );
   });
 });
