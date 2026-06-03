@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { drawUpTo, getTurtleState } from '../src/stage-utils.js';
+import { drawUpTo, getTurtleState, STAGE_W, STAGE_H } from '../src/stage-utils.js';
 import type { CanvasCommand } from '@sprout/lang';
 
 function makeMockCtx() {
@@ -199,5 +199,87 @@ describe('getTurtleState', () => {
       { kind: 'moveTo', x: 50, y: 0 },   // same position — heading stays 90
     ];
     expect(getTurtleState(cmds, 3)).toEqual({ x: 50, y: 0, heading: 90 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Shape drawing
+// ---------------------------------------------------------------------------
+
+function makeShapeMockCtx() {
+  let globalAlphaValue = 1;
+  let fillStyleValue: string = '';
+  return {
+    clearRect: vi.fn(),
+    beginPath: vi.fn(),
+    moveTo: vi.fn(),
+    lineTo: vi.fn(),
+    stroke: vi.fn(),
+    fill: vi.fn(),
+    save: vi.fn(),
+    restore: vi.fn(),
+    arc: vi.fn(),
+    rect: vi.fn(),
+    ellipse: vi.fn(),
+    closePath: vi.fn(),
+    get globalAlpha() { return globalAlphaValue; },
+    set globalAlpha(v: number) { globalAlphaValue = v; },
+    get fillStyle() { return fillStyleValue; },
+    set fillStyle(v: string) { fillStyleValue = v; },
+    strokeStyle: '#2563eb' as CanvasRenderingContext2D['strokeStyle'],
+    lineWidth: 2,
+    lineCap: 'round' as CanvasRenderingContext2D['lineCap'],
+    lineJoin: 'round' as CanvasRenderingContext2D['lineJoin'],
+  } as unknown as CanvasRenderingContext2D;
+}
+
+describe('shape drawing', () => {
+  it('drawCircle calls arc with correct center and radius', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{ kind: 'drawCircle', x: 0, y: 0, radius: 50 }];
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.arc).toHaveBeenCalledWith(STAGE_W / 2, STAGE_H / 2, 50, 0, Math.PI * 2);
+    expect(ctx.fill).toHaveBeenCalled();
+    expect(ctx.save).toHaveBeenCalled();
+    expect(ctx.restore).toHaveBeenCalled();
+  });
+
+  it('drawCircle offsets by turtle position', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{ kind: 'drawCircle', x: 20, y: -30, radius: 10 }];
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.arc).toHaveBeenCalledWith(STAGE_W / 2 + 20, STAGE_H / 2 - 30, 10, 0, Math.PI * 2);
+  });
+
+  it('drawRect calls rect with correct centered bounds', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{ kind: 'drawRect', x: 0, y: 0, width: 80, height: 40 }];
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.rect).toHaveBeenCalledWith(STAGE_W / 2 - 40, STAGE_H / 2 - 20, 80, 40);
+    expect(ctx.fill).toHaveBeenCalled();
+  });
+
+  it('drawEllipse calls ellipse with correct radii', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{ kind: 'drawEllipse', x: 0, y: 0, rx: 60, ry: 30 }];
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.ellipse).toHaveBeenCalledWith(STAGE_W / 2, STAGE_H / 2, 60, 30, 0, 0, Math.PI * 2);
+    expect(ctx.fill).toHaveBeenCalled();
+  });
+
+  it('drawTriangle calls moveTo/lineTo for triangle vertices', () => {
+    const ctx = makeShapeMockCtx();
+    const size = 60;
+    const commands: CanvasCommand[] = [{ kind: 'drawTriangle', x: 0, y: 0, size }];
+    drawUpTo(ctx, commands, 1);
+    const cx = STAGE_W / 2;
+    const cy = STAGE_H / 2;
+    const tipY  = size * Math.sqrt(3) / 3;
+    const baseY = size * Math.sqrt(3) / 6;
+    const halfW = size / 2;
+    expect(ctx.moveTo).toHaveBeenCalledWith(cx, cy - tipY);
+    expect(ctx.lineTo).toHaveBeenCalledWith(cx + halfW, cy + baseY);
+    expect(ctx.lineTo).toHaveBeenCalledWith(cx - halfW, cy + baseY);
+    expect(ctx.fill).toHaveBeenCalled();
   });
 });

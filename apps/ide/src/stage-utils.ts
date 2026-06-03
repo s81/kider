@@ -91,6 +91,87 @@ export function drawUpTo(
       case 'penDown':
       case 'penUp':
         break;
+      case 'drawCircle': {
+        ctx.stroke();
+        const cx = STAGE_W / 2 + cmd.x;
+        const cy = STAGE_H / 2 + cmd.y;
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = ctx.strokeStyle as string;
+        ctx.beginPath();
+        ctx.arc(cx, cy, cmd.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        ctx.beginPath();
+        ctx.arc(cx, cy, cmd.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        break;
+      }
+      case 'drawRect': {
+        ctx.stroke();
+        const cx = STAGE_W / 2 + cmd.x;
+        const cy = STAGE_H / 2 + cmd.y;
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = ctx.strokeStyle as string;
+        ctx.beginPath();
+        ctx.rect(cx - cmd.width / 2, cy - cmd.height / 2, cmd.width, cmd.height);
+        ctx.fill();
+        ctx.restore();
+        ctx.beginPath();
+        ctx.rect(cx - cmd.width / 2, cy - cmd.height / 2, cmd.width, cmd.height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        break;
+      }
+      case 'drawEllipse': {
+        ctx.stroke();
+        const cx = STAGE_W / 2 + cmd.x;
+        const cy = STAGE_H / 2 + cmd.y;
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = ctx.strokeStyle as string;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, cmd.rx, cmd.ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, cmd.rx, cmd.ry, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        break;
+      }
+      case 'drawTriangle': {
+        ctx.stroke();
+        const cx = STAGE_W / 2 + cmd.x;
+        const cy = STAGE_H / 2 + cmd.y;
+        const tipY  = cmd.size * Math.sqrt(3) / 3;
+        const baseY = cmd.size * Math.sqrt(3) / 6;
+        const halfW = cmd.size / 2;
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = ctx.strokeStyle as string;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - tipY);
+        ctx.lineTo(cx + halfW, cy + baseY);
+        ctx.lineTo(cx - halfW, cy + baseY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - tipY);
+        ctx.lineTo(cx + halfW, cy + baseY);
+        ctx.lineTo(cx - halfW, cy + baseY);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        break;
+      }
     }
   }
   ctx.stroke();
