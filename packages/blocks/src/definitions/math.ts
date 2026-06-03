@@ -74,7 +74,7 @@ export function registerMathBlocks(): void {
   Blockly.Blocks['sprout_pow'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('A').setCheck(null).appendField('pow');
-      this.appendValueInput('B').setCheck(null).appendField('exp');
+      this.appendValueInput('B').setCheck(null).appendField('^');
       this.setOutput(true, null);
       this.setInputsInline(true);
       this.setColour(230);
@@ -83,7 +83,7 @@ export function registerMathBlocks(): void {
   Blockly.Blocks['sprout_mod'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('A').setCheck(null).appendField('mod');
-      this.appendValueInput('B').setCheck(null);
+      this.appendValueInput('B').setCheck(null).appendField(',');
       this.setOutput(true, null);
       this.setInputsInline(true);
       this.setColour(230);
