@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { serialize, serializeExpr, serializeStmt } from '../src/serializer.js';
-import type { Program, Expr, Stmt } from '../src/ast.js';
+import type { Program, Expr, Stmt, InfixExpr } from '../src/ast.js';
 
 // ---------------------------------------------------------------------------
 // AST builder helpers
@@ -11,7 +11,7 @@ const strLit = (value: string): Expr => ({ kind: 'StringLit', value });
 const symLit = (name: string): Expr => ({ kind: 'SymbolLit', name });
 const boolLit = (value: boolean): Expr => ({ kind: 'BoolLit', value });
 const ident = (name: string): Expr => ({ kind: 'Ident', name });
-const infix = (op: '+' | '-' | '*' | '/', left: Expr, right: Expr): Expr =>
+const infix = (op: InfixExpr['op'], left: Expr, right: Expr): Expr =>
   ({ kind: 'InfixExpr', op, left, right });
 const call = (callee: string, args: Expr[], block: { kind: 'BlockExpr'; body: Stmt[] } | null = null): Expr =>
   ({ kind: 'CallExpr', callee, args, block });
@@ -353,5 +353,59 @@ describe('Program separator logic', () => {
 
   it('empty program returns empty string', () => {
     expect(serialize(program())).toBe('');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// IfExpr serialization
+// ---------------------------------------------------------------------------
+
+const ifExpr = (
+  cond: Expr,
+  thenStmts: Stmt[],
+  elseStmts: Stmt[] | null = null,
+): Expr => ({
+  kind: 'IfExpr' as const,
+  cond,
+  then: { kind: 'BlockExpr' as const, body: thenStmts },
+  else: elseStmts !== null ? { kind: 'BlockExpr' as const, body: elseStmts } : null,
+});
+const unary = (op: 'not', operand: Expr): Expr =>
+  ({ kind: 'UnaryExpr' as const, op, operand });
+
+describe('IfExpr serialization', () => {
+  it('serializes if without else', () => {
+    const expr = ifExpr(
+      boolLit(true),
+      [exprStmt(call('forward', [numLit(50)]))],
+    );
+    expect(serializeExpr(expr)).toBe('if true do\n  forward(50)\nend');
+  });
+
+  it('serializes if with else', () => {
+    const expr = ifExpr(
+      boolLit(false),
+      [exprStmt(call('forward', [numLit(50)]))],
+      [exprStmt(call('turn', [numLit(90)]))],
+    );
+    expect(serializeExpr(expr)).toBe('if false do\n  forward(50)\nelse\n  turn(90)\nend');
+  });
+
+  it('serializes nested if with comparison condition', () => {
+    const expr = ifExpr(
+      infix('<', numLit(3), numLit(10)),
+      [exprStmt(call('forward', [numLit(1)]))],
+    );
+    expect(serializeExpr(expr)).toBe('if 3 < 10 do\n  forward(1)\nend');
+  });
+});
+
+describe('UnaryExpr serialization', () => {
+  it('serializes not true', () => {
+    expect(serializeExpr(unary('not', boolLit(true)))).toBe('not true');
+  });
+
+  it('serializes not with nested comparison', () => {
+    expect(serializeExpr(unary('not', infix('==', numLit(1), numLit(2))))).toBe('not 1 == 2');
   });
 });

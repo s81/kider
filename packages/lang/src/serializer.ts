@@ -78,6 +78,19 @@ export function serializeExpr(expr: Expr, indentLevel = 0): string {
       return `on ${eventStr} do\n${body}\n${indent(indentLevel)}end`;
     }
 
+    case 'IfExpr': {
+      const condStr = serializeExpr(expr.cond, indentLevel);
+      const thenStr = serializeBlock(expr.then, indentLevel + 1);
+      if (expr.else === null) {
+        return `if ${condStr} do\n${thenStr}\n${indent(indentLevel)}end`;
+      }
+      const elseStr = serializeBlock(expr.else, indentLevel + 1);
+      return `if ${condStr} do\n${thenStr}\n${indent(indentLevel)}else\n${elseStr}\n${indent(indentLevel)}end`;
+    }
+
+    case 'UnaryExpr':
+      return `not ${serializeExpr(expr.operand, indentLevel)}`;
+
     default: {
       // Exhaustiveness check
       const _never: never = expr;

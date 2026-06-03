@@ -13,8 +13,10 @@ export type {
   CallExpr,
   BlockExpr,
   InfixExpr,
+  UnaryExpr,
   RepeatExpr,
   OnExpr,
+  IfExpr,
   // Unions
   Expr,
   Stmt,
