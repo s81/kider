@@ -11,6 +11,7 @@ import {
   mkAbove,
   mkScale,
   mkColor,
+  mkPenWidth,
 } from '../src/values.js';
 import type { CanvasCommand } from '../src/renderer.js';
 
@@ -316,6 +317,51 @@ describe('render(color)', () => {
     expect(result).toEqual([
       lineTo(0, -20),
       { kind: 'setColor', color: '#dc2626' },
+      { kind: 'moveTo', x: 0, y: -20 },
+      lineTo(0, -40),
+    ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// penWidth Drawing node in renderer
+// ---------------------------------------------------------------------------
+describe('render(penWidth)', () => {
+  it('penWidth alone emits setLineWidth + moveTo at origin', () => {
+    expect(render(mkPenWidth(4))).toEqual([
+      { kind: 'setLineWidth', width: 4 },
+      { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+
+  it('forward + penWidth + forward emits setLineWidth and moveTo re-anchor', () => {
+    const drawing = mkSequence([
+      mkForward(100),
+      mkPenWidth(4),
+      mkForward(50),
+    ]);
+    const result = roundCmds(render(drawing));
+    expect(result).toEqual([
+      lineTo(0, -100),
+      { kind: 'setLineWidth', width: 4 },
+      { kind: 'moveTo', x: 0, y: -100 },
+      lineTo(0, -150),
+    ]);
+  });
+
+  it('penWidth does not affect bounding box — measure ignores it', () => {
+    const drawing = mkSequence([mkPenWidth(4), mkForward(100)]);
+    const result = measure(drawing);
+    expect(result.height).toBeCloseTo(100, 10);
+    expect(result.width).toBeCloseTo(0, 10);
+  });
+
+  it('scale does not scale penWidth — width passes through unchanged', () => {
+    const drawing = mkScale(2, mkSequence([mkForward(10), mkPenWidth(3), mkForward(10)]));
+    const result = roundCmds(render(drawing));
+    expect(result).toEqual([
+      lineTo(0, -20),
+      { kind: 'setLineWidth', width: 3 },
       { kind: 'moveTo', x: 0, y: -20 },
       lineTo(0, -40),
     ]);
