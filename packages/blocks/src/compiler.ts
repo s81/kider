@@ -246,6 +246,68 @@ function compileExpr(block: Blockly.Block): Expr {
       const infix: InfixExpr = { kind: 'InfixExpr', op: 'or', left, right };
       return infix;
     }
+    case 'sprout_sin': {
+      const x = compileExpr(mustGetInput(block, 'X'));
+      return { kind: 'CallExpr', callee: 'sin', args: [x], block: null };
+    }
+    case 'sprout_cos': {
+      const x = compileExpr(mustGetInput(block, 'X'));
+      return { kind: 'CallExpr', callee: 'cos', args: [x], block: null };
+    }
+    case 'sprout_tan': {
+      const x = compileExpr(mustGetInput(block, 'X'));
+      return { kind: 'CallExpr', callee: 'tan', args: [x], block: null };
+    }
+    case 'sprout_abs': {
+      const x = compileExpr(mustGetInput(block, 'X'));
+      return { kind: 'CallExpr', callee: 'abs', args: [x], block: null };
+    }
+    case 'sprout_sqrt': {
+      const x = compileExpr(mustGetInput(block, 'X'));
+      return { kind: 'CallExpr', callee: 'sqrt', args: [x], block: null };
+    }
+    case 'sprout_log': {
+      const x = compileExpr(mustGetInput(block, 'X'));
+      return { kind: 'CallExpr', callee: 'log', args: [x], block: null };
+    }
+    case 'sprout_floor': {
+      const x = compileExpr(mustGetInput(block, 'X'));
+      return { kind: 'CallExpr', callee: 'floor', args: [x], block: null };
+    }
+    case 'sprout_ceil': {
+      const x = compileExpr(mustGetInput(block, 'X'));
+      return { kind: 'CallExpr', callee: 'ceil', args: [x], block: null };
+    }
+    case 'sprout_round': {
+      const x = compileExpr(mustGetInput(block, 'X'));
+      return { kind: 'CallExpr', callee: 'round', args: [x], block: null };
+    }
+    case 'sprout_random': {
+      const x = compileExpr(mustGetInput(block, 'X'));
+      return { kind: 'CallExpr', callee: 'random', args: [x], block: null };
+    }
+    case 'sprout_pow': {
+      const a = compileExpr(mustGetInput(block, 'A'));
+      const b = compileExpr(mustGetInput(block, 'B'));
+      return { kind: 'CallExpr', callee: 'pow', args: [a, b], block: null };
+    }
+    case 'sprout_mod': {
+      const a = compileExpr(mustGetInput(block, 'A'));
+      const b = compileExpr(mustGetInput(block, 'B'));
+      return { kind: 'CallExpr', callee: 'mod', args: [a, b], block: null };
+    }
+    case 'sprout_max': {
+      const a = compileExpr(mustGetInput(block, 'A'));
+      const b = compileExpr(mustGetInput(block, 'B'));
+      return { kind: 'CallExpr', callee: 'max', args: [a, b], block: null };
+    }
+    case 'sprout_min': {
+      const a = compileExpr(mustGetInput(block, 'A'));
+      const b = compileExpr(mustGetInput(block, 'B'));
+      return { kind: 'CallExpr', callee: 'min', args: [a, b], block: null };
+    }
+    case 'sprout_pi':
+      return { kind: 'CallExpr', callee: 'pi', args: [], block: null };
     default:
       throw new Error(`Unknown value block type: ${block.type}`);
   }

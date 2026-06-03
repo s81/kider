@@ -486,3 +486,76 @@ describe('compileWorkspace', () => {
     ws.dispose();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Math blocks
+// ---------------------------------------------------------------------------
+
+describe('math blocks', () => {
+  it('sprout_sin compiles to sin CallExpr (1-arg pattern)', () => {
+    const ws = makeWorkspace();
+    const sinBlock = ws.newBlock('sprout_sin');
+    const numBlock = ws.newBlock('sprout_number');
+    numBlock.setFieldValue('90', 'NUM');
+    sinBlock.getInput('X')!.connection!.connect(numBlock.outputConnection!);
+    const fwdBlock = ws.newBlock('sprout_forward');
+    fwdBlock.getInput('DISTANCE')!.connection!.connect(sinBlock.outputConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr', callee: 'forward',
+          args: [{ kind: 'CallExpr', callee: 'sin', args: [{ kind: 'NumberLit', value: 90 }], block: null }],
+          block: null,
+        },
+      }],
+    });
+  });
+
+  it('sprout_pow compiles to pow CallExpr (2-arg pattern)', () => {
+    const ws = makeWorkspace();
+    const powBlock = ws.newBlock('sprout_pow');
+    const base = ws.newBlock('sprout_number');
+    base.setFieldValue('2', 'NUM');
+    const exp = ws.newBlock('sprout_number');
+    exp.setFieldValue('3', 'NUM');
+    powBlock.getInput('A')!.connection!.connect(base.outputConnection!);
+    powBlock.getInput('B')!.connection!.connect(exp.outputConnection!);
+    const fwdBlock = ws.newBlock('sprout_forward');
+    fwdBlock.getInput('DISTANCE')!.connection!.connect(powBlock.outputConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr', callee: 'forward',
+          args: [{
+            kind: 'CallExpr', callee: 'pow',
+            args: [{ kind: 'NumberLit', value: 2 }, { kind: 'NumberLit', value: 3 }],
+            block: null,
+          }],
+          block: null,
+        },
+      }],
+    });
+  });
+
+  it('sprout_pi compiles to pi CallExpr (0-arg pattern)', () => {
+    const ws = makeWorkspace();
+    const piBlock = ws.newBlock('sprout_pi');
+    const fwdBlock = ws.newBlock('sprout_forward');
+    fwdBlock.getInput('DISTANCE')!.connection!.connect(piBlock.outputConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr', callee: 'forward',
+          args: [{ kind: 'CallExpr', callee: 'pi', args: [], block: null }],
+          block: null,
+        },
+      }],
+    });
+  });
+});

@@ -2,6 +2,7 @@ import { registerStatementBlocks } from './statements.js';
 import { registerValueBlocks } from './values.js';
 import { registerConditionalBlocks } from './conditionals.js';
 import { registerVariableBlocks } from './variables.js';
+import { registerMathBlocks } from './math.js';
 
 let registered = false;
 
@@ -12,4 +13,5 @@ export function registerAllBlocks(): void {
   registerValueBlocks();
   registerConditionalBlocks();
   registerVariableBlocks();
+  registerMathBlocks();
 }
