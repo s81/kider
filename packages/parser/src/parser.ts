@@ -2,6 +2,7 @@ import { tokenize, type Token, ParseError } from './lexer.js';
 import type {
   Program, Stmt, Expr, DefStmt,
   BlockExpr, RepeatExpr, OnExpr, CallExpr, IfExpr, UnaryExpr,
+  LetStmt, AssignStmt, WhileExpr,
 } from '@sprout/lang';
 
 class Parser {
@@ -67,6 +68,8 @@ class Parser {
 
   private parseStmt(): Stmt {
     if (this.checkIdent('def')) return this.parseDef();
+    if (this.checkIdent('let')) return this.parseLet();
+    if (this.checkIdent('set')) return this.parseSet();
     return { kind: 'ExprStmt', expr: this.parseExpr() };
   }
 
@@ -108,6 +111,22 @@ class Parser {
       stmts.push(this.parseStmt());
     }
     return stmts;
+  }
+
+  private parseLet(): LetStmt {
+    this.eatIdent('let');
+    const nameTok = this.eat('IDENT') as { kind: 'IDENT'; name: string };
+    this.eat('EQ');
+    const init = this.parseExpr();
+    return { kind: 'LetStmt', name: nameTok.name, init };
+  }
+
+  private parseSet(): AssignStmt {
+    this.eatIdent('set');
+    const nameTok = this.eat('IDENT') as { kind: 'IDENT'; name: string };
+    this.eat('EQ');
+    const value = this.parseExpr();
+    return { kind: 'AssignStmt', name: nameTok.name, value };
   }
 
   private parseDoBlock(): BlockExpr {
@@ -223,6 +242,13 @@ class Parser {
         const count = this.parseExpr();
         const body = this.parseDoBlock();
         return { kind: 'RepeatExpr', count, body } satisfies RepeatExpr;
+      }
+
+      if (name === 'while') {
+        this.advance();
+        const cond = this.parseExpr();
+        const body = this.parseDoBlock();
+        return { kind: 'WhileExpr', cond, body } satisfies WhileExpr;
       }
 
       if (name === 'on') {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { tokenize, ParseError } from '../src/lexer.js';
 import { parse } from '../src/parser.js';
-import type { Program } from '@sprout/lang';
+import type { Program, LetStmt, AssignStmt, WhileExpr } from '@sprout/lang';
 
 // Shorthand builders for expected AST values
 const num = (n: number) => ({ kind: 'NumberLit' as const, value: n });
@@ -31,6 +31,15 @@ const ifE = (cond: object, thenBody: object[], elseBody: object[] | null = null)
 });
 const unaryE = (op: 'not', operand: object) =>
   ({ kind: 'UnaryExpr' as const, op, operand });
+const letS = (name: string, init: object): LetStmt =>
+  ({ kind: 'LetStmt' as const, name, init: init as never });
+const assignS = (name: string, value: object): AssignStmt =>
+  ({ kind: 'AssignStmt' as const, name, value: value as never });
+const whileE = (cond: object, body: object[]): WhileExpr => ({
+  kind: 'WhileExpr' as const,
+  cond: cond as never,
+  body: blockE(body) as never,
+});
 
 describe('tokenize', () => {
   it('tokenizes an integer number', () => {
@@ -423,6 +432,49 @@ describe('parse — if expression', () => {
         bool_(true),
         [exprS(ifE(bool_(false), [exprS(callE('forward', [num(1)]))]))]
       )))
+    );
+  });
+});
+
+describe('parse — let / set / while', () => {
+  it('parses let statement', () => {
+    expect(parse('let x = 5')).toEqual(prog(letS('x', num(5))));
+  });
+
+  it('parses set statement', () => {
+    expect(parse('set x = x + 1')).toEqual(
+      prog(assignS('x', infix('+', id('x'), num(1))))
+    );
+  });
+
+  it('parses while with comparison condition', () => {
+    expect(parse('while x < 10 do\n  forward(x)\nend')).toEqual(
+      prog(exprS(whileE(
+        infix('<', id('x'), num(10)),
+        [exprS(callE('forward', [id('x')]))],
+      )))
+    );
+  });
+
+  it('parses canonical counting pattern', () => {
+    const src = 'let x = 0\nwhile x < 3 do\n  forward(x)\n  set x = x + 1\nend';
+    expect(parse(src)).toEqual(
+      prog(
+        letS('x', num(0)),
+        exprS(whileE(
+          infix('<', id('x'), num(3)),
+          [
+            exprS(callE('forward', [id('x')])),
+            assignS('x', infix('+', id('x'), num(1))),
+          ],
+        )),
+      )
+    );
+  });
+
+  it('parses while with boolean condition', () => {
+    expect(parse('while true do\n  forward(1)\nend')).toEqual(
+      prog(exprS(whileE(bool_(true), [exprS(callE('forward', [num(1)]))])))
     );
   });
 });
