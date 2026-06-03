@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { CanvasCommand } from '@sprout/lang';
-import { drawUpTo, STAGE_W, STAGE_H } from './stage-utils.js';
+import { drawUpTo, getTurtleState, drawTurtle, STAGE_W, STAGE_H } from './stage-utils.js';
 
 interface Props {
   commands: CanvasCommand[];
@@ -17,7 +17,9 @@ export function Stage({ commands, animated = false, stepsPerFrame = 3, onClick }
     const ctx = canvas.getContext('2d')!;
 
     if (!animated || commands.length === 0) {
-      drawUpTo(ctx, commands, commands.length);
+      const limit = commands.length;
+      drawUpTo(ctx, commands, limit);
+      drawTurtle(ctx, getTurtleState(commands, limit));
       return;
     }
 
@@ -27,6 +29,7 @@ export function Stage({ commands, animated = false, stepsPerFrame = 3, onClick }
     function tick() {
       step = Math.min(step + stepsPerFrame, commands.length);
       drawUpTo(ctx, commands, step);
+      drawTurtle(ctx, getTurtleState(commands, step));
       if (step < commands.length) {
         rafId = requestAnimationFrame(tick);
       }
