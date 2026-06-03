@@ -49,6 +49,10 @@ export {
   mkScale,
   mkColor,
   mkPenWidth,
+  mkCircle,
+  mkRect,
+  mkEllipse,
+  mkTriangle,
   // Drawing singleton constants (zero-arg constructors replaced by constants)
   PEN_UP,
   PEN_DOWN,

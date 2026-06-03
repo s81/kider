@@ -367,3 +367,60 @@ describe('render(penWidth)', () => {
     ]);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Shape rendering
+// ---------------------------------------------------------------------------
+
+describe('shape rendering', () => {
+  it('render(circle(50)) emits drawCircle at origin + moveTo', () => {
+    expect(render({ kind: 'circle', radius: 50 })).toEqual([
+      { kind: 'drawCircle', x: 0, y: 0, radius: 50 },
+      { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+
+  it('render(rect(80, 40)) emits drawRect at origin + moveTo', () => {
+    expect(render({ kind: 'rect', width: 80, height: 40 })).toEqual([
+      { kind: 'drawRect', x: 0, y: 0, width: 80, height: 40 },
+      { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+
+  it('render(ellipse(60, 30)) emits drawEllipse at origin + moveTo', () => {
+    expect(render({ kind: 'ellipse', rx: 60, ry: 30 })).toEqual([
+      { kind: 'drawEllipse', x: 0, y: 0, rx: 60, ry: 30 },
+      { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+
+  it('render(triangle(50)) emits drawTriangle at origin + moveTo', () => {
+    expect(render({ kind: 'triangle', size: 50 })).toEqual([
+      { kind: 'drawTriangle', x: 0, y: 0, size: 50 },
+      { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+
+  it('shape position tracks turtle — forward then circle', () => {
+    expect(render({ kind: 'sequence', steps: [mkForward(100), { kind: 'circle', radius: 10 }] })).toEqual([
+      { kind: 'lineTo', x: 0, y: -100 },
+      { kind: 'drawCircle', x: 0, y: -100, radius: 10 },
+      { kind: 'moveTo', x: 0, y: -100 },
+    ]);
+  });
+
+  it('measure(circle(50)) → { width: 100, height: 100 }', () => {
+    expect(measure({ kind: 'circle', radius: 50 })).toEqual({ width: 100, height: 100 });
+  });
+
+  it('measure(rect(80, 40)) → { width: 80, height: 40 }', () => {
+    expect(measure({ kind: 'rect', width: 80, height: 40 })).toEqual({ width: 80, height: 40 });
+  });
+
+  it('scale(2) doubles circle radius', () => {
+    expect(render({ kind: 'scale', factor: 2, drawing: { kind: 'circle', radius: 10 } })).toEqual([
+      { kind: 'drawCircle', x: 0, y: 0, radius: 20 },
+      { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+});

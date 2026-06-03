@@ -72,6 +72,10 @@ export type Drawing =
   | { readonly kind: 'scale';    readonly factor: number; readonly drawing: Drawing }
   | { readonly kind: 'color';    readonly color: string }
   | { readonly kind: 'penWidth'; readonly width: number }
+  | { readonly kind: 'circle';   readonly radius: number }
+  | { readonly kind: 'rect';     readonly width: number; readonly height: number }
+  | { readonly kind: 'ellipse';  readonly rx: number; readonly ry: number }
+  | { readonly kind: 'triangle'; readonly size: number }
   | { readonly kind: 'empty' };
 
 // ---------------------------------------------------------------------------
@@ -89,7 +93,8 @@ export interface SproutVar {
 }
 
 // INVARIANT: Drawing.kind values ('forward','turn','penUp','penDown','sequence',
-// 'beside','above','scale','color','penWidth','empty') must never match SproutNumber/String/Symbol/Bool/Function/Var kinds.
+// 'beside','above','scale','color','penWidth','empty','circle','rect','ellipse','triangle')
+// must never match SproutNumber/String/Symbol/Bool/Function/Var kinds.
 export type SproutValue =
   | SproutNumber
   | SproutString
@@ -131,5 +136,17 @@ export const mkColor = (color: string): Drawing =>
 
 export const mkPenWidth = (width: number): Drawing =>
   ({ kind: 'penWidth', width });
+
+export const mkCircle = (radius: number): Drawing =>
+  ({ kind: 'circle', radius });
+
+export const mkRect = (width: number, height: number): Drawing =>
+  ({ kind: 'rect', width, height });
+
+export const mkEllipse = (rx: number, ry: number): Drawing =>
+  ({ kind: 'ellipse', rx, ry });
+
+export const mkTriangle = (size: number): Drawing =>
+  ({ kind: 'triangle', size });
 
 export const EMPTY: Drawing = { kind: 'empty' };

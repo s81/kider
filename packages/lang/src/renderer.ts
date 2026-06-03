@@ -15,7 +15,11 @@ export type CanvasCommand =
   | { readonly kind: 'penDown' }
   | { readonly kind: 'penUp' }
   | { readonly kind: 'setColor'; readonly color: string }
-  | { readonly kind: 'setLineWidth'; readonly width: number };
+  | { readonly kind: 'setLineWidth'; readonly width: number }
+  | { readonly kind: 'drawCircle';   readonly x: number; readonly y: number; readonly radius: number }
+  | { readonly kind: 'drawRect';     readonly x: number; readonly y: number; readonly width: number; readonly height: number }
+  | { readonly kind: 'drawEllipse';  readonly x: number; readonly y: number; readonly rx: number; readonly ry: number }
+  | { readonly kind: 'drawTriangle'; readonly x: number; readonly y: number; readonly size: number };
 
 // ---------------------------------------------------------------------------
 // Turtle state (internal)
@@ -54,6 +58,14 @@ function scaleDrawing(factor: number, d: Drawing): Drawing {
       return { kind: 'above', top: scaleDrawing(factor, d.top), bottom: scaleDrawing(factor, d.bottom) };
     case 'scale':
       return { kind: 'scale', factor: d.factor * factor, drawing: d.drawing };
+    case 'circle':
+      return { kind: 'circle', radius: d.radius * factor };
+    case 'rect':
+      return { kind: 'rect', width: d.width * factor, height: d.height * factor };
+    case 'ellipse':
+      return { kind: 'ellipse', rx: d.rx * factor, ry: d.ry * factor };
+    case 'triangle':
+      return { kind: 'triangle', size: d.size * factor };
   }
 }
 
@@ -156,6 +168,26 @@ function renderInto(
     case 'scale':
       renderInto(scaleDrawing(drawing.factor, drawing.drawing), state, out);
       return;
+
+    case 'circle':
+      out.push({ kind: 'drawCircle', x: state.x, y: state.y, radius: drawing.radius });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      return;
+
+    case 'rect':
+      out.push({ kind: 'drawRect', x: state.x, y: state.y, width: drawing.width, height: drawing.height });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      return;
+
+    case 'ellipse':
+      out.push({ kind: 'drawEllipse', x: state.x, y: state.y, rx: drawing.rx, ry: drawing.ry });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      return;
+
+    case 'triangle':
+      out.push({ kind: 'drawTriangle', x: state.x, y: state.y, size: drawing.size });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      return;
   }
 }
 
@@ -233,6 +265,38 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
     case 'scale':
       measureInto(scaleDrawing(drawing.factor, drawing.drawing), state, bbox);
       return;
+
+    case 'circle':
+      bbox.minX = Math.min(bbox.minX, state.x - drawing.radius);
+      bbox.maxX = Math.max(bbox.maxX, state.x + drawing.radius);
+      bbox.minY = Math.min(bbox.minY, state.y - drawing.radius);
+      bbox.maxY = Math.max(bbox.maxY, state.y + drawing.radius);
+      return;
+
+    case 'rect':
+      bbox.minX = Math.min(bbox.minX, state.x - drawing.width / 2);
+      bbox.maxX = Math.max(bbox.maxX, state.x + drawing.width / 2);
+      bbox.minY = Math.min(bbox.minY, state.y - drawing.height / 2);
+      bbox.maxY = Math.max(bbox.maxY, state.y + drawing.height / 2);
+      return;
+
+    case 'ellipse':
+      bbox.minX = Math.min(bbox.minX, state.x - drawing.rx);
+      bbox.maxX = Math.max(bbox.maxX, state.x + drawing.rx);
+      bbox.minY = Math.min(bbox.minY, state.y - drawing.ry);
+      bbox.maxY = Math.max(bbox.maxY, state.y + drawing.ry);
+      return;
+
+    case 'triangle': {
+      const halfW = drawing.size / 2;
+      const tipY  = drawing.size * Math.sqrt(3) / 3;
+      const baseY = drawing.size * Math.sqrt(3) / 6;
+      bbox.minX = Math.min(bbox.minX, state.x - halfW);
+      bbox.maxX = Math.max(bbox.maxX, state.x + halfW);
+      bbox.minY = Math.min(bbox.minY, state.y - tipY);
+      bbox.maxY = Math.max(bbox.maxY, state.y + baseY);
+      return;
+    }
   }
 }
 
