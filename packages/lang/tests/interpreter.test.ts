@@ -13,7 +13,7 @@ import {
   PEN_UP,
   PEN_DOWN,
 } from '../src/values.js';
-import type { Program, Expr, Stmt } from '../src/ast.js';
+import type { Program, Expr, Stmt, InfixExpr } from '../src/ast.js';
 
 // ---------------------------------------------------------------------------
 // AST builder helpers (keep tests readable)
@@ -24,7 +24,7 @@ const strLit = (value: string): Expr => ({ kind: 'StringLit', value });
 const symLit = (name: string): Expr => ({ kind: 'SymbolLit', name });
 const boolLit = (value: boolean): Expr => ({ kind: 'BoolLit', value });
 const ident = (name: string): Expr => ({ kind: 'Ident', name });
-const infix = (op: '+' | '-' | '*' | '/', left: Expr, right: Expr): Expr =>
+const infix = (op: InfixExpr['op'], left: Expr, right: Expr): Expr =>
   ({ kind: 'InfixExpr', op, left, right });
 const call = (callee: string, args: Expr[], block = null): Expr =>
   ({ kind: 'CallExpr', callee, args, block });
@@ -32,6 +32,14 @@ const block = (body: Stmt[]): Expr =>
   ({ kind: 'BlockExpr', body });
 const repeat = (count: Expr, bodyStmts: Stmt[]): Expr =>
   ({ kind: 'RepeatExpr', count, body: { kind: 'BlockExpr', body: bodyStmts } });
+const ifExpr = (cond: Expr, thenStmts: Stmt[], elseStmts: Stmt[] | null = null): Expr => ({
+  kind: 'IfExpr' as const,
+  cond,
+  then: { kind: 'BlockExpr' as const, body: thenStmts },
+  else: elseStmts !== null ? { kind: 'BlockExpr' as const, body: elseStmts } : null,
+});
+const unary = (op: 'not', operand: Expr): Expr =>
+  ({ kind: 'UnaryExpr' as const, op, operand });
 
 const exprStmt = (expr: Expr): Stmt => ({ kind: 'ExprStmt', expr });
 const defStmt = (name: string, params: string[], body: Expr): Stmt =>
@@ -624,5 +632,201 @@ describe('color builtin', () => {
       mkColor('#dc2626'),
       mkForward(50),
     ]));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// IfExpr — conditional expression
+// ---------------------------------------------------------------------------
+describe('IfExpr', () => {
+  it('returns then-branch drawing when condition is true', () => {
+    const prog = program(
+      exprStmt(ifExpr(boolLit(true), [exprStmt(call('forward', [numLit(50)]))])),
+    );
+    // IfExpr returns evalBlock(then) = mkSequence([mkForward(50)]);
+    // interpret wraps that in its own outer sequence.
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(50)])]));
+  });
+
+  it('returns EMPTY when condition is false and no else', () => {
+    const prog = program(
+      exprStmt(ifExpr(boolLit(false), [exprStmt(call('forward', [numLit(50)]))])),
+    );
+    // IfExpr returns EMPTY; interpret collects it and wraps: mkSequence([EMPTY])
+    expect(interpret(prog)).toEqual(mkSequence([EMPTY]));
+  });
+
+  it('returns else-branch drawing when condition is false', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        boolLit(false),
+        [exprStmt(call('forward', [numLit(50)]))],
+        [exprStmt(call('turn', [numLit(90)]))],
+      )),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkTurn(90)])]));
+  });
+
+  it('throws SproutRuntimeError when condition is not a bool', () => {
+    const prog = program(
+      exprStmt(ifExpr(numLit(1), [exprStmt(call('forward', [numLit(10)]))])),
+    );
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+    expect(() => interpret(prog)).toThrow('if: condition must be a bool');
+  });
+
+  it('evaluates condition using a comparison', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        infix('<', numLit(5), numLit(10)),
+        [exprStmt(call('forward', [numLit(30)]))],
+      )),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(30)])]));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Comparison operators
+// ---------------------------------------------------------------------------
+describe('comparison operators', () => {
+  const testCmp = (op: InfixExpr['op'], l: number, r: number, expected: boolean) => {
+    const prog = program(
+      exprStmt(ifExpr(
+        infix(op, numLit(l), numLit(r)),
+        [exprStmt(call('forward', [numLit(1)]))],
+        [exprStmt(call('turn', [numLit(1)]))],
+      )),
+    );
+    if (expected) {
+      expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(1)])]));
+    } else {
+      expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkTurn(1)])]));
+    }
+  };
+
+  it('< returns true when left < right',   () => testCmp('<',  3, 5, true));
+  it('< returns false when left >= right', () => testCmp('<',  5, 3, false));
+  it('> returns true when left > right',   () => testCmp('>',  5, 3, true));
+  it('>= returns true when equal',          () => testCmp('>=', 4, 4, true));
+  it('<= returns true when left < right',   () => testCmp('<=', 2, 4, true));
+  it('== returns true for equal numbers',   () => testCmp('==', 7, 7, true));
+  it('== returns false for unequal',        () => testCmp('==', 7, 8, false));
+  it('!= returns true for unequal',         () => testCmp('!=', 7, 8, true));
+  it('!= returns false for equal',          () => testCmp('!=', 7, 7, false));
+
+  it('== works on booleans', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        infix('==', boolLit(true), boolLit(true)),
+        [exprStmt(call('forward', [numLit(1)]))],
+      )),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(1)])]));
+  });
+
+  it('throws when comparing incompatible types', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        infix('==', numLit(1), boolLit(true)),
+        [exprStmt(call('forward', [numLit(1)]))],
+      )),
+    );
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// UnaryExpr not
+// ---------------------------------------------------------------------------
+describe('UnaryExpr not', () => {
+  it('negates true to false', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        unary('not', boolLit(true)),
+        [exprStmt(call('forward', [numLit(1)]))],
+        [exprStmt(call('turn', [numLit(1)]))],
+      )),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkTurn(1)])]));
+  });
+
+  it('negates false to true', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        unary('not', boolLit(false)),
+        [exprStmt(call('forward', [numLit(1)]))],
+      )),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(1)])]));
+  });
+
+  it('throws when operand is not a bool', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        unary('not', numLit(1)),
+        [exprStmt(call('forward', [numLit(1)]))],
+      )),
+    );
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+    expect(() => interpret(prog)).toThrow('not: expected bool');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// and / or short-circuit
+// ---------------------------------------------------------------------------
+describe('and / or short-circuit', () => {
+  it('and returns false without evaluating right when left is false', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        infix('and', boolLit(false), infix('>', infix('/', numLit(1), numLit(0)), numLit(0))),
+        [exprStmt(call('forward', [numLit(1)]))],
+        [exprStmt(call('turn', [numLit(1)]))],
+      )),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkTurn(1)])]));
+  });
+
+  it('and returns right value when both are true', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        infix('and', boolLit(true), boolLit(true)),
+        [exprStmt(call('forward', [numLit(1)]))],
+      )),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(1)])]));
+  });
+
+  it('or returns true without evaluating right when left is true', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        infix('or', boolLit(true), infix('>', infix('/', numLit(1), numLit(0)), numLit(0))),
+        [exprStmt(call('forward', [numLit(1)]))],
+        [exprStmt(call('turn', [numLit(1)]))],
+      )),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(1)])]));
+  });
+
+  it('or evaluates right when left is false', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        infix('or', boolLit(false), boolLit(true)),
+        [exprStmt(call('forward', [numLit(1)]))],
+      )),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(1)])]));
+  });
+
+  it('throws when and operand is not a bool', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        infix('and', numLit(1), boolLit(true)),
+        [exprStmt(call('forward', [numLit(1)]))],
+      )),
+    );
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+    expect(() => interpret(prog)).toThrow('and: expected bool');
   });
 });

@@ -14,10 +14,12 @@ import type {
   BoolLit,
   Ident,
   InfixExpr,
+  UnaryExpr,
   CallExpr,
   BlockExpr,
   RepeatExpr,
   OnExpr,
+  IfExpr,
 } from './ast.js';
 
 import {
@@ -240,6 +242,26 @@ function evalExpr(expr: Expr, env: Env): SproutValue {
       return evalOn(expr, env);
     }
 
+    // --- If conditional ---
+    case 'IfExpr': {
+      const cond = evalExpr(expr.cond, env);
+      if (cond.kind !== 'bool') {
+        throw new SproutRuntimeError(`if: condition must be a bool, got ${cond.kind}`);
+      }
+      if (cond.value) return evalBlock(expr.then, env);
+      if (expr.else !== null) return evalBlock(expr.else, env);
+      return EMPTY;
+    }
+
+    // --- Unary not ---
+    case 'UnaryExpr': {
+      const v = evalExpr(expr.operand, env);
+      if (v.kind !== 'bool') {
+        throw new SproutRuntimeError(`not: expected bool, got ${v.kind}`);
+      }
+      return { kind: 'bool', value: !v.value };
+    }
+
     default: {
       // TypeScript exhaustiveness check
       const _exhaustive: never = expr;
@@ -249,15 +271,51 @@ function evalExpr(expr: Expr, env: Env): SproutValue {
 }
 
 function evalInfix(expr: InfixExpr, env: Env): SproutValue {
+  // Short-circuit boolean operators
+  if (expr.op === 'and') {
+    const lv = evalExpr(expr.left, env);
+    if (lv.kind !== 'bool') throw new SproutRuntimeError(`and: expected bool, got ${lv.kind}`);
+    if (!lv.value) return lv;
+    const rv = evalExpr(expr.right, env);
+    if (rv.kind !== 'bool') throw new SproutRuntimeError(`and: expected bool, got ${rv.kind}`);
+    return rv;
+  }
+  if (expr.op === 'or') {
+    const lv = evalExpr(expr.left, env);
+    if (lv.kind !== 'bool') throw new SproutRuntimeError(`or: expected bool, got ${lv.kind}`);
+    if (lv.value) return lv;
+    const rv = evalExpr(expr.right, env);
+    if (rv.kind !== 'bool') throw new SproutRuntimeError(`or: expected bool, got ${rv.kind}`);
+    return rv;
+  }
+  // == and != work on numbers or bools (same kind required)
+  if (expr.op === '==' || expr.op === '!=') {
+    const lv = evalExpr(expr.left, env);
+    const rv = evalExpr(expr.right, env);
+    let eq: boolean;
+    if (lv.kind === 'number' && rv.kind === 'number') {
+      eq = lv.value === rv.value;
+    } else if (lv.kind === 'bool' && rv.kind === 'bool') {
+      eq = lv.value === rv.value;
+    } else {
+      throw new SproutRuntimeError(`${expr.op}: cannot compare ${lv.kind} and ${rv.kind}`);
+    }
+    return { kind: 'bool', value: expr.op === '==' ? eq : !eq };
+  }
+  // Arithmetic and numeric comparisons
   const left = assertNumber(evalExpr(expr.left, env), `(${expr.op}) left operand`);
   const right = assertNumber(evalExpr(expr.right, env), `(${expr.op}) right operand`);
   switch (expr.op) {
-    case '+': return { kind: 'number', value: left.value + right.value };
-    case '-': return { kind: 'number', value: left.value - right.value };
-    case '*': return { kind: 'number', value: left.value * right.value };
+    case '+':  return { kind: 'number', value: left.value + right.value };
+    case '-':  return { kind: 'number', value: left.value - right.value };
+    case '*':  return { kind: 'number', value: left.value * right.value };
     case '/':
       if (right.value === 0) throw new SproutRuntimeError('Division by zero');
       return { kind: 'number', value: left.value / right.value };
+    case '<':  return { kind: 'bool', value: left.value <  right.value };
+    case '>':  return { kind: 'bool', value: left.value >  right.value };
+    case '<=': return { kind: 'bool', value: left.value <= right.value };
+    case '>=': return { kind: 'bool', value: left.value >= right.value };
   }
 }
 

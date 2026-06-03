@@ -40,13 +40,19 @@ export interface Ident {
 // Compound expressions
 // ---------------------------------------------------------------------------
 
-/** Binary arithmetic expression */
+/** Binary arithmetic, comparison, or boolean expression */
 export interface InfixExpr {
   readonly kind: 'InfixExpr';
-  // Phase 1: arithmetic only. Comparison/boolean ops deferred to a later phase.
-  readonly op: '+' | '-' | '*' | '/';
+  readonly op: '+' | '-' | '*' | '/' | '<' | '>' | '<=' | '>=' | '==' | '!=' | 'and' | 'or';
   readonly left: Expr;
   readonly right: Expr;
+}
+
+/** Prefix unary expression — currently only `not` */
+export interface UnaryExpr {
+  readonly kind: 'UnaryExpr';
+  readonly op: 'not';
+  readonly operand: Expr;
 }
 
 /**
@@ -83,6 +89,14 @@ export interface OnExpr {
   readonly body: BlockExpr;
 }
 
+/** `if <cond> do ... [else ...] end` */
+export interface IfExpr {
+  readonly kind: 'IfExpr';
+  readonly cond: Expr;
+  readonly then: BlockExpr;
+  readonly else: BlockExpr | null;
+}
+
 // ---------------------------------------------------------------------------
 // Expr union
 // ---------------------------------------------------------------------------
@@ -94,10 +108,12 @@ export type Expr =
   | BoolLit
   | Ident
   | InfixExpr
+  | UnaryExpr
   | CallExpr
   | BlockExpr
   | RepeatExpr
-  | OnExpr;
+  | OnExpr
+  | IfExpr;
 
 // ---------------------------------------------------------------------------
 // Statement nodes
