@@ -33,6 +33,7 @@ export type {
   SproutSymbol,
   SproutBool,
   SproutFunction,
+  SproutVar,
   Drawing,
   SproutValue,
   Env,

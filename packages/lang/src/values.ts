@@ -78,14 +78,25 @@ export type Drawing =
 // SproutValue — top-level value union
 // ---------------------------------------------------------------------------
 
+/**
+ * A mutable variable cell. The `cell` object is intentionally mutable —
+ * `set x = expr` writes to `cell.value` in-place. The `SproutVar` wrapper
+ * itself is readonly so the env binding never changes, only the cell contents.
+ */
+export interface SproutVar {
+  readonly kind: 'var';
+  readonly cell: { value: SproutValue };
+}
+
 // INVARIANT: Drawing.kind values ('forward','turn','penUp','penDown','sequence',
-// 'beside','above','scale','color','penWidth','empty') must never match SproutNumber/String/Symbol/Bool/Function kinds.
+// 'beside','above','scale','color','penWidth','empty') must never match SproutNumber/String/Symbol/Bool/Function/Var kinds.
 export type SproutValue =
   | SproutNumber
   | SproutString
   | SproutSymbol
   | SproutBool
   | SproutFunction
+  | SproutVar
   | Drawing;
 
 // ---------------------------------------------------------------------------
