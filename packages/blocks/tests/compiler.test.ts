@@ -687,3 +687,53 @@ describe('text block', () => {
     ws.dispose();
   });
 });
+
+// ---------------------------------------------------------------------------
+// randomColor block
+// ---------------------------------------------------------------------------
+
+describe('randomColor block', () => {
+  it('sprout_random_color with MODE="palette" compiles to randomColor()', () => {
+    const ws = makeWorkspace();
+    const block = ws.newBlock('sprout_random_color');
+    block.setFieldValue('palette', 'MODE');
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [block];
+
+    const result = compileWorkspace(ws);
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr',
+          callee: 'randomColor',
+          args: [],
+          block: null,
+        },
+      }],
+    });
+    ws.dispose();
+  });
+
+  it('sprout_random_color with MODE="any" compiles to randomColor(:any)', () => {
+    const ws = makeWorkspace();
+    const block = ws.newBlock('sprout_random_color');
+    block.setFieldValue('any', 'MODE');
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [block];
+
+    const result = compileWorkspace(ws);
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr',
+          callee: 'randomColor',
+          args: [{ kind: 'SymbolLit', name: 'any' }],
+          block: null,
+        },
+      }],
+    });
+    ws.dispose();
+  });
+});

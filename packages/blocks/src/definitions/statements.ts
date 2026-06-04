@@ -78,6 +78,23 @@ export function registerStatementBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_random_color'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('random color')
+        .appendField(
+          new Blockly.FieldDropdown([
+            ['palette', 'palette'],
+            ['any',     'any'],
+          ]) as unknown as Blockly.Field,
+          'MODE',
+        );
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(20);
+    },
+  };
+
   Blockly.Blocks['sprout_repeat'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('COUNT').setCheck('Number').appendField('repeat');
