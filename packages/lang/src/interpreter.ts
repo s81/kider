@@ -28,6 +28,7 @@ import type {
 import {
   type SproutValue,
   type SproutNumber,
+  type SproutString,
   type SproutVar,
   type SproutFunction,
   type Drawing,
@@ -45,6 +46,7 @@ import {
   mkEllipse,
   mkTriangle,
   mkPolygon,
+  mkText,
   PEN_UP,
   PEN_DOWN,
   EMPTY,
@@ -70,7 +72,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
     case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'penWidth': case 'empty':
-    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon':
+    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text':
       return true;
     default:
       return false;
@@ -81,6 +83,15 @@ function assertNumber(v: SproutValue, context: string): SproutNumber {
   if (v.kind !== 'number') {
     throw new SproutRuntimeError(
       `${context}: expected number, got ${v.kind}`
+    );
+  }
+  return v;
+}
+
+function assertString(v: SproutValue, context: string): SproutString {
+  if (v.kind !== 'string') {
+    throw new SproutRuntimeError(
+      `${context}: expected string, got ${v.kind}`
     );
   }
   return v;
@@ -306,6 +317,13 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (!Number.isInteger(n.value)) throw new SproutRuntimeError(`polygon expects n to be an integer, got ${n.value}`);
     if (n.value < 3) throw new SproutRuntimeError(`polygon expects n ≥ 3, got ${n.value}`);
     return mkPolygon(n.value, size.value);
+  }],
+  ['text', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`text expects 2 arguments, got ${args.length}`);
+    const str = assertString(args[0], 'text (str)');
+    const size = assertNumber(args[1], 'text (size)');
+    if (size.value <= 0) throw new SproutRuntimeError(`text expects size > 0, got ${size.value}`);
+    return mkText(str.value, size.value);
   }],
 ]);
 

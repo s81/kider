@@ -11,6 +11,7 @@ import {
   mkColor,
   mkPenWidth,
   mkPolygon,
+  mkText,
   PEN_UP,
   PEN_DOWN,
 } from '../src/values.js';
@@ -1094,5 +1095,34 @@ describe('shape builtins', () => {
   it('polygon(2.5, 60) throws for non-integer n (not just n<3)', () => {
     expect(() => interpret(program(exprStmt(call('polygon', [numLit(2.5), numLit(60)]))))).toThrow(SproutRuntimeError);
     expect(() => interpret(program(exprStmt(call('polygon', [numLit(2.5), numLit(60)]))))).toThrow(/integer/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// text builtin
+// ---------------------------------------------------------------------------
+describe('text builtin', () => {
+  it('text("hi", 20) returns text Drawing', () => {
+    expect(interpret(program(exprStmt(call('text', [strLit('hi'), numLit(20)]))))).toEqual(
+      mkSequence([mkText('hi', 20)])
+    );
+  });
+  it('text() with 0 args throws', () => {
+    expect(() => interpret(program(exprStmt(call('text', []))))).toThrow(SproutRuntimeError);
+    expect(() => interpret(program(exprStmt(call('text', []))))).toThrow(/text/);
+  });
+  it('text("hi") with 1 arg throws', () => {
+    expect(() => interpret(program(exprStmt(call('text', [strLit('hi')]))))).toThrow(SproutRuntimeError);
+    expect(() => interpret(program(exprStmt(call('text', [strLit('hi')]))))).toThrow(/text/);
+  });
+  it('text(42, 20) with non-string first arg throws', () => {
+    expect(() => interpret(program(exprStmt(call('text', [numLit(42), numLit(20)]))))).toThrow(SproutRuntimeError);
+  });
+  it('text("hi", true) with non-number size throws', () => {
+    expect(() => interpret(program(exprStmt(call('text', [strLit('hi'), boolLit(true)]))))).toThrow(SproutRuntimeError);
+  });
+  it('text("hi", 0) with size <= 0 throws', () => {
+    expect(() => interpret(program(exprStmt(call('text', [strLit('hi'), numLit(0)]))))).toThrow(SproutRuntimeError);
+    expect(() => interpret(program(exprStmt(call('text', [strLit('hi'), numLit(0)]))))).toThrow(/text/);
   });
 });
