@@ -737,3 +737,30 @@ describe('randomColor block', () => {
     ws.dispose();
   });
 });
+
+describe('on event block — new events', () => {
+  const NEW_EVENTS = ['left', 'right', 'up', 'down', 'space', 'timer'] as const;
+
+  for (const event of NEW_EVENTS) {
+    it(`sprout_on_event with EVENT="${event}" compiles to OnExpr(:${event})`, () => {
+      const ws = makeWorkspace();
+      const block = ws.newBlock('sprout_on_event');
+      block.setFieldValue(event, 'EVENT');
+      (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [block];
+
+      const result = compileWorkspace(ws);
+      expect(result).toEqual({
+        kind: 'Program',
+        stmts: [{
+          kind: 'ExprStmt',
+          expr: {
+            kind: 'OnExpr',
+            event: { kind: 'SymbolLit', name: event },
+            body: { kind: 'BlockExpr', body: [] },
+          },
+        }],
+      });
+      ws.dispose();
+    });
+  }
+});

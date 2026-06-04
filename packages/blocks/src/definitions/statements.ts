@@ -111,9 +111,14 @@ export function registerStatementBlocks(): void {
         .appendField('on')
         .appendField(
           new Blockly.FieldDropdown([
-            ['click', 'click'],
-            ['load', 'load'],
-            ['keydown', 'keydown'],
+            ['click',  'click'],
+            ['load',   'load'],
+            ['left',   'left'],
+            ['right',  'right'],
+            ['up',     'up'],
+            ['down',   'down'],
+            ['space',  'space'],
+            ['timer',  'timer'],
           ]) as unknown as Blockly.Field,
           'EVENT',
         );
