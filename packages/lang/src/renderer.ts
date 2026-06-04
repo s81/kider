@@ -22,7 +22,8 @@ export type CanvasCommand =
   | { readonly kind: 'drawTriangle'; readonly x: number; readonly y: number; readonly size: number }
   | { readonly kind: 'drawPolygon';  readonly x: number; readonly y: number; readonly n: number; readonly size: number }
   | { readonly kind: 'drawText';     readonly x: number; readonly y: number; readonly str: string; readonly size: number }
-  | { readonly kind: 'fillBackground'; readonly color: string };
+  | { readonly kind: 'fillBackground'; readonly color: string }
+  | { readonly kind: 'clearCanvas' };
 
 // ---------------------------------------------------------------------------
 // Turtle state (internal)
@@ -74,6 +75,8 @@ function scaleDrawing(factor: number, d: Drawing): Drawing {
     case 'text':
       return { kind: 'text', str: d.str, size: d.size * factor };
     case 'background':
+      return d;
+    case 'clearCanvas':
       return d;
   }
 }
@@ -211,6 +214,15 @@ function renderInto(
     case 'background':
       out.push({ kind: 'fillBackground', color: drawing.color });
       return;
+
+    case 'clearCanvas':
+      out.push({ kind: 'clearCanvas' });
+      state.x = 0;
+      state.y = 0;
+      state.heading = 0;
+      state.penDown = true;
+      out.push({ kind: 'moveTo', x: 0, y: 0 });
+      return;
   }
 }
 
@@ -343,6 +355,9 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
       return;
 
     case 'background':
+      return;
+
+    case 'clearCanvas':
       return;
   }
 }

@@ -15,6 +15,7 @@ import {
   mkPolygon,
   mkText,
   mkBackground,
+  mkClearCanvas,
 } from '../src/values.js';
 import type { CanvasCommand } from '../src/renderer.js';
 
@@ -558,5 +559,37 @@ describe('background rendering', () => {
 
   it('measure(background) returns width=0, height=0', () => {
     expect(measure(mkBackground('#dc2626'))).toEqual({ width: 0, height: 0 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// clearCanvas rendering
+// ---------------------------------------------------------------------------
+describe('clearCanvas rendering', () => {
+  it('render(clearCanvas) emits clearCanvas then moveTo(0,0)', () => {
+    expect(render(mkClearCanvas())).toEqual([
+      { kind: 'clearCanvas' },
+      { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+
+  it('sequence [forward(50), clearCanvas, forward(30)] — second forward restarts from (0,0)', () => {
+    expect(render(mkSequence([mkForward(50), mkClearCanvas(), mkForward(30)]))).toEqual([
+      { kind: 'lineTo', x: 0, y: -50 },
+      { kind: 'clearCanvas' },
+      { kind: 'moveTo', x: 0, y: 0 },
+      { kind: 'lineTo', x: 0, y: -30 },
+    ]);
+  });
+
+  it('scale(2, clearCanvas) leaves it unchanged', () => {
+    expect(render({ kind: 'scale', factor: 2, drawing: mkClearCanvas() })).toEqual([
+      { kind: 'clearCanvas' },
+      { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+
+  it('measure(clearCanvas) returns width=0, height=0', () => {
+    expect(measure(mkClearCanvas())).toEqual({ width: 0, height: 0 });
   });
 });
