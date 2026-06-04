@@ -18,6 +18,8 @@ import { Stage } from './Stage.js';
 
 type SourceMode = 'blocks' | 'editor';
 
+const TIMER_INTERVAL_MS = 200;
+
 export function App() {
   const wsRef = useRef<Blockly.Workspace | null>(null);
   const [programText, setProgramText] = useState('');
@@ -155,7 +157,7 @@ export function App() {
               timerRef.current = null;
             }
           }
-        }, 200);
+        }, TIMER_INTERVAL_MS);
       }
     } catch (e) {
       if (e instanceof SproutRuntimeError || e instanceof ParseError) {
@@ -235,6 +237,8 @@ export function App() {
   }
 
   const hasClickHandler = handlers.has(':click');
+  const hasKeyHandlers = handlers.has(':left') || handlers.has(':right') || handlers.has(':up') ||
+    handlers.has(':down') || handlers.has(':space');
 
   return (
     <div style={{ display: 'flex', height: '100%', fontFamily: 'sans-serif' }}>
@@ -423,13 +427,11 @@ export function App() {
           </div>
         )}
 
-        {(handlers.has(':left') || handlers.has(':right') || handlers.has(':up') ||
-          handlers.has(':down') || handlers.has(':space') || handlers.has(':timer')) && (
+        {(hasKeyHandlers || handlers.has(':timer')) && (
           <div style={{ fontSize: 12, color: '#64748b', textAlign: 'center' }}>
             {[
-              (handlers.has(':left') || handlers.has(':right') || handlers.has(':up') ||
-               handlers.has(':down') || handlers.has(':space')) ? '← → ↑ ↓ space active' : '',
-              handlers.has(':timer') ? 'timer active (200ms)' : '',
+              hasKeyHandlers ? '← → ↑ ↓ space active' : '',
+              handlers.has(':timer') ? `timer active (${TIMER_INTERVAL_MS}ms)` : '',
             ].filter(Boolean).join(' · ')}
           </div>
         )}
