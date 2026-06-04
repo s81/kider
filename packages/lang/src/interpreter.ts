@@ -304,6 +304,7 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     const n = assertNumber(args[0], 'polygon (n)');
     const size = assertNumber(args[1], 'polygon (size)');
     if (n.value < 3) throw new SproutRuntimeError(`polygon expects n ≥ 3, got ${n.value}`);
+    if (!Number.isInteger(n.value)) throw new SproutRuntimeError(`polygon expects n to be an integer, got ${n.value}`);
     return mkPolygon(n.value, size.value);
   }],
 ]);
