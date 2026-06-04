@@ -43,6 +43,7 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_ellipse':
     case 'sprout_triangle':
     case 'sprout_polygon':
+    case 'sprout_text':
       return { kind: 'ExprStmt', expr: compileExprBlock(block) };
     case 'sprout_let':
       return compileLet(block);
@@ -193,6 +194,11 @@ function compileExprBlock(block: Blockly.Block): Expr {
       const n = compileExpr(mustGetInput(block, 'N'));
       const size = compileExpr(mustGetInput(block, 'SIZE'));
       return { kind: 'CallExpr', callee: 'polygon', args: [n, size], block: null };
+    }
+    case 'sprout_text': {
+      const str = block.getFieldValue('TEXT') as string;
+      const size = compileExpr(mustGetInput(block, 'SIZE'));
+      return { kind: 'CallExpr', callee: 'text', args: [{ kind: 'StringLit', value: str }, size], block: null };
     }
     default:
       throw new Error(`Block type cannot be compiled as expression: ${block.type}`);

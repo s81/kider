@@ -47,4 +47,16 @@ export function registerShapeBlocks(): void {
       this.setColour(160);
     },
   };
+  Blockly.Blocks['sprout_text'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('text')
+        .appendField(new Blockly.FieldTextInput('hello'), 'TEXT');
+      this.appendValueInput('SIZE').setCheck('Number').appendField('size');
+      this.setInputsInline(true);
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(160);
+    },
+  };
 }

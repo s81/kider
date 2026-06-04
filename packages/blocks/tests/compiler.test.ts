@@ -666,3 +666,24 @@ describe('polygon block', () => {
     ws.dispose();
   });
 });
+
+describe('text block', () => {
+  it('sprout_text compiles to CallExpr text(str, size)', () => {
+    const ws = makeWorkspace();
+    const textBlock = ws.newBlock('sprout_text');
+    textBlock.setFieldValue('hello', 'TEXT');
+    const sizeNum = ws.newBlock('sprout_number');
+    sizeNum.setFieldValue('20', 'NUM');
+    textBlock.getInput('SIZE')!.connection!.connect(sizeNum.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: { kind: 'CallExpr', callee: 'text', args: [{ kind: 'StringLit', value: 'hello' }, { kind: 'NumberLit', value: 20 }], block: null },
+      }],
+    });
+    ws.dispose();
+  });
+});
