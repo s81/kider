@@ -358,6 +358,9 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
       return;
 
     case 'clearCanvas':
+      state.x = 0;
+      state.y = 0;
+      state.heading = 0;
       return;
   }
 }
