@@ -95,6 +95,31 @@ export function registerStatementBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_background'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('background')
+        .appendField(
+          new Blockly.FieldDropdown([
+            ['white',  'white'],
+            ['black',  'black'],
+            ['red',    'red'],
+            ['blue',   'blue'],
+            ['green',  'green'],
+            ['orange', 'orange'],
+            ['purple', 'purple'],
+            ['yellow', 'yellow'],
+            ['pink',   'pink'],
+          ]) as unknown as Blockly.Field,
+          'COLOR',
+        );
+      this.setTooltip('Sets the canvas background color. In text mode, hex strings like "#ff4400" are also accepted.');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(20);
+    },
+  };
+
   Blockly.Blocks['sprout_repeat'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('COUNT').setCheck('Number').appendField('repeat');

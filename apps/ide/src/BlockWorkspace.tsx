@@ -13,6 +13,7 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_pen_down' },
     { kind: 'block', type: 'sprout_color' },
     { kind: 'block', type: 'sprout_random_color' },
+    { kind: 'block', type: 'sprout_background' },
     { kind: 'block', type: 'sprout_pen_width' },
     // Control
     { kind: 'block', type: 'sprout_repeat' },

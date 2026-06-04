@@ -764,3 +764,49 @@ describe('on event block — new events', () => {
     });
   }
 });
+
+describe('background block', () => {
+  it('sprout_background with COLOR="red" compiles to background(:red)', () => {
+    const ws = makeWorkspace();
+    const block = ws.newBlock('sprout_background');
+    block.setFieldValue('red', 'COLOR');
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [block];
+
+    const result = compileWorkspace(ws);
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr',
+          callee: 'background',
+          args: [{ kind: 'SymbolLit', name: 'red' }],
+          block: null,
+        },
+      }],
+    });
+    ws.dispose();
+  });
+
+  it('sprout_background with COLOR="white" compiles to background(:white)', () => {
+    const ws = makeWorkspace();
+    const block = ws.newBlock('sprout_background');
+    block.setFieldValue('white', 'COLOR');
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [block];
+
+    const result = compileWorkspace(ws);
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr',
+          callee: 'background',
+          args: [{ kind: 'SymbolLit', name: 'white' }],
+          block: null,
+        },
+      }],
+    });
+    ws.dispose();
+  });
+});
