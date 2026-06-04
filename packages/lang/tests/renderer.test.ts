@@ -13,6 +13,7 @@ import {
   mkColor,
   mkPenWidth,
   mkPolygon,
+  mkText,
 } from '../src/values.js';
 import type { CanvasCommand } from '../src/renderer.js';
 
@@ -475,6 +476,41 @@ describe('polygon rendering', () => {
     expect(render(drawing)).toEqual([
       { kind: 'lineTo', x: 0, y: -100 },
       { kind: 'drawPolygon', x: 0, y: -100, n: 4, size: 40 },
+      { kind: 'moveTo', x: 0, y: -100 },
+    ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Text rendering
+// ---------------------------------------------------------------------------
+
+describe('text rendering', () => {
+  it('render(text("hi", 20)) emits drawText at origin + moveTo', () => {
+    expect(render(mkText('hi', 20))).toEqual([
+      { kind: 'drawText', x: 0, y: 0, str: 'hi', size: 20 },
+      { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+
+  it('measure(text("hi", 20)) → width = 2 * 20 * 0.6, height = 20', () => {
+    const result = measure(mkText('hi', 20));
+    expect(result.width).toBeCloseTo(2 * 20 * 0.6, 5);
+    expect(result.height).toBeCloseTo(20, 5);
+  });
+
+  it('scaleDrawing(2) doubles size, str unchanged', () => {
+    expect(render({ kind: 'scale', factor: 2, drawing: mkText('hi', 10) })).toEqual([
+      { kind: 'drawText', x: 0, y: 0, str: 'hi', size: 20 },
+      { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+
+  it('shape position tracks turtle — forward then text', () => {
+    const drawing = { kind: 'sequence' as const, steps: [mkForward(100), mkText('hi', 20)] };
+    expect(render(drawing)).toEqual([
+      { kind: 'lineTo', x: 0, y: -100 },
+      { kind: 'drawText', x: 0, y: -100, str: 'hi', size: 20 },
       { kind: 'moveTo', x: 0, y: -100 },
     ]);
   });
