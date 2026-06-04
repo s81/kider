@@ -97,6 +97,7 @@ export function App() {
       ' ':        ':space',
     };
     function onKeyDown(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       const handlerKey = KEY_MAP[e.key];
       if (!handlerKey) return;
       const fn = handlersRef.current.get(handlerKey);
@@ -156,6 +157,8 @@ export function App() {
               clearInterval(timerRef.current);
               timerRef.current = null;
             }
+            setHandlers(new Map());
+            handlersRef.current = new Map();
           }
         }, TIMER_INTERVAL_MS);
       }
