@@ -578,6 +578,7 @@ describe('shape blocks', () => {
         expr: { kind: 'CallExpr', callee: 'circle', args: [{ kind: 'NumberLit', value: 50 }], block: null },
       }],
     });
+    ws.dispose();
   });
 
   it('sprout_rect compiles to rect CallExpr with width and height', () => {
@@ -600,6 +601,7 @@ describe('shape blocks', () => {
         },
       }],
     });
+    ws.dispose();
   });
 
   it('sprout_ellipse compiles to ellipse CallExpr with rx and ry', () => {
@@ -622,6 +624,7 @@ describe('shape blocks', () => {
         },
       }],
     });
+    ws.dispose();
   });
 
   it('sprout_triangle compiles to triangle CallExpr', () => {
@@ -637,5 +640,6 @@ describe('shape blocks', () => {
         expr: { kind: 'CallExpr', callee: 'triangle', args: [{ kind: 'NumberLit', value: 50 }], block: null },
       }],
     });
+    ws.dispose();
   });
 });

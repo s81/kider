@@ -3,7 +3,7 @@ import * as Blockly from 'blockly/node';
 export function registerShapeBlocks(): void {
   Blockly.Blocks['sprout_circle'] = {
     init(this: Blockly.Block) {
-      this.appendValueInput('R').setCheck(null).appendField('circle');
+      this.appendValueInput('R').setCheck('Number').appendField('circle');
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(160);
@@ -11,8 +11,8 @@ export function registerShapeBlocks(): void {
   };
   Blockly.Blocks['sprout_rect'] = {
     init(this: Blockly.Block) {
-      this.appendValueInput('W').setCheck(null).appendField('rect');
-      this.appendValueInput('H').setCheck(null).appendField('×');
+      this.appendValueInput('W').setCheck('Number').appendField('rect');
+      this.appendValueInput('H').setCheck('Number').appendField('×');
       this.setInputsInline(true);
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
@@ -21,8 +21,8 @@ export function registerShapeBlocks(): void {
   };
   Blockly.Blocks['sprout_ellipse'] = {
     init(this: Blockly.Block) {
-      this.appendValueInput('RX').setCheck(null).appendField('ellipse');
-      this.appendValueInput('RY').setCheck(null).appendField('×');
+      this.appendValueInput('RX').setCheck('Number').appendField('ellipse');
+      this.appendValueInput('RY').setCheck('Number').appendField('×');
       this.setInputsInline(true);
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
@@ -31,7 +31,7 @@ export function registerShapeBlocks(): void {
   };
   Blockly.Blocks['sprout_triangle'] = {
     init(this: Blockly.Block) {
-      this.appendValueInput('SIZE').setCheck(null).appendField('triangle');
+      this.appendValueInput('SIZE').setCheck('Number').appendField('triangle');
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(160);
