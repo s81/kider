@@ -207,6 +207,13 @@ export function drawUpTo(
         ctx.moveTo(cx, cy);
         break;
       }
+      case 'fillBackground': {
+        ctx.save();
+        ctx.fillStyle = cmd.color;
+        ctx.fillRect(0, 0, STAGE_W, STAGE_H);
+        ctx.restore();
+        break;
+      }
     }
   }
   ctx.stroke();

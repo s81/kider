@@ -217,6 +217,7 @@ function makeShapeMockCtx() {
     lineTo: vi.fn(),
     stroke: vi.fn(),
     fill: vi.fn(),
+    fillRect: vi.fn(),
     save: vi.fn(),
     restore: vi.fn(),
     arc: vi.fn(),
@@ -347,5 +348,29 @@ describe('text drawing', () => {
     const commands: CanvasCommand[] = [{ kind: 'drawText', x: 0, y: 0, str: 'hi', size: 16 }];
     drawUpTo(ctx, commands, 1);
     expect(fillStyleAtCall).toBe('#2563eb');
+  });
+});
+
+describe('background drawing', () => {
+  it('fillBackground calls ctx.fillRect(0, 0, STAGE_W, STAGE_H)', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{ kind: 'fillBackground', color: '#dc2626' }];
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.fillRect).toHaveBeenCalledWith(0, 0, STAGE_W, STAGE_H);
+  });
+
+  it('fillBackground sets fillStyle to the given color', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{ kind: 'fillBackground', color: '#ff4400' }];
+    drawUpTo(ctx, commands, 1);
+    expect((ctx as unknown as { fillStyle: string }).fillStyle).toBe('#ff4400');
+  });
+
+  it('fillBackground calls ctx.save() and ctx.restore()', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{ kind: 'fillBackground', color: '#dc2626' }];
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.save).toHaveBeenCalled();
+    expect(ctx.restore).toHaveBeenCalled();
   });
 });
