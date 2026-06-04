@@ -189,6 +189,27 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     }
     return mkColor(hex);
   }],
+  ['randomColor', (args) => {
+    if (args.length === 0) {
+      const keys = Object.keys(COLOR_MAP);
+      const hex = COLOR_MAP[keys[Math.floor(Math.random() * keys.length)]];
+      return mkColor(hex);
+    }
+    if (args.length === 1) {
+      const sym = args[0];
+      if (sym.kind !== 'symbol' || sym.name !== 'any') {
+        throw new SproutRuntimeError(
+          `randomColor: expected no arguments or :any, got ${sym.kind === 'symbol' ? ':' + sym.name : sym.kind}`
+        );
+      }
+      const r = Math.floor(Math.random() * 256);
+      const g = Math.floor(Math.random() * 256);
+      const b = Math.floor(Math.random() * 256);
+      const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+      return mkColor(hex);
+    }
+    throw new SproutRuntimeError(`randomColor expects 0 or 1 arguments, got ${args.length}`);
+  }],
   ['puts', (args) => {
     // Side-effect for kids: print to console (best-effort) and return EMPTY.
     if (args.length >= 1) {

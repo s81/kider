@@ -640,6 +640,47 @@ describe('color builtin', () => {
 });
 
 // ---------------------------------------------------------------------------
+// randomColor builtin
+// ---------------------------------------------------------------------------
+describe('randomColor builtin', () => {
+  const PALETTE_COLORS = [
+    '#dc2626', '#2563eb', '#16a34a', '#ea580c', '#9333ea',
+    '#000000', '#ffffff', '#ca8a04', '#db2777',
+  ];
+
+  it('randomColor() returns mkSequence([mkColor(x)]) where x is a palette color', () => {
+    const result = interpret(program(exprStmt(call('randomColor', []))));
+    const possible = PALETTE_COLORS.map(c => mkSequence([mkColor(c)]));
+    expect(possible).toContainEqual(result);
+  });
+
+  it('randomColor(:any) returns a color Drawing with a valid #rrggbb hex', () => {
+    const result = interpret(program(exprStmt(call('randomColor', [{ kind: 'SymbolLit' as const, name: 'any' }]))));
+    const seq = result as { kind: 'sequence'; steps: Array<{ kind: string; color?: string }> };
+    expect(seq.steps[0].kind).toBe('color');
+    expect(seq.steps[0].color).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it('randomColor(:bad) throws SproutRuntimeError', () => {
+    expect(() =>
+      interpret(program(exprStmt(call('randomColor', [{ kind: 'SymbolLit' as const, name: 'bad' }]))))
+    ).toThrow(SproutRuntimeError);
+    expect(() =>
+      interpret(program(exprStmt(call('randomColor', [{ kind: 'SymbolLit' as const, name: 'bad' }]))))
+    ).toThrow(/randomColor/);
+  });
+
+  it('randomColor with 2 args throws SproutRuntimeError', () => {
+    expect(() =>
+      interpret(program(exprStmt(call('randomColor', [numLit(1), numLit(2)]))))
+    ).toThrow(SproutRuntimeError);
+    expect(() =>
+      interpret(program(exprStmt(call('randomColor', [numLit(1), numLit(2)]))))
+    ).toThrow(/randomColor/);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // IfExpr — conditional expression
 // ---------------------------------------------------------------------------
 describe('IfExpr', () => {
