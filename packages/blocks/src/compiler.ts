@@ -38,6 +38,10 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_scale':
     case 'sprout_if':
     case 'sprout_while':
+    case 'sprout_circle':
+    case 'sprout_rect':
+    case 'sprout_ellipse':
+    case 'sprout_triangle':
       return { kind: 'ExprStmt', expr: compileExprBlock(block) };
     case 'sprout_let':
       return compileLet(block);
@@ -165,6 +169,24 @@ function compileExprBlock(block: Blockly.Block): Expr {
       const body = compileBlockExpr(firstBodyBlock);
       const whileExpr: WhileExpr = { kind: 'WhileExpr', cond, body };
       return whileExpr;
+    }
+    case 'sprout_circle': {
+      const r = compileExpr(mustGetInput(block, 'R'));
+      return { kind: 'CallExpr', callee: 'circle', args: [r], block: null };
+    }
+    case 'sprout_rect': {
+      const w = compileExpr(mustGetInput(block, 'W'));
+      const h = compileExpr(mustGetInput(block, 'H'));
+      return { kind: 'CallExpr', callee: 'rect', args: [w, h], block: null };
+    }
+    case 'sprout_ellipse': {
+      const rx = compileExpr(mustGetInput(block, 'RX'));
+      const ry = compileExpr(mustGetInput(block, 'RY'));
+      return { kind: 'CallExpr', callee: 'ellipse', args: [rx, ry], block: null };
+    }
+    case 'sprout_triangle': {
+      const size = compileExpr(mustGetInput(block, 'SIZE'));
+      return { kind: 'CallExpr', callee: 'triangle', args: [size], block: null };
     }
     default:
       throw new Error(`Block type cannot be compiled as expression: ${block.type}`);

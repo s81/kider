@@ -559,3 +559,83 @@ describe('math blocks', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Shape blocks
+// ---------------------------------------------------------------------------
+
+describe('shape blocks', () => {
+  it('sprout_circle compiles to circle CallExpr', () => {
+    const ws = makeWorkspace();
+    const circleBlock = ws.newBlock('sprout_circle');
+    const numBlock = ws.newBlock('sprout_number');
+    numBlock.setFieldValue('50', 'NUM');
+    circleBlock.getInput('R')!.connection!.connect(numBlock.outputConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: { kind: 'CallExpr', callee: 'circle', args: [{ kind: 'NumberLit', value: 50 }], block: null },
+      }],
+    });
+  });
+
+  it('sprout_rect compiles to rect CallExpr with width and height', () => {
+    const ws = makeWorkspace();
+    const rectBlock = ws.newBlock('sprout_rect');
+    const wNum = ws.newBlock('sprout_number');
+    wNum.setFieldValue('80', 'NUM');
+    const hNum = ws.newBlock('sprout_number');
+    hNum.setFieldValue('40', 'NUM');
+    rectBlock.getInput('W')!.connection!.connect(wNum.outputConnection!);
+    rectBlock.getInput('H')!.connection!.connect(hNum.outputConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr', callee: 'rect',
+          args: [{ kind: 'NumberLit', value: 80 }, { kind: 'NumberLit', value: 40 }],
+          block: null,
+        },
+      }],
+    });
+  });
+
+  it('sprout_ellipse compiles to ellipse CallExpr with rx and ry', () => {
+    const ws = makeWorkspace();
+    const ellipseBlock = ws.newBlock('sprout_ellipse');
+    const rxNum = ws.newBlock('sprout_number');
+    rxNum.setFieldValue('60', 'NUM');
+    const ryNum = ws.newBlock('sprout_number');
+    ryNum.setFieldValue('30', 'NUM');
+    ellipseBlock.getInput('RX')!.connection!.connect(rxNum.outputConnection!);
+    ellipseBlock.getInput('RY')!.connection!.connect(ryNum.outputConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr', callee: 'ellipse',
+          args: [{ kind: 'NumberLit', value: 60 }, { kind: 'NumberLit', value: 30 }],
+          block: null,
+        },
+      }],
+    });
+  });
+
+  it('sprout_triangle compiles to triangle CallExpr', () => {
+    const ws = makeWorkspace();
+    const triBlock = ws.newBlock('sprout_triangle');
+    const numBlock = ws.newBlock('sprout_number');
+    numBlock.setFieldValue('50', 'NUM');
+    triBlock.getInput('SIZE')!.connection!.connect(numBlock.outputConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: { kind: 'CallExpr', callee: 'triangle', args: [{ kind: 'NumberLit', value: 50 }], block: null },
+      }],
+    });
+  });
+});
