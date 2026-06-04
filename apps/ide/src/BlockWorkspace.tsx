@@ -54,6 +54,11 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_min' },
     { kind: 'block', type: 'sprout_random' },
     { kind: 'block', type: 'sprout_pi' },
+    // Shapes
+    { kind: 'block', type: 'sprout_circle' },
+    { kind: 'block', type: 'sprout_rect' },
+    { kind: 'block', type: 'sprout_ellipse' },
+    { kind: 'block', type: 'sprout_triangle' },
     // Output
     { kind: 'block', type: 'sprout_puts' },
   ],
