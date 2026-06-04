@@ -96,8 +96,8 @@ Add `{ kind: 'block', type: 'sprout_random_color' }` after `sprout_color` in the
 
 ### `packages/lang/tests/interpreter.test.ts` — `describe('randomColor builtin')`
 
-- `randomColor()` returns a Drawing whose hex is one of the 9 palette hex values
-- `randomColor(:any)` returns a Drawing whose hex matches `/^#[0-9a-f]{6}$/`
+- `randomColor()` result equals one of the 9 `mkColor(paletteHex)` values (the Drawing has field `color`, not `hex`)
+- `randomColor(:any)` result's `.color` field matches `/^#[0-9a-f]{6}$/`
 - `randomColor(:bad)` throws `SproutRuntimeError` matching `/randomColor/`
 - `randomColor(1, 2)` throws `SproutRuntimeError` matching `/randomColor/`
 
