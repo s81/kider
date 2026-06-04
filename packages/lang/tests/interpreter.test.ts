@@ -1198,30 +1198,29 @@ describe('background builtin', () => {
     );
   });
 
+  it('background inside a sequence is accumulated correctly', () => {
+    const prog = program(
+      exprStmt(call('forward', [numLit(100)])),
+      exprStmt(call('background', [symLit('red')])),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkForward(100), mkBackground('#dc2626')]));
+  });
+
   it('background(:unknown) throws SproutRuntimeError', () => {
-    expect(() =>
-      interpret(program(exprStmt(call('background', [symLit('unknown')]))))
-    ).toThrow(SproutRuntimeError);
-    expect(() =>
-      interpret(program(exprStmt(call('background', [symLit('unknown')]))))
-    ).toThrow(/background/);
+    const fn = () => interpret(program(exprStmt(call('background', [symLit('unknown')]))));
+    expect(fn).toThrow(SproutRuntimeError);
+    expect(fn).toThrow(/background/);
   });
 
   it('background(1) throws SproutRuntimeError', () => {
-    expect(() =>
-      interpret(program(exprStmt(call('background', [numLit(1)]))))
-    ).toThrow(SproutRuntimeError);
-    expect(() =>
-      interpret(program(exprStmt(call('background', [numLit(1)]))))
-    ).toThrow(/background/);
+    const fn = () => interpret(program(exprStmt(call('background', [numLit(1)]))));
+    expect(fn).toThrow(SproutRuntimeError);
+    expect(fn).toThrow(/background/);
   });
 
   it('background() with no args throws SproutRuntimeError', () => {
-    expect(() =>
-      interpret(program(exprStmt(call('background', []))))
-    ).toThrow(SproutRuntimeError);
-    expect(() =>
-      interpret(program(exprStmt(call('background', []))))
-    ).toThrow(/background/);
+    const fn = () => interpret(program(exprStmt(call('background', []))));
+    expect(fn).toThrow(SproutRuntimeError);
+    expect(fn).toThrow(/background/);
   });
 });
