@@ -654,11 +654,18 @@ describe('randomColor builtin', () => {
     expect(possible).toContainEqual(result);
   });
 
-  it('randomColor(:any) returns a color Drawing with a valid #rrggbb hex', () => {
-    const result = interpret(program(exprStmt(call('randomColor', [{ kind: 'SymbolLit' as const, name: 'any' }]))));
-    const seq = result as { kind: 'sequence'; steps: Array<{ kind: string; color?: string }> };
-    expect(seq.steps[0].kind).toBe('color');
-    expect(seq.steps[0].color).toMatch(/^#[0-9a-f]{6}$/);
+  it('randomColor(:any) returns a color Drawing with a valid #rrggbb hex, and can produce non-palette colors', () => {
+    const paletteSet = new Set(PALETTE_COLORS);
+    const results: string[] = [];
+    for (let i = 0; i < 20; i++) {
+      const result = interpret(program(exprStmt(call('randomColor', [{ kind: 'SymbolLit' as const, name: 'any' }]))));
+      const seq = result as { kind: 'sequence'; steps: Array<{ kind: string; color?: string }> };
+      expect(seq.steps[0].kind).toBe('color');
+      const color = seq.steps[0].color!;
+      expect(color).toMatch(/^#[0-9a-f]{6}$/);
+      results.push(color);
+    }
+    expect(results.some(c => !paletteSet.has(c))).toBe(true);
   });
 
   it('randomColor(:bad) throws SproutRuntimeError', () => {
