@@ -37,4 +37,14 @@ export function registerShapeBlocks(): void {
       this.setColour(160);
     },
   };
+  Blockly.Blocks['sprout_polygon'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('N').setCheck('Number').appendField('polygon');
+      this.appendValueInput('SIZE').setCheck('Number').appendField('×');
+      this.setInputsInline(true);
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(160);
+    },
+  };
 }

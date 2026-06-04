@@ -643,3 +643,26 @@ describe('shape blocks', () => {
     ws.dispose();
   });
 });
+
+describe('polygon block', () => {
+  it('sprout_polygon compiles to CallExpr polygon(n, size)', () => {
+    const ws = makeWorkspace();
+    const polygonBlock = ws.newBlock('sprout_polygon');
+    const nNum = ws.newBlock('sprout_number');
+    nNum.setFieldValue('6', 'NUM');
+    polygonBlock.getInput('N')!.connection!.connect(nNum.outputConnection!);
+    const sizeNum = ws.newBlock('sprout_number');
+    sizeNum.setFieldValue('60', 'NUM');
+    polygonBlock.getInput('SIZE')!.connection!.connect(sizeNum.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: { kind: 'CallExpr', callee: 'polygon', args: [{ kind: 'NumberLit', value: 6 }, { kind: 'NumberLit', value: 60 }], block: null },
+      }],
+    });
+    ws.dispose();
+  });
+});
