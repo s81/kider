@@ -189,9 +189,7 @@ export function App() {
     if (!clickFn || accDrawingRef.current === null) return;
     try {
       const delta = callHandler(clickFn);
-      const next = mkSequence([accDrawingRef.current, delta]);
-      accDrawingRef.current = next;
-      setCommands(render(next));
+      applyHandlerDelta(delta);
     } catch (e) {
       setError(e instanceof SproutRuntimeError ? e.message : String(e));
     }

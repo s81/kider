@@ -361,6 +361,7 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
       state.x = 0;
       state.y = 0;
       state.heading = 0;
+      state.penDown = true;
       return;
   }
 }
