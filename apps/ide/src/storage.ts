@@ -26,3 +26,27 @@ export function buildBlocksSave(blocks: string, text: string): SaveState {
 export function buildTextSave(text: string): SaveState {
   return { mode: 'text', text };
 }
+
+export function encodeShare(save: SaveState): string {
+  const json = JSON.stringify(save);
+  return btoa(
+    encodeURIComponent(json).replace(/%([0-9A-F]{2})/gi, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16))
+    )
+  );
+}
+
+export function decodeShare(hash: string): SaveState | null {
+  if (!hash.startsWith('#share=')) return null;
+  try {
+    const json = decodeURIComponent(
+      atob(hash.slice('#share='.length))
+        .split('')
+        .map(c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+        .join('')
+    );
+    return parseSave(json);
+  } catch {
+    return null;
+  }
+}

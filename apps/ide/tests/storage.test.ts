@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseSave, buildBlocksSave, buildTextSave } from '../src/storage.js';
+import { parseSave, buildBlocksSave, buildTextSave, encodeShare, decodeShare } from '../src/storage.js';
 
 describe('parseSave', () => {
   it('returns null for invalid JSON', () => {
@@ -49,5 +49,39 @@ describe('buildTextSave', () => {
       mode: 'text',
       text: 'forward(100)',
     });
+  });
+});
+
+describe('encodeShare / decodeShare', () => {
+  it('round-trips a text save', () => {
+    const save = buildTextSave('forward(100)');
+    expect(decodeShare('#share=' + encodeShare(save))).toEqual(save);
+  });
+
+  it('round-trips a blocks save', () => {
+    const save = buildBlocksSave('{"blocks":{}}', 'forward(100)');
+    expect(decodeShare('#share=' + encodeShare(save))).toEqual(save);
+  });
+
+  it('round-trips text containing Unicode (emoji)', () => {
+    const save = buildTextSave('text("hello 🌈", 20)');
+    expect(decodeShare('#share=' + encodeShare(save))).toEqual(save);
+  });
+
+  it('decodeShare returns null for empty string', () => {
+    expect(decodeShare('')).toBeNull();
+  });
+
+  it('decodeShare returns null for wrong prefix', () => {
+    expect(decodeShare('#other=abc')).toBeNull();
+  });
+
+  it('decodeShare returns null for malformed base64', () => {
+    expect(decodeShare('#share=!!!')).toBeNull();
+  });
+
+  it('decodeShare returns null for valid base64 but invalid save JSON', () => {
+    const badPayload = btoa('{"mode":"unknown"}');
+    expect(decodeShare('#share=' + badPayload)).toBeNull();
   });
 });
