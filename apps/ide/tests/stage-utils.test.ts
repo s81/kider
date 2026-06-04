@@ -283,3 +283,37 @@ describe('shape drawing', () => {
     expect(ctx.fill).toHaveBeenCalled();
   });
 });
+
+describe('polygon drawing', () => {
+  it('drawPolygon with n=4, size=80 calls moveTo/lineTo for 4 vertices, fill, closePath', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{ kind: 'drawPolygon', x: 0, y: 0, n: 4, size: 80 }];
+    drawUpTo(ctx, commands, 1);
+    // fill must be called (semi-transparent fill pass)
+    expect(ctx.fill).toHaveBeenCalled();
+    // closePath must be called (closes polygon path)
+    expect(ctx.closePath).toHaveBeenCalled();
+    // 4 vertices → 1 moveTo (first vertex) + 3 lineTo (remaining vertices)
+    // Note: additional moveTo calls from setup and turtle reset are also present.
+    expect(ctx.lineTo).toHaveBeenCalledTimes(3);
+    // stroke must be called for the outline pass
+    expect(ctx.stroke).toHaveBeenCalled();
+  });
+
+  it('drawPolygon offsets vertices by turtle position', () => {
+    const ctx = makeShapeMockCtx();
+    const n = 4;
+    const size = 80;
+    const ox = 30;
+    const oy = -20;
+    const commands: CanvasCommand[] = [{ kind: 'drawPolygon', x: ox, y: oy, n, size }];
+    drawUpTo(ctx, commands, 1);
+    const cx = STAGE_W / 2 + ox;
+    const cy = STAGE_H / 2 + oy;
+    const R = size / (2 * Math.sin(Math.PI / n));
+    // First vertex: k=0 → angle = -π/2 → x=cx+R*cos(-π/2)≈cx, y=cy+R*sin(-π/2)=cy-R (top)
+    const v0x = cx + R * Math.cos(-Math.PI / 2);
+    const v0y = cy + R * Math.sin(-Math.PI / 2);
+    expect(ctx.moveTo).toHaveBeenCalledWith(expect.closeTo(v0x, 5), expect.closeTo(v0y, 5));
+  });
+});

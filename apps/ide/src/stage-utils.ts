@@ -172,6 +172,29 @@ export function drawUpTo(
         ctx.moveTo(cx, cy);
         break;
       }
+      case 'drawPolygon': {
+        ctx.stroke();
+        const cx = STAGE_W / 2 + cmd.x;
+        const cy = STAGE_H / 2 + cmd.y;
+        const R = cmd.size / (2 * Math.sin(Math.PI / cmd.n));
+        const vertices = Array.from({ length: cmd.n }, (_, k) => ({
+          x: cx + R * Math.cos(-Math.PI / 2 + (2 * Math.PI * k) / cmd.n),
+          y: cy + R * Math.sin(-Math.PI / 2 + (2 * Math.PI * k) / cmd.n),
+        }));
+        ctx.beginPath();
+        ctx.moveTo(vertices[0].x, vertices[0].y);
+        for (let i = 1; i < vertices.length; i++) ctx.lineTo(vertices[i].x, vertices[i].y);
+        ctx.closePath();
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = ctx.strokeStyle as string;
+        ctx.fill();
+        ctx.restore();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        break;
+      }
     }
   }
   ctx.stroke();
