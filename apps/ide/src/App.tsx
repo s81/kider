@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type * as Blockly from 'blockly';
+import * as Blockly from 'blockly';
 import { compileWorkspace } from '@sprout/blocks';
 import {
   interpretFull,
@@ -10,6 +10,7 @@ import {
 } from '@sprout/lang';
 import { parse, ParseError } from '@sprout/parser';
 import type { CanvasCommand, Drawing, SproutFunction } from '@sprout/lang';
+import { parseSave, buildBlocksSave, buildTextSave } from './storage.js';
 import { BlockWorkspace } from './BlockWorkspace.js';
 import { TextPanel } from './TextPanel.js';
 import { Stage } from './Stage.js';
@@ -45,6 +46,26 @@ export function App() {
       }
     }
   }, [editorText, sourceMode]);
+
+  useEffect(() => {
+    const ws = wsRef.current;
+    if (sourceMode === 'blocks') {
+      if (!ws) return;
+      const blocks = JSON.stringify(Blockly.serialization.workspaces.save(ws));
+      localStorage.setItem('sprout_save', JSON.stringify(buildBlocksSave(blocks, programText)));
+    } else {
+      localStorage.setItem('sprout_save', JSON.stringify(buildTextSave(editorText)));
+    }
+  }, [sourceMode, programText, editorText]);
+
+  useEffect(() => {
+    const raw = localStorage.getItem('sprout_save');
+    if (!raw) return;
+    const saved = parseSave(raw);
+    if (!saved || saved.mode !== 'text') return;
+    setEditorText(saved.text);
+    setSourceMode('editor');
+  }, []);
 
   const accDrawingRef = useRef<Drawing | null>(null);
   const [handlers, setHandlers] = useState<Map<string, SproutFunction>>(new Map());
@@ -102,7 +123,22 @@ export function App() {
       <div style={{ flex: '1 1 0', minWidth: 0 }}>
         <BlockWorkspace
           onTextChange={setProgramText}
-          onWorkspaceReady={ws => { wsRef.current = ws; }}
+          onWorkspaceReady={ws => {
+            wsRef.current = ws;
+            const raw = localStorage.getItem('sprout_save');
+            if (!raw) return;
+            const saved = parseSave(raw);
+            if (!saved || saved.mode !== 'blocks') return;
+            try {
+              Blockly.serialization.workspaces.load(
+                JSON.parse(saved.blocks) as Record<string, unknown>,
+                ws,
+                { recordUndo: false },
+              );
+            } catch {
+              // Silently ignore corrupt save data
+            }
+          }}
         />
       </div>
 

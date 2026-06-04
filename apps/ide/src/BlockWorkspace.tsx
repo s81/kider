@@ -75,7 +75,6 @@ export function BlockWorkspace({ onTextChange, onWorkspaceReady }: Props) {
   useEffect(() => {
     registerAllBlocks();
     const ws = Blockly.inject(divRef.current!, { toolbox: TOOLBOX });
-    onWorkspaceReady(ws);
 
     const listener = (e: Blockly.Events.Abstract) => {
       if (e.isUiEvent) return;
@@ -86,6 +85,7 @@ export function BlockWorkspace({ onTextChange, onWorkspaceReady }: Props) {
       }
     };
     ws.addChangeListener(listener);
+    onWorkspaceReady(ws);
 
     return () => {
       ws.removeChangeListener(listener);
