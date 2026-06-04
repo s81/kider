@@ -47,6 +47,7 @@ import {
   mkTriangle,
   mkPolygon,
   mkText,
+  mkBackground,
   PEN_UP,
   PEN_DOWN,
   EMPTY,
@@ -72,7 +73,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
     case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'penWidth': case 'empty':
-    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text':
+    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background':
       return true;
     default:
       return false;
@@ -209,6 +210,23 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
       return mkColor(hex);
     }
     throw new SproutRuntimeError(`randomColor expects 0 or 1 arguments, got ${args.length}`);
+  }],
+  ['background', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`background expects 1 argument, got ${args.length}`);
+    const arg = args[0];
+    if (arg.kind === 'symbol') {
+      const hex = COLOR_MAP[arg.name];
+      if (hex === undefined) {
+        throw new SproutRuntimeError(
+          `background: unknown color :${arg.name}. Available: ${Object.keys(COLOR_MAP).map(k => ':' + k).join(', ')}`
+        );
+      }
+      return mkBackground(hex);
+    }
+    if (arg.kind === 'string') {
+      return mkBackground(arg.value);
+    }
+    throw new SproutRuntimeError(`background: expects a color symbol or hex string, got ${arg.kind}`);
   }],
   ['puts', (args) => {
     // Side-effect for kids: print to console (best-effort) and return EMPTY.

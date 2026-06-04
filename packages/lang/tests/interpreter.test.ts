@@ -12,6 +12,7 @@ import {
   mkPenWidth,
   mkPolygon,
   mkText,
+  mkBackground,
   PEN_UP,
   PEN_DOWN,
 } from '../src/values.js';
@@ -1172,5 +1173,55 @@ describe('text builtin', () => {
   it('text("hi", 0) with size <= 0 throws', () => {
     expect(() => interpret(program(exprStmt(call('text', [strLit('hi'), numLit(0)]))))).toThrow(SproutRuntimeError);
     expect(() => interpret(program(exprStmt(call('text', [strLit('hi'), numLit(0)]))))).toThrow(/text/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// background builtin
+// ---------------------------------------------------------------------------
+describe('background builtin', () => {
+  it('background(:red) returns a background Drawing with the palette hex', () => {
+    expect(interpret(program(exprStmt(call('background', [symLit('red')]))))).toEqual(
+      mkSequence([mkBackground('#dc2626')])
+    );
+  });
+
+  it('background(:white) returns a background Drawing with #ffffff', () => {
+    expect(interpret(program(exprStmt(call('background', [symLit('white')]))))).toEqual(
+      mkSequence([mkBackground('#ffffff')])
+    );
+  });
+
+  it('background("#ff4400") accepts a hex string directly', () => {
+    expect(interpret(program(exprStmt(call('background', [strLit('#ff4400')]))))).toEqual(
+      mkSequence([mkBackground('#ff4400')])
+    );
+  });
+
+  it('background(:unknown) throws SproutRuntimeError', () => {
+    expect(() =>
+      interpret(program(exprStmt(call('background', [symLit('unknown')]))))
+    ).toThrow(SproutRuntimeError);
+    expect(() =>
+      interpret(program(exprStmt(call('background', [symLit('unknown')]))))
+    ).toThrow(/background/);
+  });
+
+  it('background(1) throws SproutRuntimeError', () => {
+    expect(() =>
+      interpret(program(exprStmt(call('background', [numLit(1)]))))
+    ).toThrow(SproutRuntimeError);
+    expect(() =>
+      interpret(program(exprStmt(call('background', [numLit(1)]))))
+    ).toThrow(/background/);
+  });
+
+  it('background() with no args throws SproutRuntimeError', () => {
+    expect(() =>
+      interpret(program(exprStmt(call('background', []))))
+    ).toThrow(SproutRuntimeError);
+    expect(() =>
+      interpret(program(exprStmt(call('background', []))))
+    ).toThrow(/background/);
   });
 });
