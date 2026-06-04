@@ -195,6 +195,17 @@ export function drawUpTo(
         ctx.moveTo(cx, cy);
         break;
       }
+      case 'drawText': {
+        ctx.stroke();
+        const cx = STAGE_W / 2 + cmd.x;
+        const cy = STAGE_H / 2 + cmd.y;
+        ctx.font = `${cmd.size}px sans-serif`;
+        ctx.fillStyle = ctx.strokeStyle as string;
+        ctx.fillText(cmd.str, cx, cy);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        break;
+      }
     }
   }
   ctx.stroke();

@@ -209,6 +209,7 @@ describe('getTurtleState', () => {
 function makeShapeMockCtx() {
   let globalAlphaValue = 1;
   let fillStyleValue: string = '';
+  let fontValue: string = '';
   return {
     clearRect: vi.fn(),
     beginPath: vi.fn(),
@@ -222,10 +223,13 @@ function makeShapeMockCtx() {
     rect: vi.fn(),
     ellipse: vi.fn(),
     closePath: vi.fn(),
+    fillText: vi.fn(),
     get globalAlpha() { return globalAlphaValue; },
     set globalAlpha(v: number) { globalAlphaValue = v; },
     get fillStyle() { return fillStyleValue; },
     set fillStyle(v: string) { fillStyleValue = v; },
+    get font() { return fontValue; },
+    set font(v: string) { fontValue = v; },
     strokeStyle: '#2563eb' as CanvasRenderingContext2D['strokeStyle'],
     lineWidth: 2,
     lineCap: 'round' as CanvasRenderingContext2D['lineCap'],
@@ -315,5 +319,22 @@ describe('polygon drawing', () => {
     const v0x = cx + R * Math.cos(-Math.PI / 2);
     const v0y = cy + R * Math.sin(-Math.PI / 2);
     expect(ctx.moveTo).toHaveBeenCalledWith(expect.closeTo(v0x, 5), expect.closeTo(v0y, 5));
+  });
+});
+
+describe('text drawing', () => {
+  it('drawText calls fillText with correct canvas-offset position', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{ kind: 'drawText', x: 10, y: -20, str: 'hello', size: 24 }];
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.fillText).toHaveBeenCalledWith('hello', STAGE_W / 2 + 10, STAGE_H / 2 - 20);
+  });
+
+  it('drawText sets fillStyle to strokeStyle before drawing', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{ kind: 'drawText', x: 0, y: 0, str: 'hi', size: 16 }];
+    drawUpTo(ctx, commands, 1);
+    expect((ctx as unknown as { fillStyle: string }).fillStyle).toBe('#2563eb');
+    expect((ctx as unknown as { font: string }).font).toBe('16px sans-serif');
   });
 });
