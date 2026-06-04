@@ -308,10 +308,15 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
 
     case 'polygon': {
       const R = drawing.size / (2 * Math.sin(Math.PI / drawing.n));
-      bbox.minX = Math.min(bbox.minX, state.x - R);
-      bbox.maxX = Math.max(bbox.maxX, state.x + R);
-      bbox.minY = Math.min(bbox.minY, state.y - R);
-      bbox.maxY = Math.max(bbox.maxY, state.y + R);
+      for (let k = 0; k < drawing.n; k++) {
+        const angle = -Math.PI / 2 + (2 * Math.PI * k) / drawing.n;
+        const vx = state.x + R * Math.cos(angle);
+        const vy = state.y + R * Math.sin(angle);
+        bbox.minX = Math.min(bbox.minX, vx);
+        bbox.maxX = Math.max(bbox.maxX, vx);
+        bbox.minY = Math.min(bbox.minY, vy);
+        bbox.maxY = Math.max(bbox.maxY, vy);
+      }
       return;
     }
   }

@@ -454,10 +454,12 @@ describe('polygon rendering', () => {
     ]);
   });
 
-  it('measure(polygon(6, 60)) → width 120, height 120 (hexagon: R=60)', () => {
-    // hexagon: R = 60 / (2 * sin(π/6)) = 60 / (2 * 0.5) = 60; bbox = 2R × 2R = 120 × 120
+  it('measure(polygon(6, 60)) → tight vertex-based bbox', () => {
+    // hexagon: R = 60 / (2 * sin(π/6)) = 60
+    // vertex x range: ±R*cos(30°) = ±60*(√3/2) → width ≈ 103.92
+    // vertex y range: ±R → height = 120 (top vertex at -π/2, bottom at +π/2)
     const result = measure(mkPolygon(6, 60));
-    expect(result.width).toBeCloseTo(120, 5);
+    expect(result.width).toBeCloseTo(60 * Math.sqrt(3), 5);
     expect(result.height).toBeCloseTo(120, 5);
   });
 

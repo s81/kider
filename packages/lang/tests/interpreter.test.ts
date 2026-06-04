@@ -1091,4 +1091,8 @@ describe('shape builtins', () => {
   it('polygon(6, true) throws with non-number size', () => {
     expect(() => interpret(program(exprStmt(call('polygon', [numLit(6), boolLit(true)]))))).toThrow(SproutRuntimeError);
   });
+  it('polygon(2.5, 60) throws for non-integer n (not just n<3)', () => {
+    expect(() => interpret(program(exprStmt(call('polygon', [numLit(2.5), numLit(60)]))))).toThrow(SproutRuntimeError);
+    expect(() => interpret(program(exprStmt(call('polygon', [numLit(2.5), numLit(60)]))))).toThrow(/integer/);
+  });
 });
