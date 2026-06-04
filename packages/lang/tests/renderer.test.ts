@@ -14,6 +14,7 @@ import {
   mkPenWidth,
   mkPolygon,
   mkText,
+  mkBackground,
 } from '../src/values.js';
 import type { CanvasCommand } from '../src/renderer.js';
 
@@ -529,5 +530,33 @@ describe('text rendering', () => {
     const result = measure(seq);
     expect(result.height).toBeCloseTo(70, 5);
     expect(result.width).toBeCloseTo(2 * 20 * 0.6, 5); // 'hi' = 2 chars, width per char = size * 0.6
+  });
+});
+
+// ---------------------------------------------------------------------------
+// background rendering
+// ---------------------------------------------------------------------------
+describe('background rendering', () => {
+  it('render(background) emits fillBackground — no moveTo', () => {
+    expect(render(mkBackground('#dc2626'))).toEqual([
+      { kind: 'fillBackground', color: '#dc2626' },
+    ]);
+  });
+
+  it('scale(2, background) leaves color unchanged', () => {
+    expect(render({ kind: 'scale', factor: 2, drawing: mkBackground('#2563eb') })).toEqual([
+      { kind: 'fillBackground', color: '#2563eb' },
+    ]);
+  });
+
+  it('sequence [background, forward] emits fillBackground then lineTo', () => {
+    expect(render(mkSequence([mkBackground('#dc2626'), mkForward(50)]))).toEqual([
+      { kind: 'fillBackground', color: '#dc2626' },
+      { kind: 'lineTo', x: 0, y: -50 },
+    ]);
+  });
+
+  it('measure(background) returns width=0, height=0', () => {
+    expect(measure(mkBackground('#dc2626'))).toEqual({ width: 0, height: 0 });
   });
 });

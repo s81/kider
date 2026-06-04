@@ -21,7 +21,8 @@ export type CanvasCommand =
   | { readonly kind: 'drawEllipse';  readonly x: number; readonly y: number; readonly rx: number; readonly ry: number }
   | { readonly kind: 'drawTriangle'; readonly x: number; readonly y: number; readonly size: number }
   | { readonly kind: 'drawPolygon';  readonly x: number; readonly y: number; readonly n: number; readonly size: number }
-  | { readonly kind: 'drawText';     readonly x: number; readonly y: number; readonly str: string; readonly size: number };
+  | { readonly kind: 'drawText';     readonly x: number; readonly y: number; readonly str: string; readonly size: number }
+  | { readonly kind: 'fillBackground'; readonly color: string };
 
 // ---------------------------------------------------------------------------
 // Turtle state (internal)
@@ -72,6 +73,8 @@ function scaleDrawing(factor: number, d: Drawing): Drawing {
       return { kind: 'polygon', n: d.n, size: d.size * factor };
     case 'text':
       return { kind: 'text', str: d.str, size: d.size * factor };
+    case 'background':
+      return d;
   }
 }
 
@@ -204,6 +207,10 @@ function renderInto(
       out.push({ kind: 'drawText', x: state.x, y: state.y, str: drawing.str, size: drawing.size });
       out.push({ kind: 'moveTo', x: state.x, y: state.y });
       return;
+
+    case 'background':
+      out.push({ kind: 'fillBackground', color: drawing.color });
+      return;
   }
 }
 
@@ -333,6 +340,9 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
       bbox.maxX = Math.max(bbox.maxX, state.x + drawing.str.length * drawing.size * 0.6);
       bbox.minY = Math.min(bbox.minY, state.y - drawing.size);
       bbox.maxY = Math.max(bbox.maxY, state.y);
+      return;
+
+    case 'background':
       return;
   }
 }
