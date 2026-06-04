@@ -40,6 +40,7 @@ function roundCmd(c: CanvasCommand): CanvasCommand {
   if (c.kind === 'drawEllipse')  return { ...c, x: roundNum(c.x), y: roundNum(c.y) };
   if (c.kind === 'drawTriangle') return { ...c, x: roundNum(c.x), y: roundNum(c.y) };
   if (c.kind === 'drawPolygon')  return { ...c, x: roundNum(c.x), y: roundNum(c.y) };
+  if (c.kind === 'drawText')     return { ...c, x: roundNum(c.x), y: roundNum(c.y) };
   return c;
 }
 const roundCmds = (cmds: CanvasCommand[]) => cmds.map(roundCmd);
@@ -513,5 +514,20 @@ describe('text rendering', () => {
       { kind: 'drawText', x: 0, y: -100, str: 'hi', size: 20 },
       { kind: 'moveTo', x: 0, y: -100 },
     ]);
+  });
+
+  it('measure bbox verifies text grows upward from baseline', () => {
+    // After forward(50), turtle is at y=-50. Text of size 20 should have:
+    // - baseline at y=-50
+    // - minY = -50 - 20 = -70 (text grows upward)
+    // - maxY = -50 (baseline)
+    // Sequence bounds: forward(50) goes from (0,0) to (0,-50) with maxY=0
+    // Text at (0,-50) with size 20: minY=-70, maxY=-50
+    // Overall bbox: minX=0, maxX=0.6*20*2≈24, minY=-70, maxY=0
+    // Height should be 70 (from -70 to 0)
+    const seq = mkSequence([mkForward(50), mkText('hi', 20)]);
+    const result = measure(seq);
+    expect(result.height).toBeCloseTo(70, 5);
+    expect(result.width).toBeCloseTo(2 * 20 * 0.6, 5); // 'hi' = 2 chars, width per char = size * 0.6
   });
 });
