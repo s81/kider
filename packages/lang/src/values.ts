@@ -76,6 +76,7 @@ export type Drawing =
   | { readonly kind: 'rect';     readonly width: number; readonly height: number }
   | { readonly kind: 'ellipse';  readonly rx: number; readonly ry: number }
   | { readonly kind: 'triangle'; readonly size: number }
+  | { readonly kind: 'polygon';  readonly n: number; readonly size: number }
   | { readonly kind: 'empty' };
 
 // ---------------------------------------------------------------------------
@@ -93,7 +94,7 @@ export interface SproutVar {
 }
 
 // INVARIANT: Drawing.kind values ('forward','turn','penUp','penDown','sequence',
-// 'beside','above','scale','color','penWidth','empty','circle','rect','ellipse','triangle')
+// 'beside','above','scale','color','penWidth','empty','circle','rect','ellipse','triangle','polygon')
 // must never match SproutNumber/String/Symbol/Bool/Function/Var kinds.
 export type SproutValue =
   | SproutNumber
@@ -148,5 +149,8 @@ export const mkEllipse = (rx: number, ry: number): Drawing =>
 
 export const mkTriangle = (size: number): Drawing =>
   ({ kind: 'triangle', size });
+
+export const mkPolygon = (n: number, size: number): Drawing =>
+  ({ kind: 'polygon', n, size });
 
 export const EMPTY: Drawing = { kind: 'empty' };

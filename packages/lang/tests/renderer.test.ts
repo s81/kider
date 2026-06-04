@@ -12,6 +12,7 @@ import {
   mkScale,
   mkColor,
   mkPenWidth,
+  mkPolygon,
 } from '../src/values.js';
 import type { CanvasCommand } from '../src/renderer.js';
 
@@ -37,6 +38,7 @@ function roundCmd(c: CanvasCommand): CanvasCommand {
   if (c.kind === 'drawRect')     return { ...c, x: roundNum(c.x), y: roundNum(c.y) };
   if (c.kind === 'drawEllipse')  return { ...c, x: roundNum(c.x), y: roundNum(c.y) };
   if (c.kind === 'drawTriangle') return { ...c, x: roundNum(c.x), y: roundNum(c.y) };
+  if (c.kind === 'drawPolygon')  return { ...c, x: roundNum(c.x), y: roundNum(c.y) };
   return c;
 }
 const roundCmds = (cmds: CanvasCommand[]) => cmds.map(roundCmd);
@@ -436,6 +438,42 @@ describe('shape rendering', () => {
     expect(render({ kind: 'scale', factor: 2, drawing: { kind: 'circle', radius: 10 } })).toEqual([
       { kind: 'drawCircle', x: 0, y: 0, radius: 20 },
       { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Polygon rendering
+// ---------------------------------------------------------------------------
+
+describe('polygon rendering', () => {
+  it('render(polygon(6, 60)) emits drawPolygon at origin + moveTo', () => {
+    expect(render(mkPolygon(6, 60))).toEqual([
+      { kind: 'drawPolygon', x: 0, y: 0, n: 6, size: 60 },
+      { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+
+  it('measure(polygon(6, 60)) → width 120, height 120 (hexagon: R=60)', () => {
+    // hexagon: R = 60 / (2 * sin(π/6)) = 60 / (2 * 0.5) = 60; bbox = 2R × 2R = 120 × 120
+    const result = measure(mkPolygon(6, 60));
+    expect(result.width).toBeCloseTo(120, 5);
+    expect(result.height).toBeCloseTo(120, 5);
+  });
+
+  it('scaleDrawing(2) doubles size, n unchanged', () => {
+    expect(render({ kind: 'scale', factor: 2, drawing: mkPolygon(6, 30) })).toEqual([
+      { kind: 'drawPolygon', x: 0, y: 0, n: 6, size: 60 },
+      { kind: 'moveTo', x: 0, y: 0 },
+    ]);
+  });
+
+  it('shape position tracks turtle — forward then polygon', () => {
+    const drawing = { kind: 'sequence' as const, steps: [mkForward(100), mkPolygon(4, 40)] };
+    expect(render(drawing)).toEqual([
+      { kind: 'lineTo', x: 0, y: -100 },
+      { kind: 'drawPolygon', x: 0, y: -100, n: 4, size: 40 },
+      { kind: 'moveTo', x: 0, y: -100 },
     ]);
   });
 });

@@ -19,7 +19,8 @@ export type CanvasCommand =
   | { readonly kind: 'drawCircle';   readonly x: number; readonly y: number; readonly radius: number }
   | { readonly kind: 'drawRect';     readonly x: number; readonly y: number; readonly width: number; readonly height: number }
   | { readonly kind: 'drawEllipse';  readonly x: number; readonly y: number; readonly rx: number; readonly ry: number }
-  | { readonly kind: 'drawTriangle'; readonly x: number; readonly y: number; readonly size: number };
+  | { readonly kind: 'drawTriangle'; readonly x: number; readonly y: number; readonly size: number }
+  | { readonly kind: 'drawPolygon';  readonly x: number; readonly y: number; readonly n: number; readonly size: number };
 
 // ---------------------------------------------------------------------------
 // Turtle state (internal)
@@ -66,6 +67,8 @@ function scaleDrawing(factor: number, d: Drawing): Drawing {
       return { kind: 'ellipse', rx: d.rx * factor, ry: d.ry * factor };
     case 'triangle':
       return { kind: 'triangle', size: d.size * factor };
+    case 'polygon':
+      return { kind: 'polygon', n: d.n, size: d.size * factor };
   }
 }
 
@@ -188,6 +191,11 @@ function renderInto(
       out.push({ kind: 'drawTriangle', x: state.x, y: state.y, size: drawing.size });
       out.push({ kind: 'moveTo', x: state.x, y: state.y });
       return;
+
+    case 'polygon':
+      out.push({ kind: 'drawPolygon', x: state.x, y: state.y, n: drawing.n, size: drawing.size });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      return;
   }
 }
 
@@ -295,6 +303,15 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
       bbox.maxX = Math.max(bbox.maxX, state.x + halfW);
       bbox.minY = Math.min(bbox.minY, state.y - tipY);
       bbox.maxY = Math.max(bbox.maxY, state.y + baseY);
+      return;
+    }
+
+    case 'polygon': {
+      const R = drawing.size / (2 * Math.sin(Math.PI / drawing.n));
+      bbox.minX = Math.min(bbox.minX, state.x - R);
+      bbox.maxX = Math.max(bbox.maxX, state.x + R);
+      bbox.minY = Math.min(bbox.minY, state.y - R);
+      bbox.maxY = Math.max(bbox.maxY, state.y + R);
       return;
     }
   }

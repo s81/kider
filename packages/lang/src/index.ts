@@ -53,6 +53,7 @@ export {
   mkRect,
   mkEllipse,
   mkTriangle,
+  mkPolygon,
   // Drawing singleton constants (zero-arg constructors replaced by constants)
   PEN_UP,
   PEN_DOWN,
