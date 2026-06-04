@@ -10,7 +10,8 @@ import {
 } from '@sprout/lang';
 import { parse, ParseError } from '@sprout/parser';
 import type { CanvasCommand, Drawing, SproutFunction } from '@sprout/lang';
-import { parseSave, buildBlocksSave, buildTextSave } from './storage.js';
+import { parseSave, buildBlocksSave, buildTextSave, encodeShare, decodeShare } from './storage.js';
+import type { SaveState } from './storage.js';
 import { BlockWorkspace } from './BlockWorkspace.js';
 import { TextPanel } from './TextPanel.js';
 import { Stage } from './Stage.js';
@@ -27,6 +28,7 @@ export function App() {
   const [animated, setAnimated] = useState(false);
   const [stepsPerFrame, setStepsPerFrame] = useState(3);
   const [editorParseError, setEditorParseError] = useState<string | null>(null);
+  const [shareConfirm, setShareConfirm] = useState(false);
 
   useEffect(() => {
     // Clear any stale runtime error from a previous Run when the user edits.
@@ -65,6 +67,17 @@ export function App() {
     if (!saved || saved.mode !== 'text') return;
     setEditorText(saved.text);
     setSourceMode('editor');
+  }, []);
+
+  useEffect(() => {
+    const saved = decodeShare(window.location.hash);
+    if (!saved) return;
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    if (saved.mode === 'text') {
+      setEditorText(saved.text);
+      setSourceMode('editor');
+    }
+    // blocks mode is handled in onWorkspaceReady (child effects run before parent effects)
   }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -146,6 +159,22 @@ export function App() {
     e.target.value = '';
   }
 
+  function handleShare() {
+    let save: SaveState;
+    if (sourceMode === 'blocks' && wsRef.current) {
+      const blocksJson = JSON.stringify(Blockly.serialization.workspaces.save(wsRef.current));
+      save = buildBlocksSave(blocksJson, programText);
+    } else {
+      save = buildTextSave(editorText);
+    }
+    const encoded = encodeShare(save);
+    const url = `${window.location.origin}${window.location.pathname}#share=${encoded}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setShareConfirm(true);
+      setTimeout(() => setShareConfirm(false), 2000);
+    });
+  }
+
   const hasClickHandler = handlers.has(':click');
 
   return (
@@ -156,6 +185,20 @@ export function App() {
           onTextChange={setProgramText}
           onWorkspaceReady={ws => {
             wsRef.current = ws;
+            // URL share takes priority over localStorage (child effects run before parent effects,
+            // so this fires before the mount useEffect that clears the hash for text shares)
+            const share = decodeShare(window.location.hash);
+            if (share?.mode === 'blocks') {
+              window.history.replaceState(null, '', window.location.pathname + window.location.search);
+              try {
+                Blockly.serialization.workspaces.load(
+                  JSON.parse(share.blocks) as Record<string, unknown>,
+                  ws,
+                  { recordUndo: false },
+                );
+              } catch { /* ignore corrupt share */ }
+              return;
+            }
             const raw = localStorage.getItem('sprout_save');
             if (!raw) return;
             const saved = parseSave(raw);
@@ -264,6 +307,21 @@ export function App() {
             }}
           >
             ↑ Import
+          </button>
+          <button
+            onClick={handleShare}
+            style={{
+              flex: 1,
+              padding: '4px 0',
+              fontSize: 13,
+              background: '#fff',
+              border: '1px solid #cbd5e1',
+              borderRadius: 4,
+              cursor: 'pointer',
+              color: shareConfirm ? '#16a34a' : '#334155',
+            }}
+          >
+            {shareConfirm ? '✓ Copied!' : '↗ Share'}
           </button>
           <input
             ref={fileInputRef}
