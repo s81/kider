@@ -67,6 +67,7 @@ export function App() {
     setSourceMode('editor');
   }, []);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const accDrawingRef = useRef<Drawing | null>(null);
   const [handlers, setHandlers] = useState<Map<string, SproutFunction>>(new Map());
 
@@ -113,6 +114,36 @@ export function App() {
   function handleSwitchToEditor() {
     setEditorText(programText);
     setSourceMode('editor');
+  }
+
+  function handleExport() {
+    const text = sourceMode === 'blocks' ? programText : editorText;
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'program.sprout';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function handleImport() {
+    fileInputRef.current?.click();
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      setEditorText(text);
+      setSourceMode('editor');
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   }
 
   const hasClickHandler = handlers.has(':click');
@@ -200,6 +231,47 @@ export function App() {
           >
             Text
           </button>
+        </div>
+
+        {/* Export / Import */}
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button
+            onClick={handleExport}
+            style={{
+              flex: 1,
+              padding: '4px 0',
+              fontSize: 13,
+              background: '#fff',
+              border: '1px solid #cbd5e1',
+              borderRadius: 4,
+              cursor: 'pointer',
+              color: '#334155',
+            }}
+          >
+            ↓ Export
+          </button>
+          <button
+            onClick={handleImport}
+            style={{
+              flex: 1,
+              padding: '4px 0',
+              fontSize: 13,
+              background: '#fff',
+              border: '1px solid #cbd5e1',
+              borderRadius: 4,
+              cursor: 'pointer',
+              color: '#334155',
+            }}
+          >
+            ↑ Import
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".sprout,.txt"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
         </div>
 
         {/* Animation controls */}
