@@ -83,8 +83,47 @@ export function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const accDrawingRef = useRef<Drawing | null>(null);
   const [handlers, setHandlers] = useState<Map<string, SproutFunction>>(new Map());
+  const handlersRef = useRef<Map<string, SproutFunction>>(new Map());
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const KEY_MAP: Record<string, string> = {
+      ArrowLeft:  ':left',
+      ArrowRight: ':right',
+      ArrowUp:    ':up',
+      ArrowDown:  ':down',
+      ' ':        ':space',
+    };
+    function onKeyDown(e: KeyboardEvent) {
+      const handlerKey = KEY_MAP[e.key];
+      if (!handlerKey) return;
+      const fn = handlersRef.current.get(handlerKey);
+      if (!fn || accDrawingRef.current === null) return;
+      e.preventDefault();
+      try {
+        const delta = callHandler(fn);
+        const next = mkSequence([accDrawingRef.current, delta]);
+        accDrawingRef.current = next;
+        setCommands(render(next));
+      } catch (err) {
+        setError(err instanceof SproutRuntimeError ? err.message : String(err));
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) clearInterval(timerRef.current);
+    };
+  }, []);
 
   function handleRun() {
+    if (timerRef.current !== null) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     try {
       setError(null);
       let program;
@@ -97,8 +136,27 @@ export function App() {
       }
       const { drawing, handlers: h } = interpretFull(program);
       accDrawingRef.current = drawing;
+      handlersRef.current = h;
       setHandlers(h);
       setCommands(render(drawing));
+      const timerFn = h.get(':timer');
+      if (timerFn) {
+        timerRef.current = setInterval(() => {
+          if (accDrawingRef.current === null) return;
+          try {
+            const delta = callHandler(timerFn);
+            const next = mkSequence([accDrawingRef.current, delta]);
+            accDrawingRef.current = next;
+            setCommands(render(next));
+          } catch (e) {
+            setError(e instanceof SproutRuntimeError ? e.message : String(e));
+            if (timerRef.current !== null) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+          }
+        }, 200);
+      }
     } catch (e) {
       if (e instanceof SproutRuntimeError || e instanceof ParseError) {
         setError(e.message);
@@ -107,6 +165,7 @@ export function App() {
       }
       setCommands([]);
       setHandlers(new Map());
+      handlersRef.current = new Map();
       accDrawingRef.current = null;
     }
   }
@@ -361,6 +420,17 @@ export function App() {
         {hasClickHandler && (
           <div style={{ fontSize: 12, color: '#64748b', textAlign: 'center' }}>
             Click the canvas to fire the :click handler
+          </div>
+        )}
+
+        {(handlers.has(':left') || handlers.has(':right') || handlers.has(':up') ||
+          handlers.has(':down') || handlers.has(':space') || handlers.has(':timer')) && (
+          <div style={{ fontSize: 12, color: '#64748b', textAlign: 'center' }}>
+            {[
+              (handlers.has(':left') || handlers.has(':right') || handlers.has(':up') ||
+               handlers.has(':down') || handlers.has(':space')) ? '← → ↑ ↓ space active' : '',
+              handlers.has(':timer') ? 'timer active (200ms)' : '',
+            ].filter(Boolean).join(' · ')}
           </div>
         )}
 
