@@ -810,3 +810,26 @@ describe('background block', () => {
     ws.dispose();
   });
 });
+
+describe('clearCanvas block', () => {
+  it('sprout_clear_canvas compiles to clearCanvas()', () => {
+    const ws = makeWorkspace();
+    const block = ws.newBlock('sprout_clear_canvas');
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [block];
+
+    const result = compileWorkspace(ws);
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr',
+          callee: 'clearCanvas',
+          args: [],
+          block: null,
+        },
+      }],
+    });
+    ws.dispose();
+  });
+});

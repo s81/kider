@@ -120,6 +120,17 @@ export function registerStatementBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_clear_canvas'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('clear canvas');
+      this.setTooltip('Wipes the canvas and resets the turtle to the center.');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(20);
+    },
+  };
+
   Blockly.Blocks['sprout_repeat'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('COUNT').setCheck('Number').appendField('repeat');
