@@ -10,6 +10,7 @@ import {
   mkScale,
   mkColor,
   mkPenWidth,
+  mkPolygon,
   PEN_UP,
   PEN_DOWN,
 } from '../src/values.js';
@@ -1066,5 +1067,25 @@ describe('shape builtins', () => {
   });
   it('triangle throws with non-number arg', () => {
     expect(() => interpret(program(exprStmt(call('triangle', [boolLit(true)]))))).toThrow(SproutRuntimeError);
+  });
+  it('polygon(6, 60) returns polygon Drawing', () => {
+    expect(interpret(program(exprStmt(call('polygon', [numLit(6), numLit(60)]))))).toEqual(
+      mkSequence([mkPolygon(6, 60)])
+    );
+  });
+  it('polygon() throws with 0 args', () => {
+    expect(() => interpret(program(exprStmt(call('polygon', []))))).toThrow(SproutRuntimeError);
+    expect(() => interpret(program(exprStmt(call('polygon', []))))).toThrow(/polygon/);
+  });
+  it('polygon(6) throws with 1 arg', () => {
+    expect(() => interpret(program(exprStmt(call('polygon', [numLit(6)]))))).toThrow(SproutRuntimeError);
+    expect(() => interpret(program(exprStmt(call('polygon', [numLit(6)]))))).toThrow(/polygon/);
+  });
+  it('polygon(2, 60) throws when n < 3', () => {
+    expect(() => interpret(program(exprStmt(call('polygon', [numLit(2), numLit(60)]))))).toThrow(SproutRuntimeError);
+    expect(() => interpret(program(exprStmt(call('polygon', [numLit(2), numLit(60)]))))).toThrow(/polygon/);
+  });
+  it('polygon(true, 60) throws with non-number n', () => {
+    expect(() => interpret(program(exprStmt(call('polygon', [boolLit(true), numLit(60)]))))).toThrow(SproutRuntimeError);
   });
 });

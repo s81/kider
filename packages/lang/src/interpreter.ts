@@ -44,6 +44,7 @@ import {
   mkRect,
   mkEllipse,
   mkTriangle,
+  mkPolygon,
   PEN_UP,
   PEN_DOWN,
   EMPTY,
@@ -69,7 +70,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
     case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'penWidth': case 'empty':
-    case 'circle': case 'rect': case 'ellipse': case 'triangle':
+    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon':
       return true;
     default:
       return false;
@@ -297,6 +298,13 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (args.length !== 1) throw new SproutRuntimeError(`triangle expects 1 argument, got ${args.length}`);
     const size = assertNumber(args[0], 'triangle');
     return mkTriangle(size.value);
+  }],
+  ['polygon', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`polygon expects 2 arguments, got ${args.length}`);
+    const n = assertNumber(args[0], 'polygon (n)');
+    const size = assertNumber(args[1], 'polygon (size)');
+    if (n.value < 3) throw new SproutRuntimeError(`polygon expects n ≥ 3, got ${n.value}`);
+    return mkPolygon(n.value, size.value);
   }],
 ]);
 
