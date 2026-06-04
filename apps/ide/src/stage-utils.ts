@@ -200,6 +200,7 @@ export function drawUpTo(
         const cx = STAGE_W / 2 + cmd.x;
         const cy = STAGE_H / 2 + cmd.y;
         ctx.font = `${cmd.size}px sans-serif`;
+        // fillStyle set directly — no globalAlpha change, so no save/restore needed
         ctx.fillStyle = ctx.strokeStyle as string;
         ctx.fillText(cmd.str, cx, cy);
         ctx.beginPath();

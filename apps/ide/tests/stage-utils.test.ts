@@ -337,4 +337,15 @@ describe('text drawing', () => {
     expect((ctx as unknown as { fillStyle: string }).fillStyle).toBe('#2563eb');
     expect((ctx as unknown as { font: string }).font).toBe('16px sans-serif');
   });
+
+  it('drawText sets fillStyle before calling fillText', () => {
+    const ctx = makeShapeMockCtx();
+    let fillStyleAtCall = '';
+    (ctx.fillText as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      fillStyleAtCall = (ctx as unknown as { fillStyle: string }).fillStyle;
+    });
+    const commands: CanvasCommand[] = [{ kind: 'drawText', x: 0, y: 0, str: 'hi', size: 16 }];
+    drawUpTo(ctx, commands, 1);
+    expect(fillStyleAtCall).toBe('#2563eb');
+  });
 });
