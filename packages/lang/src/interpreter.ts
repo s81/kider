@@ -48,6 +48,7 @@ import {
   mkPolygon,
   mkText,
   mkBackground,
+  mkClearCanvas,
   PEN_UP,
   PEN_DOWN,
   EMPTY,
@@ -73,7 +74,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
     case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'penWidth': case 'empty':
-    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background':
+    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas':
       return true;
     default:
       return false;
@@ -227,6 +228,10 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
       return mkBackground(arg.value);
     }
     throw new SproutRuntimeError(`background: expects a color symbol or hex string, got ${arg.kind}`);
+  }],
+  ['clearCanvas', (args) => {
+    if (args.length !== 0) throw new SproutRuntimeError(`clearCanvas expects 0 arguments, got ${args.length}`);
+    return mkClearCanvas();
   }],
   ['puts', (args) => {
     // Side-effect for kids: print to console (best-effort) and return EMPTY.

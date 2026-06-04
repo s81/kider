@@ -13,6 +13,7 @@ import {
   mkPolygon,
   mkText,
   mkBackground,
+  mkClearCanvas,
   PEN_UP,
   PEN_DOWN,
 } from '../src/values.js';
@@ -1222,5 +1223,30 @@ describe('background builtin', () => {
     const fn = () => interpret(program(exprStmt(call('background', []))));
     expect(fn).toThrow(SproutRuntimeError);
     expect(fn).toThrow(/background/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// clearCanvas builtin
+// ---------------------------------------------------------------------------
+describe('clearCanvas builtin', () => {
+  it('clearCanvas() returns a clearCanvas Drawing', () => {
+    expect(interpret(program(exprStmt(call('clearCanvas', []))))).toEqual(
+      mkSequence([mkClearCanvas()])
+    );
+  });
+
+  it('clearCanvas(1) throws SproutRuntimeError', () => {
+    const fn = () => interpret(program(exprStmt(call('clearCanvas', [numLit(1)]))));
+    expect(fn).toThrow(SproutRuntimeError);
+    expect(fn).toThrow(/clearCanvas/);
+  });
+
+  it('clearCanvas inside a sequence is accumulated correctly', () => {
+    const prog = program(
+      exprStmt(call('forward', [numLit(50)])),
+      exprStmt(call('clearCanvas', [])),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkForward(50), mkClearCanvas()]));
   });
 });
