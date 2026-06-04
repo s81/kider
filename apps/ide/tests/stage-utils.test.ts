@@ -366,11 +366,13 @@ describe('background drawing', () => {
     expect((ctx as unknown as { fillStyle: string }).fillStyle).toBe('#ff4400');
   });
 
-  it('fillBackground calls ctx.save() and ctx.restore()', () => {
+  it('fillBackground flushes path and restores state', () => {
     const ctx = makeShapeMockCtx();
     const commands: CanvasCommand[] = [{ kind: 'fillBackground', color: '#dc2626' }];
     drawUpTo(ctx, commands, 1);
+    expect(ctx.stroke).toHaveBeenCalled();
     expect(ctx.save).toHaveBeenCalled();
     expect(ctx.restore).toHaveBeenCalled();
+    expect(ctx.beginPath).toHaveBeenCalled();
   });
 });

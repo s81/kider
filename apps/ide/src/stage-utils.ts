@@ -208,10 +208,12 @@ export function drawUpTo(
         break;
       }
       case 'fillBackground': {
+        ctx.stroke();
         ctx.save();
         ctx.fillStyle = cmd.color;
         ctx.fillRect(0, 0, STAGE_W, STAGE_H);
         ctx.restore();
+        ctx.beginPath();
         break;
       }
     }
