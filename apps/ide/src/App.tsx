@@ -105,9 +105,7 @@ export function App() {
       e.preventDefault();
       try {
         const delta = callHandler(fn);
-        const next = mkSequence([accDrawingRef.current, delta]);
-        accDrawingRef.current = next;
-        setCommands(render(next));
+        applyHandlerDelta(delta);
       } catch (err) {
         setError(err instanceof SproutRuntimeError ? err.message : String(err));
       }
@@ -121,6 +119,19 @@ export function App() {
       if (timerRef.current !== null) clearInterval(timerRef.current);
     };
   }, []);
+
+  function applyHandlerDelta(delta: Drawing) {
+    const deltaCommands = render(delta);
+    const usesClear = deltaCommands.some(c => c.kind === 'clearCanvas');
+    if (usesClear) {
+      accDrawingRef.current = delta;
+      setCommands(deltaCommands);
+    } else {
+      const next = mkSequence([accDrawingRef.current!, delta]);
+      accDrawingRef.current = next;
+      setCommands(render(next));
+    }
+  }
 
   function handleRun() {
     if (timerRef.current !== null) {
@@ -148,9 +159,7 @@ export function App() {
           if (accDrawingRef.current === null) return;
           try {
             const delta = callHandler(timerFn);
-            const next = mkSequence([accDrawingRef.current, delta]);
-            accDrawingRef.current = next;
-            setCommands(render(next));
+            applyHandlerDelta(delta);
           } catch (e) {
             setError(e instanceof SproutRuntimeError ? e.message : String(e));
             if (timerRef.current !== null) {

@@ -376,3 +376,39 @@ describe('background drawing', () => {
     expect(ctx.beginPath).toHaveBeenCalled();
   });
 });
+
+describe('clearCanvas drawing', () => {
+  it('clearCanvas calls ctx.stroke() before clearRect', () => {
+    const ctx = makeShapeMockCtx();
+    let strokeCalledBeforeClear = false;
+    let clearRectCallCount = 0;
+    (ctx.stroke as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      strokeCalledBeforeClear = true;
+    });
+    (ctx.clearRect as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      clearRectCallCount++;
+      // Only check on the second call — the first is the initial canvas wipe at the top of drawUpTo
+      if (clearRectCallCount >= 2) {
+        expect(strokeCalledBeforeClear).toBe(true);
+      }
+    });
+    const commands: CanvasCommand[] = [{ kind: 'clearCanvas' }];
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.clearRect).toHaveBeenCalledTimes(2);
+  });
+
+  it('clearCanvas calls ctx.clearRect(0, 0, STAGE_W, STAGE_H)', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{ kind: 'clearCanvas' }];
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.clearRect).toHaveBeenCalledWith(0, 0, STAGE_W, STAGE_H);
+  });
+
+  it('clearCanvas calls ctx.beginPath() and ctx.moveTo(STAGE_W/2, STAGE_H/2)', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{ kind: 'clearCanvas' }];
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.beginPath).toHaveBeenCalled();
+    expect(ctx.moveTo).toHaveBeenCalledWith(STAGE_W / 2, STAGE_H / 2);
+  });
+});

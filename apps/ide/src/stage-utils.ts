@@ -216,6 +216,13 @@ export function drawUpTo(
         ctx.beginPath();
         break;
       }
+      case 'clearCanvas': {
+        ctx.stroke();
+        ctx.clearRect(0, 0, STAGE_W, STAGE_H);
+        ctx.beginPath();
+        ctx.moveTo(STAGE_W / 2, STAGE_H / 2);
+        break;
+      }
     }
   }
   ctx.stroke();
