@@ -1,0 +1,7 @@
+[build]
+  command   = "pnpm install && pnpm --filter @sprout/ide build"
+  publish   = "apps/ide/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  PNPM_VERSION = "10"

@@ -11,6 +11,7 @@
   "dependencies": {
     "@sprout/blocks": "workspace:*",
     "@sprout/lang": "workspace:*",
+    "blockly": "^12.5.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

@@ -5,9 +5,12 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@sprout/lang": ["../../packages/lang/src/index.ts"],
+      "@sprout/blocks": ["../../packages/blocks/src/index.ts"]
+    }
   },
   "include": ["src"]
 }
