@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { tokenize, ParseError } from '../src/lexer.js';
 import { parse } from '../src/parser.js';
-import type { Program, LetStmt, AssignStmt, WhileExpr } from '@sprout/lang';
+import type { Program, LetStmt, AssignStmt, WhileExpr, ForEachExpr } from '@sprout/lang';
 
 // Shorthand builders for expected AST values
 const num = (n: number) => ({ kind: 'NumberLit' as const, value: n });
@@ -38,6 +38,12 @@ const assignS = (name: string, value: object): AssignStmt =>
 const whileE = (cond: object, body: object[]): WhileExpr => ({
   kind: 'WhileExpr' as const,
   cond: cond as never,
+  body: blockE(body) as never,
+});
+const forEachE = (item: string, list: object, body: object[]): ForEachExpr => ({
+  kind: 'ForEachExpr' as const,
+  item,
+  list: list as never,
   body: blockE(body) as never,
 });
 
@@ -476,5 +482,21 @@ describe('parse — let / set / while', () => {
     expect(parse('while true do\n  forward(1)\nend')).toEqual(
       prog(exprS(whileE(bool_(true), [exprS(callE('forward', [num(1)]))])))
     );
+  });
+});
+
+describe('for each loop', () => {
+  it('parses for each with ident list', () => {
+    expect(parse('for each x in myList do\n  forward(x)\nend')).toEqual(
+      prog(exprS(forEachE('x', id('myList'), [exprS(callE('forward', [id('x')]))])))
+    );
+  });
+
+  it('parses for each with list() call', () => {
+    const result = parse('for each item in list(1, 2, 3) do\n  stamp()\nend');
+    const expr = (result.stmts[0] as { expr: ForEachExpr }).expr;
+    expect(expr.kind).toBe('ForEachExpr');
+    expect(expr.item).toBe('item');
+    expect(expr.list).toEqual(callE('list', [num(1), num(2), num(3)]));
   });
 });

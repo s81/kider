@@ -2,12 +2,13 @@ import { tokenize, type Token, ParseError } from './lexer.js';
 import type {
   Program, Stmt, Expr, DefStmt,
   BlockExpr, RepeatExpr, OnExpr, CallExpr, IfExpr, UnaryExpr,
-  LetStmt, AssignStmt, WhileExpr,
+  LetStmt, AssignStmt, WhileExpr, ForEachExpr,
 } from '@sprout/lang';
 
 class Parser {
   private tokens: Token[];
   private pos = 0;
+  private noBlockCall = false;
 
   constructor(source: string) {
     this.tokens = tokenize(source);
@@ -259,6 +260,19 @@ class Parser {
         return { kind: 'OnExpr', event, body } satisfies OnExpr;
       }
 
+      if (name === 'for') {
+        this.advance();
+        this.eatIdent('each');
+        const itemTok = this.eat('IDENT') as { kind: 'IDENT'; name: string };
+        this.eatIdent('in');
+        const prevNoBlock = this.noBlockCall;
+        this.noBlockCall = true;
+        const list = this.parseExpr();
+        this.noBlockCall = prevNoBlock;
+        const body = this.parseDoBlock();
+        return { kind: 'ForEachExpr', item: itemTok.name, list, body } satisfies ForEachExpr;
+      }
+
       this.advance();
 
       if (this.check('LPAREN')) {
@@ -270,7 +284,7 @@ class Parser {
         }
         this.eat('RPAREN');
 
-        if (this.checkIdent('do')) {
+        if (!this.noBlockCall && this.checkIdent('do')) {
           const block = this.parseDoBlock();
           return { kind: 'CallExpr', callee: name, args, block } satisfies CallExpr;
         }
