@@ -22,6 +22,7 @@ export type CanvasCommand =
   | { readonly kind: 'drawTriangle'; readonly x: number; readonly y: number; readonly size: number }
   | { readonly kind: 'drawPolygon';  readonly x: number; readonly y: number; readonly n: number; readonly size: number }
   | { readonly kind: 'drawText';     readonly x: number; readonly y: number; readonly str: string; readonly size: number }
+  | { readonly kind: 'drawStamp'; readonly x: number; readonly y: number; readonly heading: number }
   | { readonly kind: 'fillBackground'; readonly color: string }
   | { readonly kind: 'clearCanvas' };
 
@@ -74,6 +75,8 @@ function scaleDrawing(factor: number, d: Drawing): Drawing {
       return { kind: 'polygon', n: d.n, size: d.size * factor };
     case 'text':
       return { kind: 'text', str: d.str, size: d.size * factor };
+    case 'stamp':
+      return d;
     case 'background':
       return d;
     case 'clearCanvas':
@@ -208,6 +211,11 @@ function renderInto(
 
     case 'text':
       out.push({ kind: 'drawText', x: state.x, y: state.y, str: drawing.str, size: drawing.size });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      return;
+
+    case 'stamp':
+      out.push({ kind: 'drawStamp', x: state.x, y: state.y, heading: state.heading });
       out.push({ kind: 'moveTo', x: state.x, y: state.y });
       return;
 
@@ -352,6 +360,13 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
       bbox.maxX = Math.max(bbox.maxX, state.x + drawing.str.length * drawing.size * 0.6);
       bbox.minY = Math.min(bbox.minY, state.y - drawing.size);
       bbox.maxY = Math.max(bbox.maxY, state.y);
+      return;
+
+    case 'stamp':
+      bbox.minX = Math.min(bbox.minX, state.x - 12);
+      bbox.maxX = Math.max(bbox.maxX, state.x + 12);
+      bbox.minY = Math.min(bbox.minY, state.y - 12);
+      bbox.maxY = Math.max(bbox.maxY, state.y + 12);
       return;
 
     case 'background':

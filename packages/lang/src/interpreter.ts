@@ -48,6 +48,7 @@ import {
   mkText,
   mkBackground,
   mkClearCanvas,
+  mkStamp,
   mkList,
   PEN_UP,
   PEN_DOWN,
@@ -86,7 +87,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
     case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'penWidth': case 'empty':
-    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas':
+    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas': case 'stamp':
       return true;
     default:
       return false;
@@ -262,6 +263,7 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (args.length !== 0) throw new SproutRuntimeError(`clearCanvas expects 0 arguments, got ${args.length}`);
     return mkClearCanvas();
   }],
+  ['stamp', (_args) => mkStamp()],
   ['puts', (args) => {
     // Side-effect for kids: print to console (best-effort) and return EMPTY.
     if (args.length >= 1) {

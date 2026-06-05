@@ -14,6 +14,7 @@ import {
   mkText,
   mkBackground,
   mkClearCanvas,
+  mkStamp,
   mkList,
   PEN_UP,
   PEN_DOWN,
@@ -1761,5 +1762,12 @@ describe('list builtins', () => {
       const prog = program(exprStmt(call('isEmpty', [strLit('hi')])));
       expect(() => interpretValue(prog)).toThrow('isEmpty: expected list, got string');
     });
+  });
+});
+
+describe('stamp builtin', () => {
+  it('returns a stamp Drawing', () => {
+    const prog = program(exprStmt(call('stamp', [])));
+    expect(interpretFull(prog).drawing).toEqual(mkSequence([mkStamp()]));
   });
 });

@@ -60,6 +60,7 @@ export {
   mkText,
   mkBackground,
   mkClearCanvas,
+  mkStamp,
   // Drawing singleton constants (zero-arg constructors replaced by constants)
   PEN_UP,
   PEN_DOWN,

@@ -16,6 +16,7 @@ import {
   mkText,
   mkBackground,
   mkClearCanvas,
+  mkStamp,
 } from '../src/values.js';
 import type { CanvasCommand } from '../src/renderer.js';
 
@@ -591,5 +592,28 @@ describe('clearCanvas rendering', () => {
 
   it('measure(clearCanvas) returns width=0, height=0', () => {
     expect(measure(mkClearCanvas())).toEqual({ width: 0, height: 0 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// stamp rendering
+// ---------------------------------------------------------------------------
+describe('stamp rendering', () => {
+  it('emits drawStamp at origin with default heading', () => {
+    expect(render(mkStamp())).toContainEqual(
+      { kind: 'drawStamp', x: 0, y: 0, heading: 0 }
+    );
+  });
+
+  it('emits drawStamp at turtle position after forward', () => {
+    expect(render(mkSequence([mkForward(50), mkStamp()]))).toContainEqual(
+      { kind: 'drawStamp', x: 0, y: -50, heading: 0 }
+    );
+  });
+
+  it('emits drawStamp with correct heading after turn', () => {
+    expect(render(mkSequence([mkTurn(90), mkStamp()]))).toContainEqual(
+      { kind: 'drawStamp', x: 0, y: 0, heading: 90 }
+    );
   });
 });

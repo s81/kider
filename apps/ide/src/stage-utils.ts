@@ -216,6 +216,29 @@ export function drawUpTo(
         ctx.beginPath();
         break;
       }
+      case 'drawStamp': {
+        ctx.stroke();
+        const cx = STAGE_W / 2 + cmd.x;
+        const cy = STAGE_H / 2 + cmd.y;
+        const size = 12;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate((cmd.heading * Math.PI) / 180);
+        ctx.beginPath();
+        ctx.moveTo(0, -size);
+        ctx.lineTo(size * 0.6, size * 0.7);
+        ctx.lineTo(-size * 0.6, size * 0.7);
+        ctx.closePath();
+        ctx.fillStyle = ctx.strokeStyle as string;
+        ctx.globalAlpha = 0.7;
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+        ctx.stroke();
+        ctx.restore();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        break;
+      }
       case 'clearCanvas': {
         ctx.stroke();
         ctx.clearRect(0, 0, STAGE_W, STAGE_H);
