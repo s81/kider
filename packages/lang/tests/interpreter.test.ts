@@ -59,6 +59,7 @@ const whileExpr = (cond: Expr, body: Stmt[]): WhileExpr => ({
 });
 
 const program = (...stmts: Stmt[]): Program => ({ kind: 'Program', stmts });
+const returnStmt = (value: Expr): Stmt => ({ kind: 'ReturnStmt', value });
 
 // ---------------------------------------------------------------------------
 // 1. NumberLit evaluates to SproutNumber
@@ -1383,5 +1384,91 @@ describe('length builtin', () => {
     const fn = () => interpret(program(exprStmt(call('length', [strLit('a'), strLit('b')]))));
     expect(fn).toThrow(SproutRuntimeError);
     expect(fn).toThrow(/length/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Return statement
+// ---------------------------------------------------------------------------
+describe('return statement', () => {
+  it('function with only return — returns the value', () => {
+    // def double(n) { return n * 2 }
+    // let x = double(3)
+    // forward(x)
+    const prog = program(
+      defStmt('double', ['n'], block([
+        returnStmt(infix('*', ident('n'), numLit(2))),
+      ])),
+      letStmt('x', call('double', [numLit(3)])),
+      exprStmt(call('forward', [ident('x')])),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkForward(6)]));
+  });
+
+  it('function with drawing then return — drawings appear, value returned', () => {
+    // def drawAndGet(r) { circle(r); return r }
+    // let size = drawAndGet(50)
+    // forward(size)
+    const mkCircle = (r: number) => ({ kind: 'circle' as const, radius: r });
+    const prog = program(
+      defStmt('drawAndGet', ['r'], block([
+        exprStmt(call('circle', [ident('r')])),
+        returnStmt(ident('r')),
+      ])),
+      letStmt('size', call('drawAndGet', [numLit(50)])),
+      exprStmt(call('forward', [ident('size')])),
+    );
+    const result = interpret(prog);
+    // Result: sequence of [drawings from drawAndGet call (circle(50)), forward(50)]
+    expect(result).toEqual(mkSequence([mkSequence([mkCircle(50)]), mkForward(50)]));
+  });
+
+  it('function with only drawing, no return — still works (no regression)', () => {
+    // def draw(r) { circle(r) }
+    // draw(30)
+    const mkCircle = (r: number) => ({ kind: 'circle' as const, radius: r });
+    const prog = program(
+      defStmt('draw', ['r'], block([
+        exprStmt(call('circle', [ident('r')])),
+      ])),
+      exprStmt(call('draw', [numLit(30)])),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkCircle(30)])]));
+  });
+
+  it('bare function call statement with return — drawings appear, return value discarded', () => {
+    // def drawAndGet(r) { circle(r); return r }
+    // drawAndGet(40)  ← call as statement
+    const mkCircle = (r: number) => ({ kind: 'circle' as const, radius: r });
+    const prog = program(
+      defStmt('drawAndGet', ['r'], block([
+        exprStmt(call('circle', [ident('r')])),
+        returnStmt(ident('r')),
+      ])),
+      exprStmt(call('drawAndGet', [numLit(40)])),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkCircle(40)])]));
+  });
+
+  it('function with return returns correct type — string', () => {
+    // def greeting() { return "hello" }
+    // let msg = greeting()
+    // text(msg, 20)
+    const prog = program(
+      defStmt('greeting', [], block([
+        returnStmt(strLit('hello')),
+      ])),
+      letStmt('msg', call('greeting', [])),
+      exprStmt(call('text', [ident('msg'), numLit(20)])),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkText('hello', 20)]));
+  });
+
+  it('return outside function throws SproutRuntimeError', () => {
+    const prog = program(
+      { kind: 'ReturnStmt', value: numLit(42) },
+    );
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+    expect(() => interpret(prog)).toThrow(/return/);
   });
 });

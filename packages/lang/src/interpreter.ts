@@ -65,6 +65,15 @@ export class SproutRuntimeError extends Error {
   }
 }
 
+// Internal signals for return value propagation — not exported.
+class ReturnSignal {
+  constructor(public value: SproutValue, public drawings: Drawing) {}
+}
+
+class ReturnBundle {
+  constructor(public value: SproutValue, public drawing: Drawing) {}
+}
+
 // ---------------------------------------------------------------------------
 // Type guards
 // ---------------------------------------------------------------------------
@@ -433,7 +442,15 @@ function evalExpr(expr: Expr, env: Env): SproutValue {
 
     // --- Call ---
     case 'CallExpr': {
-      return evalCall(expr, env);
+      try {
+        return evalCall(expr, env);
+      } catch (e) {
+        if (e instanceof ReturnBundle) {
+          // Expression context: drop drawings, return value only.
+          return e.value;
+        }
+        throw e;
+      }
     }
 
     // --- On (event handler) ---
@@ -564,6 +581,11 @@ function evalBlock(block: BlockExpr, env: Env): Drawing {
   const drawings: Drawing[] = [];
   let currentEnv = env;
   for (const stmt of block.body) {
+    if (stmt.kind === 'ReturnStmt') {
+      const value = evalExpr(stmt.value, currentEnv);
+      const drawing = drawings.length === 0 ? EMPTY : mkSequence(drawings);
+      throw new ReturnSignal(value, drawing);
+    }
     const [val, newEnv] = evalStmtWithEnv(stmt, currentEnv);
     currentEnv = newEnv;
     if (val !== null && isDrawing(val)) {
@@ -621,7 +643,14 @@ function evalCall(expr: CallExpr, env: Env): SproutValue {
   // Build child env: extend the function's *closure* env (lexical scoping).
   const childEnv = envExtend(fn.env, fn.params.map((p, i) => [p, evaluatedArgs[i]] as [string, SproutValue]));
 
-  return evalExpr(fn.body, childEnv);
+  try {
+    return evalExpr(fn.body, childEnv);
+  } catch (e) {
+    if (e instanceof ReturnSignal) {
+      throw new ReturnBundle(e.value, e.drawings);
+    }
+    throw e;
+  }
 }
 
 function evalWhile(expr: WhileExpr, env: Env): Drawing {
@@ -658,7 +687,6 @@ function evalStmtWithEnv(stmt: Stmt, env: Env): [SproutValue | null, Env] {
         env,
       };
       const newEnv = envExtend(env, [[stmt.name, fn]]);
-      // DefStmt produces NO value — null signals "skip this for drawings".
       return [null, newEnv];
     }
     case 'ExprStmt': {
@@ -675,10 +703,41 @@ function evalStmtWithEnv(stmt: Stmt, env: Env): [SproutValue | null, Env] {
         const newEnv = envExtend(env, [[key, handler]]);
         return [null, newEnv];
       }
+      // Direct function call: catch ReturnBundle to emit its drawings.
+      if (stmt.expr.kind === 'CallExpr') {
+        try {
+          const val = evalCall(stmt.expr, env);
+          return [val, env];
+        } catch (e) {
+          if (e instanceof ReturnBundle) {
+            // Return value is discarded; drawings surface as this statement's output.
+            return [e.drawing, env];
+          }
+          throw e;
+        }
+      }
       const val = evalExpr(stmt.expr, env);
       return [val, env];
     }
     case 'LetStmt': {
+      // Direct function call as init: extract drawings as a side contribution.
+      if (stmt.init.kind === 'CallExpr') {
+        let initVal: SproutValue;
+        let sideDrawing: Drawing = EMPTY;
+        try {
+          initVal = evalCall(stmt.init, env);
+        } catch (e) {
+          if (e instanceof ReturnBundle) {
+            initVal = e.value;
+            sideDrawing = e.drawing;
+          } else {
+            throw e;
+          }
+        }
+        const varCell: SproutVar = { kind: 'var', cell: { value: initVal } };
+        const newEnv = envExtend(env, [[stmt.name, varCell]]);
+        return [sideDrawing === EMPTY ? null : sideDrawing, newEnv];
+      }
       const initVal = evalExpr(stmt.init, env);
       const varCell: SproutVar = { kind: 'var', cell: { value: initVal } };
       const newEnv = envExtend(env, [[stmt.name, varCell]]);
@@ -692,11 +751,31 @@ function evalStmtWithEnv(stmt: Stmt, env: Env): [SproutValue | null, Env] {
       if (existing.kind !== 'var') {
         throw new SproutRuntimeError(`set: '${stmt.name}' is not a variable`);
       }
+      // Direct function call as value: extract drawings as a side contribution.
+      if (stmt.value.kind === 'CallExpr') {
+        let val: SproutValue;
+        let sideDrawing: Drawing = EMPTY;
+        try {
+          val = evalCall(stmt.value, env);
+        } catch (e) {
+          if (e instanceof ReturnBundle) {
+            val = e.value;
+            sideDrawing = e.drawing;
+          } else {
+            throw e;
+          }
+        }
+        existing.cell.value = val;
+        return [sideDrawing === EMPTY ? null : sideDrawing, env];
+      }
       existing.cell.value = evalExpr(stmt.value, env);
       return [null, env];
     }
-    case 'ReturnStmt':
-      throw new SproutRuntimeError('return(...) is not yet implemented');
+    case 'ReturnStmt': {
+      // return used outside a function body — evalBlock intercepts it first,
+      // so this only fires at the top level (Program stmts) or other non-function contexts.
+      throw new SproutRuntimeError('return can only be used inside a function');
+    }
   }
 }
 
