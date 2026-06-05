@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { serialize, serializeExpr, serializeStmt } from '../src/serializer.js';
-import type { Program, Expr, Stmt, InfixExpr, LetStmt, AssignStmt, WhileExpr } from '../src/ast.js';
+import type { Program, Expr, Stmt, InfixExpr, LetStmt, AssignStmt, WhileExpr, ForEachExpr } from '../src/ast.js';
 
 // ---------------------------------------------------------------------------
 // AST builder helpers
@@ -34,6 +34,9 @@ const whileExpr = (cond: Expr, body: Stmt[]): WhileExpr => ({
   cond,
   body: { kind: 'BlockExpr', body },
 });
+
+const forEachE = (item: string, list: Expr, body: Stmt[]): Expr =>
+  ({ kind: 'ForEachExpr', item, list, body: { kind: 'BlockExpr', body } } as unknown as Expr);
 
 const program = (...stmts: Stmt[]): Program => ({ kind: 'Program', stmts });
 
@@ -456,6 +459,17 @@ describe('LetStmt / AssignStmt / WhileExpr serialization', () => {
       '  forward(x)\n' +
       '  set x = x + 1\n' +
       'end'
+    );
+  });
+});
+
+describe('ForEachExpr', () => {
+  it('serializes for each loop', () => {
+    const expr = forEachE('x', call('list', [numLit(1), numLit(2)]), [
+      exprStmt(call('forward', [ident('x')])),
+    ]);
+    expect(serializeExpr(expr)).toBe(
+      'for each x in list(1, 2) do\n  forward(x)\nend'
     );
   });
 });

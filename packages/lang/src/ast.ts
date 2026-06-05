@@ -104,6 +104,14 @@ export interface WhileExpr {
   readonly body: BlockExpr;
 }
 
+/** `for each <item> in <list> do ... end` */
+export interface ForEachExpr {
+  readonly kind: 'ForEachExpr';
+  readonly item: string;
+  readonly list: Expr;
+  readonly body: BlockExpr;
+}
+
 // ---------------------------------------------------------------------------
 // Expr union
 // ---------------------------------------------------------------------------
@@ -121,7 +129,8 @@ export type Expr =
   | RepeatExpr
   | OnExpr
   | IfExpr
-  | WhileExpr;
+  | WhileExpr
+  | ForEachExpr;
 
 // ---------------------------------------------------------------------------
 // Statement nodes

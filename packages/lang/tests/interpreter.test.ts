@@ -20,7 +20,7 @@ import {
   PEN_DOWN,
   type SproutFunction,
 } from '../src/values.js';
-import type { Program, Expr, Stmt, InfixExpr, LetStmt, AssignStmt, WhileExpr } from '../src/ast.js';
+import type { Program, Expr, Stmt, InfixExpr, LetStmt, AssignStmt, WhileExpr, ForEachExpr } from '../src/ast.js';
 
 // ---------------------------------------------------------------------------
 // AST builder helpers (keep tests readable)
@@ -58,6 +58,13 @@ const assignStmt = (name: string, value: Expr): AssignStmt =>
 const whileExpr = (cond: Expr, body: Stmt[]): WhileExpr => ({
   kind: 'WhileExpr',
   cond,
+  body: { kind: 'BlockExpr', body },
+});
+
+const forEachExpr = (item: string, list: Expr, body: Stmt[]): ForEachExpr => ({
+  kind: 'ForEachExpr',
+  item,
+  list,
   body: { kind: 'BlockExpr', body },
 });
 
@@ -1769,5 +1776,70 @@ describe('stamp builtin', () => {
   it('returns a stamp Drawing', () => {
     const prog = program(exprStmt(call('stamp', [])));
     expect(interpretFull(prog).drawing).toEqual(mkSequence([mkStamp()]));
+  });
+});
+
+describe('for each loop', () => {
+  it('empty list produces EMPTY drawing', () => {
+    const prog = program(
+      exprStmt(forEachExpr('x', call('list', []), [
+        exprStmt(call('forward', [numLit(10)])),
+      ])),
+    );
+    // evalForEach returns EMPTY; interpretFull wraps it in mkSequence([EMPTY])
+    expect(interpretFull(prog).drawing).toEqual(mkSequence([EMPTY]));
+  });
+
+  it('single-item list runs body once', () => {
+    const prog = program(
+      exprStmt(forEachExpr('x', call('list', [numLit(50)]), [
+        exprStmt(call('forward', [ident('x')])),
+      ])),
+    );
+    // evalForEach → mkSequence([mkSequence([mkForward(50)])])
+    // interpretFull wraps → mkSequence([mkSequence([mkSequence([mkForward(50)])])])
+    const iterDrawing = mkSequence([mkForward(50)]);
+    expect(interpretFull(prog).drawing).toEqual(mkSequence([mkSequence([iterDrawing])]));
+  });
+
+  it('multi-item list runs body N times', () => {
+    const prog = program(
+      exprStmt(forEachExpr('x', call('list', [numLit(10), numLit(20), numLit(30)]), [
+        exprStmt(call('forward', [ident('x')])),
+      ])),
+    );
+    // evalForEach → mkSequence([mkSequence([mkForward(10)]), mkSequence([mkForward(20)]), mkSequence([mkForward(30)])])
+    // interpretFull wraps that in mkSequence([...])
+    const d10 = mkSequence([mkForward(10)]);
+    const d20 = mkSequence([mkForward(20)]);
+    const d30 = mkSequence([mkForward(30)]);
+    expect(interpretFull(prog).drawing).toEqual(mkSequence([mkSequence([d10, d20, d30])]));
+  });
+
+  it('throws on non-list', () => {
+    const prog = program(
+      exprStmt(forEachExpr('x', numLit(42), [])),
+    );
+    expect(() => interpretFull(prog)).toThrow('for each: expected list, got number');
+  });
+
+  it('item variable is in scope inside body', () => {
+    const prog = program(
+      exprStmt(forEachExpr('x', call('list', [numLit(7)]), [
+        exprStmt(call('forward', [ident('x')])),
+      ])),
+    );
+    // evalForEach → mkSequence([mkSequence([mkForward(7)])])
+    // interpretFull wraps → mkSequence([mkSequence([mkSequence([mkForward(7)])])])
+    const iterDrawing = mkSequence([mkForward(7)]);
+    expect(interpretFull(prog).drawing).toEqual(mkSequence([mkSequence([iterDrawing])]));
+  });
+
+  it('item variable does not leak out of loop', () => {
+    const prog = program(
+      exprStmt(forEachExpr('x', call('list', [numLit(1)]), [])),
+      exprStmt(ident('x')),
+    );
+    expect(() => interpretFull(prog)).toThrow();
   });
 });

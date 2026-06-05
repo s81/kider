@@ -20,6 +20,7 @@ export type {
   OnExpr,
   IfExpr,
   WhileExpr,
+  ForEachExpr,  // NEW
   // Unions
   Expr,
   Stmt,

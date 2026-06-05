@@ -21,6 +21,7 @@ import type {
   OnExpr,
   IfExpr,
   WhileExpr,
+  ForEachExpr,
 } from './ast.js';
 
 import {
@@ -533,6 +534,10 @@ function evalExpr(expr: Expr, env: Env): SproutValue {
       return { kind: 'bool', value: !v.value };
     }
 
+    // --- For-each loop ---
+    case 'ForEachExpr':
+      return evalForEach(expr, env);
+
     // --- While loop ---
     case 'WhileExpr':
       return evalWhile(expr, env);
@@ -717,6 +722,19 @@ function evalWhile(expr: WhileExpr, env: Env): Drawing {
     }
     if (!cond.value) break;
     drawings.push(evalBlock(expr.body, env));
+  }
+  return drawings.length === 0 ? EMPTY : mkSequence(drawings);
+}
+
+function evalForEach(expr: ForEachExpr, env: Env): Drawing {
+  const listVal = evalExpr(expr.list, env);
+  if (listVal.kind !== 'list') {
+    throw new SproutRuntimeError(`for each: expected list, got ${listVal.kind}`);
+  }
+  const drawings: Drawing[] = [];
+  for (const item of listVal.items) {
+    const childEnv = envExtend(env, [[expr.item, item]]);
+    drawings.push(evalBlock(expr.body, childEnv));
   }
   return drawings.length === 0 ? EMPTY : mkSequence(drawings);
 }
@@ -960,6 +978,9 @@ export function collectInputNames(program: Program): string[] {
         break;
       case 'WhileExpr':
         walkExpr(expr.cond); walkBlock(expr.body);
+        break;
+      case 'ForEachExpr':
+        walkExpr(expr.list); walkBlock(expr.body);
         break;
     }
   }

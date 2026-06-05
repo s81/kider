@@ -2,7 +2,7 @@
 // This is a one-way transformation: AST → Ruby-like display text.
 // There is NO parser; the text panel in the IDE is read-only.
 
-import type { Program, Expr, Stmt, BlockExpr } from './ast.js';
+import type { Program, Expr, Stmt, BlockExpr, ForEachExpr } from './ast.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -95,6 +95,12 @@ export function serializeExpr(expr: Expr, indentLevel = 0): string {
       const condStr = serializeExpr(expr.cond, indentLevel);
       const body = serializeBlock(expr.body, indentLevel + 1);
       return `while ${condStr} do\n${body}\n${indent(indentLevel)}end`;
+    }
+
+    case 'ForEachExpr': {
+      const listStr = serializeExpr(expr.list, indentLevel);
+      const body = serializeBlock(expr.body, indentLevel + 1);
+      return `for each ${expr.item} in ${listStr} do\n${body}\n${indent(indentLevel)}end`;
     }
 
     default: {
