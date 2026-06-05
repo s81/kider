@@ -406,6 +406,10 @@ function compileExpr(block: Blockly.Block): Expr {
         block: null,
       };
     }
+    case 'sprout_mouse_x':
+      return { kind: 'CallExpr', callee: 'mouseX', args: [], block: null };
+    case 'sprout_mouse_y':
+      return { kind: 'CallExpr', callee: 'mouseY', args: [], block: null };
     case 'sprout_list': {
       const items: Expr[] = [];
       for (const key of ['VALUE_0', 'VALUE_1', 'VALUE_2']) {

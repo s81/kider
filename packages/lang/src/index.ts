@@ -76,6 +76,7 @@ export {
   interpretFullWithInputs,
   collectInputNames,
   callHandler,
+  setMousePosition,
   SproutRuntimeError,
 } from './interpreter.js';
 

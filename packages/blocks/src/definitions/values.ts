@@ -85,6 +85,24 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_mouse_x'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('mouseX');
+      this.setOutput(true, 'Number');
+      this.setColour(230);
+      this.setTooltip('Current mouse X position');
+    },
+  };
+
+  Blockly.Blocks['sprout_mouse_y'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('mouseY');
+      this.setOutput(true, 'Number');
+      this.setColour(230);
+      this.setTooltip('Current mouse Y position');
+    },
+  };
+
   Blockly.Blocks['sprout_list'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput().appendField('list');

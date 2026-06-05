@@ -80,6 +80,10 @@ class ReturnBundle {
 // Module-level input values — set by interpretWithInputs before each run.
 let _inputValues: ReadonlyMap<string, number> = new Map();
 
+// Module-level mouse position — set by setMousePosition before each frame.
+let _mouseX: number = 0;
+let _mouseY: number = 0;
+
 // ---------------------------------------------------------------------------
 // Type guards
 // ---------------------------------------------------------------------------
@@ -425,6 +429,14 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (args.length !== 1) throw new SproutRuntimeError(`input expects 1 argument, got ${args.length}`);
     const name = assertString(args[0], 'input');
     return { kind: 'number', value: _inputValues.get(name.value) ?? 0 } satisfies SproutNumber;
+  }],
+  ['mouseX', (args) => {
+    if (args.length !== 0) throw new SproutRuntimeError(`mouseX expects 0 arguments, got ${args.length}`);
+    return { kind: 'number', value: _mouseX } satisfies SproutNumber;
+  }],
+  ['mouseY', (args) => {
+    if (args.length !== 0) throw new SproutRuntimeError(`mouseY expects 0 arguments, got ${args.length}`);
+    return { kind: 'number', value: _mouseY } satisfies SproutNumber;
   }],
   // --- List builtins ---
   ['list', (args) => mkList(args)],
@@ -1124,6 +1136,11 @@ export function interpretWithInputs(
   } finally {
     _inputValues = prev;
   }
+}
+
+export function setMousePosition(x: number, y: number): void {
+  _mouseX = x;
+  _mouseY = y;
 }
 
 export function interpretFullWithInputs(

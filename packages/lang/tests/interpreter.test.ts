@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { interpret, interpretFull, interpretValue, callHandler, collectInputNames, interpretWithInputs, interpretFullWithInputs, SproutRuntimeError } from '../src/interpreter.js';
+import { interpret, interpretFull, interpretValue, callHandler, collectInputNames, interpretWithInputs, interpretFullWithInputs, setMousePosition, SproutRuntimeError } from '../src/interpreter.js';
 import {
   EMPTY,
   mkForward,
@@ -1611,6 +1611,51 @@ describe('input builtin', () => {
     const inputs = new Map<string, number>([['speed', 7]]);
     const { drawing } = interpretFullWithInputs(prog, inputs);
     expect(drawing).toEqual(mkSequence([mkForward(7)]));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// mouseX / mouseY builtins
+// ---------------------------------------------------------------------------
+describe('mouseX / mouseY builtins', () => {
+  it('mouseX() returns 0 by default', () => {
+    const prog = program(exprStmt(call('forward', [call('mouseX', [])])));
+    expect(interpret(prog)).toEqual(mkSequence([mkForward(0)]));
+  });
+
+  it('mouseY() returns 0 by default', () => {
+    const prog = program(exprStmt(call('forward', [call('mouseY', [])])));
+    expect(interpret(prog)).toEqual(mkSequence([mkForward(0)]));
+  });
+
+  it('mouseX() returns set X value', () => {
+    setMousePosition(100, 200);
+    try {
+      const prog = program(exprStmt(call('forward', [call('mouseX', [])])));
+      expect(interpret(prog)).toEqual(mkSequence([mkForward(100)]));
+    } finally {
+      setMousePosition(0, 0);
+    }
+  });
+
+  it('mouseY() returns set Y value', () => {
+    setMousePosition(100, 200);
+    try {
+      const prog = program(exprStmt(call('forward', [call('mouseY', [])])));
+      expect(interpret(prog)).toEqual(mkSequence([mkForward(200)]));
+    } finally {
+      setMousePosition(0, 0);
+    }
+  });
+
+  it('mouseX throws when given arguments', () => {
+    const prog = program(exprStmt(call('mouseX', [numLit(1)])));
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('mouseY throws when given arguments', () => {
+    const prog = program(exprStmt(call('mouseY', [numLit(1)])));
+    expect(() => interpret(prog)).toThrow(SproutRuntimeError);
   });
 });
 
