@@ -1199,3 +1199,19 @@ describe('list blocks', () => {
     });
   });
 });
+
+describe('stamp block', () => {
+  it('sprout_stamp compiles to stamp()', () => {
+    const ws = makeWorkspace();
+    const stampBlock = ws.newBlock('sprout_stamp');
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('s', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(stampBlock.outputConnection!);
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 's',
+      init: { kind: 'CallExpr', callee: 'stamp', args: [], block: null },
+    });
+  });
+});

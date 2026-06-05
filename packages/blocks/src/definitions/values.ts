@@ -135,4 +135,13 @@ export function registerValueBlocks(): void {
       this.setColour(180);
     },
   };
+
+  Blockly.Blocks['sprout_stamp'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('stamp');
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(290);
+    },
+  };
 }
