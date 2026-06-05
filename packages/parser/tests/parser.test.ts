@@ -493,10 +493,8 @@ describe('for each loop', () => {
   });
 
   it('parses for each with list() call', () => {
-    const result = parse('for each item in list(1, 2, 3) do\n  stamp()\nend');
-    const expr = (result.stmts[0] as { expr: ForEachExpr }).expr;
-    expect(expr.kind).toBe('ForEachExpr');
-    expect(expr.item).toBe('item');
-    expect(expr.list).toEqual(callE('list', [num(1), num(2), num(3)]));
+    expect(parse('for each item in list(1, 2, 3) do\n  stamp()\nend')).toEqual(
+      prog(exprS(forEachE('item', callE('list', [num(1), num(2), num(3)]), [exprS(callE('stamp', []))])))
+    );
   });
 });
