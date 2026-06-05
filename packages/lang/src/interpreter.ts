@@ -600,8 +600,15 @@ function evalRepeat(expr: RepeatExpr, env: Env): Drawing {
   const count = Math.trunc(countVal.value);
   const drawings: Drawing[] = [];
   for (let i = 0; i < count; i++) {
-    const d = evalBlock(expr.body, env);
-    drawings.push(d);
+    try {
+      const d = evalBlock(expr.body, env);
+      drawings.push(d);
+    } catch (e) {
+      if (e instanceof ReturnSignal) {
+        throw new SproutRuntimeError('return can only be used inside a function');
+      }
+      throw e;
+    }
   }
   return drawings.length === 0 ? EMPTY : mkSequence(drawings);
 }
@@ -661,7 +668,14 @@ function evalWhile(expr: WhileExpr, env: Env): Drawing {
       throw new SproutRuntimeError(`while: condition must be bool, got ${cond.kind}`);
     }
     if (!cond.value) break;
-    drawings.push(evalBlock(expr.body, env));
+    try {
+      drawings.push(evalBlock(expr.body, env));
+    } catch (e) {
+      if (e instanceof ReturnSignal) {
+        throw new SproutRuntimeError('return can only be used inside a function');
+      }
+      throw e;
+    }
   }
   return drawings.length === 0 ? EMPTY : mkSequence(drawings);
 }
@@ -844,6 +858,13 @@ export function interpretFull(
  * produces.  Returns EMPTY if the body produces a non-Drawing value.
  */
 export function callHandler(fn: SproutFunction): Drawing {
-  const result = evalExpr(fn.body, fn.env);
-  return isDrawing(result) ? result : EMPTY;
+  try {
+    const result = evalExpr(fn.body, fn.env);
+    return isDrawing(result) ? result : EMPTY;
+  } catch (e) {
+    if (e instanceof ReturnBundle) {
+      return e.drawing;
+    }
+    throw e;
+  }
 }

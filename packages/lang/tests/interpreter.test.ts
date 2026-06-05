@@ -16,6 +16,7 @@ import {
   mkClearCanvas,
   PEN_UP,
   PEN_DOWN,
+  type SproutFunction,
 } from '../src/values.js';
 import type { Program, Expr, Stmt, InfixExpr, LetStmt, AssignStmt, WhileExpr } from '../src/ast.js';
 
@@ -1470,5 +1471,33 @@ describe('return statement', () => {
     );
     expect(() => interpret(prog)).toThrow(SproutRuntimeError);
     expect(() => interpret(prog)).toThrow(/return/);
+  });
+
+  it('callHandler: calling a value-returning function surfaces its drawing', () => {
+    // def draw(r) { circle(r); return r }
+    // on :click do draw(40) end
+    // callHandler on the click handler should surface the circle drawing
+    const { handlers } = interpretFull(program(
+      defStmt('draw', ['r'], block([
+        exprStmt(call('circle', [ident('r')])),
+        returnStmt(ident('r')),
+      ])),
+      exprStmt(onExpr('click', [exprStmt(call('draw', [numLit(40)]))])),
+    ));
+    const fn = handlers.get(':click')!;
+    const drawing = callHandler(fn);
+    expect(drawing).toMatchObject({ kind: 'sequence' });
+  });
+
+  it('return inside repeat at top level throws SproutRuntimeError', () => {
+    expect(() => interpret(program(
+      exprStmt(repeat(numLit(3), [returnStmt(numLit(1))])),
+    ))).toThrow(SproutRuntimeError);
+  });
+
+  it('return inside while at top level throws SproutRuntimeError', () => {
+    expect(() => interpret(program(
+      exprStmt(whileExpr(boolLit(true), [returnStmt(numLit(1))])),
+    ))).toThrow(SproutRuntimeError);
   });
 });
