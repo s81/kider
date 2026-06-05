@@ -84,4 +84,55 @@ export function registerValueBlocks(): void {
       this.setColour(45);
     },
   };
+
+  Blockly.Blocks['sprout_list'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('list');
+      this.appendValueInput('VALUE_0').setCheck(null);
+      this.appendValueInput('VALUE_1').setCheck(null);
+      this.appendValueInput('VALUE_2').setCheck(null);
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(180);
+    },
+  };
+
+  Blockly.Blocks['sprout_push'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('push');
+      this.appendValueInput('VAL').setCheck(null).appendField('+');
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(180);
+    },
+  };
+
+  Blockly.Blocks['sprout_get'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('get');
+      this.appendValueInput('INDEX').setCheck('Number').appendField('at');
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(180);
+    },
+  };
+
+  Blockly.Blocks['sprout_size'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('size of');
+      this.setOutput(true, 'Number');
+      this.setInputsInline(true);
+      this.setColour(180);
+    },
+  };
+
+  Blockly.Blocks['sprout_is_empty'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('is');
+      this.appendDummyInput().appendField('empty?');
+      this.setOutput(true, 'Boolean');
+      this.setInputsInline(true);
+      this.setColour(180);
+    },
+  };
 }

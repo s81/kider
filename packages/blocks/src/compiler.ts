@@ -388,6 +388,32 @@ function compileExpr(block: Blockly.Block): Expr {
         block: null,
       };
     }
+    case 'sprout_list': {
+      const items: Expr[] = [];
+      for (const key of ['VALUE_0', 'VALUE_1', 'VALUE_2']) {
+        const b = block.getInputTargetBlock(key);
+        if (b !== null) items.push(compileExpr(b));
+      }
+      return { kind: 'CallExpr', callee: 'list', args: items, block: null };
+    }
+    case 'sprout_push': {
+      const lst = compileExpr(mustGetInput(block, 'LIST'));
+      const val = compileExpr(mustGetInput(block, 'VAL'));
+      return { kind: 'CallExpr', callee: 'push', args: [lst, val], block: null };
+    }
+    case 'sprout_get': {
+      const lst = compileExpr(mustGetInput(block, 'LIST'));
+      const idx = compileExpr(mustGetInput(block, 'INDEX'));
+      return { kind: 'CallExpr', callee: 'get', args: [lst, idx], block: null };
+    }
+    case 'sprout_size': {
+      const lst = compileExpr(mustGetInput(block, 'LIST'));
+      return { kind: 'CallExpr', callee: 'size', args: [lst], block: null };
+    }
+    case 'sprout_is_empty': {
+      const lst = compileExpr(mustGetInput(block, 'LIST'));
+      return { kind: 'CallExpr', callee: 'isEmpty', args: [lst], block: null };
+    }
     default:
       throw new Error(`Unknown value block type: ${block.type}`);
   }

@@ -32,6 +32,12 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_beside' },
     { kind: 'block', type: 'sprout_above' },
     { kind: 'block', type: 'sprout_scale' },
+    // Lists
+    { kind: 'block', type: 'sprout_list' },
+    { kind: 'block', type: 'sprout_push' },
+    { kind: 'block', type: 'sprout_get' },
+    { kind: 'block', type: 'sprout_size' },
+    { kind: 'block', type: 'sprout_is_empty' },
     // Text
     { kind: 'block', type: 'sprout_string' },
     { kind: 'block', type: 'sprout_join' },

@@ -1046,3 +1046,156 @@ describe('sprout_input', () => {
     });
   });
 });
+
+describe('list blocks', () => {
+  it('sprout_list with 0 connected inputs compiles to list()', () => {
+    const ws = makeWorkspace();
+    const listBlock = ws.newBlock('sprout_list');
+    // no inputs connected — all 3 VALUE slots left unconnected
+
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('myList', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(listBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 'myList',
+      init: { kind: 'CallExpr', callee: 'list', args: [], block: null },
+    });
+  });
+
+  it('sprout_list with 2 connected inputs compiles to list(a, b)', () => {
+    const ws = makeWorkspace();
+    const listBlock = ws.newBlock('sprout_list');
+    const n1 = ws.newBlock('sprout_number');
+    n1.setFieldValue('10', 'NUM');
+    const n2 = ws.newBlock('sprout_number');
+    n2.setFieldValue('20', 'NUM');
+    listBlock.getInput('VALUE_0')!.connection!.connect(n1.outputConnection!);
+    listBlock.getInput('VALUE_1')!.connection!.connect(n2.outputConnection!);
+    // VALUE_2 left unconnected
+
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('nums', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(listBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 'nums',
+      init: {
+        kind: 'CallExpr', callee: 'list',
+        args: [
+          { kind: 'NumberLit', value: 10 },
+          { kind: 'NumberLit', value: 20 },
+        ],
+        block: null,
+      },
+    });
+  });
+
+  it('sprout_push compiles to push(list, val)', () => {
+    const ws = makeWorkspace();
+    const pushBlock = ws.newBlock('sprout_push');
+    const listIdent = ws.newBlock('sprout_ident');
+    listIdent.setFieldValue('colors', 'NAME');
+    const val = ws.newBlock('sprout_number');
+    val.setFieldValue('5', 'NUM');
+    pushBlock.getInput('LIST')!.connection!.connect(listIdent.outputConnection!);
+    pushBlock.getInput('VAL')!.connection!.connect(val.outputConnection!);
+
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('result', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(pushBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 'result',
+      init: {
+        kind: 'CallExpr', callee: 'push',
+        args: [
+          { kind: 'Ident', name: 'colors' },
+          { kind: 'NumberLit', value: 5 },
+        ],
+        block: null,
+      },
+    });
+  });
+
+  it('sprout_get compiles to get(list, index)', () => {
+    const ws = makeWorkspace();
+    const getBlock = ws.newBlock('sprout_get');
+    const listIdent = ws.newBlock('sprout_ident');
+    listIdent.setFieldValue('scores', 'NAME');
+    const idx = ws.newBlock('sprout_number');
+    idx.setFieldValue('1', 'NUM');
+    getBlock.getInput('LIST')!.connection!.connect(listIdent.outputConnection!);
+    getBlock.getInput('INDEX')!.connection!.connect(idx.outputConnection!);
+
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('item', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(getBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 'item',
+      init: {
+        kind: 'CallExpr', callee: 'get',
+        args: [
+          { kind: 'Ident', name: 'scores' },
+          { kind: 'NumberLit', value: 1 },
+        ],
+        block: null,
+      },
+    });
+  });
+
+  it('sprout_size compiles to size(list)', () => {
+    const ws = makeWorkspace();
+    const sizeBlock = ws.newBlock('sprout_size');
+    const listIdent = ws.newBlock('sprout_ident');
+    listIdent.setFieldValue('items', 'NAME');
+    sizeBlock.getInput('LIST')!.connection!.connect(listIdent.outputConnection!);
+
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('n', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(sizeBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 'n',
+      init: {
+        kind: 'CallExpr', callee: 'size',
+        args: [{ kind: 'Ident', name: 'items' }],
+        block: null,
+      },
+    });
+  });
+
+  it('sprout_is_empty compiles to isEmpty(list)', () => {
+    const ws = makeWorkspace();
+    const isEmptyBlock = ws.newBlock('sprout_is_empty');
+    const listIdent = ws.newBlock('sprout_ident');
+    listIdent.setFieldValue('things', 'NAME');
+    isEmptyBlock.getInput('LIST')!.connection!.connect(listIdent.outputConnection!);
+
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('empty', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(isEmptyBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 'empty',
+      init: {
+        kind: 'CallExpr', callee: 'isEmpty',
+        args: [{ kind: 'Ident', name: 'things' }],
+        block: null,
+      },
+    });
+  });
+});
