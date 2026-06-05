@@ -158,6 +158,17 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_reduce'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('reduce');
+      this.appendValueInput('FN').setCheck(null).appendField('with');
+      this.appendValueInput('INIT').setCheck(null).appendField('start');
+      this.setOutput(true, null);
+      this.setColour(260);
+      this.setTooltip('Fold a list into a single value');
+    },
+  };
+
   Blockly.Blocks['sprout_stamp'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput().appendField('stamp');

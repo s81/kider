@@ -442,6 +442,8 @@ function compileExpr(block: Blockly.Block): Expr {
       const fn = compileExpr(mustGetInput(block, 'FN'));
       return { kind: 'CallExpr', callee: 'filter', args: [lst, fn], block: null };
     }
+    case 'sprout_reduce':
+      return { kind: 'CallExpr', callee: 'reduce', args: [compileExpr(mustGetInput(block, 'LIST')), compileExpr(mustGetInput(block, 'FN')), compileExpr(mustGetInput(block, 'INIT'))], block: null };
     case 'sprout_stamp':
       return { kind: 'CallExpr', callee: 'stamp', args: [], block: null };
     default:

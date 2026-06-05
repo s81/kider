@@ -1926,6 +1926,81 @@ describe('list builtins', () => {
       expect(() => interpretValue(prog)).toThrow('predicate must return a bool');
     });
   });
+
+  describe('reduce()', () => {
+    it('sums a list (reduce with add, init 0)', () => {
+      const prog = program(
+        defStmt('add', ['a', 'b'], infix('+', ident('a'), ident('b'))),
+        exprStmt(call('reduce', [
+          call('list', [numLit(1), numLit(2), numLit(3), numLit(4)]),
+          ident('add'),
+          numLit(0),
+        ])),
+      );
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 10 });
+    });
+
+    it('multiplies a list (reduce with mul, init 1)', () => {
+      const prog = program(
+        defStmt('mul', ['a', 'b'], infix('*', ident('a'), ident('b'))),
+        exprStmt(call('reduce', [
+          call('list', [numLit(1), numLit(2), numLit(3)]),
+          ident('mul'),
+          numLit(1),
+        ])),
+      );
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 6 });
+    });
+
+    it('returns init for empty list', () => {
+      const prog = program(
+        defStmt('add', ['a', 'b'], infix('+', ident('a'), ident('b'))),
+        exprStmt(call('reduce', [call('list', []), ident('add'), numLit(0)])),
+      );
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 0 });
+    });
+
+    it('is a left fold (reduce with sub, init 10)', () => {
+      // 10 - 1 - 2 - 3 = 4
+      const prog = program(
+        defStmt('sub', ['a', 'b'], infix('-', ident('a'), ident('b'))),
+        exprStmt(call('reduce', [
+          call('list', [numLit(1), numLit(2), numLit(3)]),
+          ident('sub'),
+          numLit(10),
+        ])),
+      );
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 4 });
+    });
+
+    it('throws on wrong arg count', () => {
+      const prog = program(exprStmt(call('reduce', [call('list', []), numLit(0)])));
+      expect(() => interpretValue(prog)).toThrow('reduce expects 3 arguments, got 2');
+    });
+
+    it('throws if first arg is not a list', () => {
+      const prog = program(
+        defStmt('add', ['a', 'b'], infix('+', ident('a'), ident('b'))),
+        exprStmt(call('reduce', [numLit(1), ident('add'), numLit(0)])),
+      );
+      expect(() => interpretValue(prog)).toThrow('reduce: expected list, got number');
+    });
+
+    it('throws if second arg is not a function', () => {
+      const prog = program(exprStmt(
+        call('reduce', [call('list', [numLit(1)]), numLit(42), numLit(0)])
+      ));
+      expect(() => interpretValue(prog)).toThrow('reduce: second argument must be a function');
+    });
+
+    it('throws if function takes only 1 parameter', () => {
+      const prog = program(
+        defStmt('oneParam', ['x'], ident('x')),
+        exprStmt(call('reduce', [call('list', [numLit(1)]), ident('oneParam'), numLit(0)])),
+      );
+      expect(() => interpretValue(prog)).toThrow('reduce: function must take exactly 2 parameters, got 1');
+    });
+  });
 });
 
 describe('stamp builtin', () => {

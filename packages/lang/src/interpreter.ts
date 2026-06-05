@@ -729,6 +729,29 @@ function evalCall(expr: CallExpr, env: Env): SproutValue {
     return mkList(filtered);
   }
 
+  if (expr.callee === 'reduce') {
+    if (expr.args.length !== 3) throw new SproutRuntimeError(`reduce expects 3 arguments, got ${expr.args.length}`);
+    const lst = assertList(evalExpr(expr.args[0], env), 'reduce');
+    const fnVal = evalExpr(expr.args[1], env);
+    if (fnVal.kind !== 'function') throw new SproutRuntimeError(`reduce: second argument must be a function`);
+    const fn = fnVal as SproutFunction;
+    if (fn.params.length !== 2) throw new SproutRuntimeError(`reduce: function must take exactly 2 parameters, got ${fn.params.length}`);
+    let acc = evalExpr(expr.args[2], env);
+    for (const item of lst.items) {
+      const childEnv = envExtend(fn.env, [
+        [fn.params[0], acc] as [string, SproutValue],
+        [fn.params[1], item] as [string, SproutValue],
+      ]);
+      try {
+        acc = evalExpr(fn.body, childEnv);
+      } catch (e) {
+        if (e instanceof ReturnSignal) { acc = e.value; continue; }
+        throw e;
+      }
+    }
+    return acc;
+  }
+
   // Check built-ins first.
   const builtin = BUILTINS.get(expr.callee);
   if (builtin !== undefined) {
