@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { interpret, interpretFull, callHandler, SproutRuntimeError } from '../src/interpreter.js';
+import { interpret, interpretFull, callHandler, collectInputNames, interpretWithInputs, SproutRuntimeError } from '../src/interpreter.js';
 import {
   EMPTY,
   mkForward,
@@ -1531,5 +1531,76 @@ describe('return statement', () => {
       exprStmt(call('forward', [ident('x')])),
     );
     expect(interpret(prog)).toEqual(mkSequence([mkForward(42)]));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// input builtin
+// ---------------------------------------------------------------------------
+describe('input builtin', () => {
+  it('interpretWithInputs returns value from map', () => {
+    const prog = program(exprStmt(call('forward', [call('input', [strLit('x')])])));
+    const inputs = new Map<string, number>([['x', 42]]);
+    expect(interpretWithInputs(prog, inputs)).toEqual(mkSequence([mkForward(42)]));
+  });
+
+  it('returns 0 for missing key', () => {
+    const prog = program(exprStmt(call('forward', [call('input', [strLit('y')])])));
+    const inputs = new Map<string, number>([['x', 42]]);
+    expect(interpretWithInputs(prog, inputs)).toEqual(mkSequence([mkForward(0)]));
+  });
+
+  it('interpret (no inputs) returns 0', () => {
+    const prog = program(exprStmt(call('forward', [call('input', [strLit('x')])])));
+    expect(interpret(prog)).toEqual(mkSequence([mkForward(0)]));
+  });
+
+  it('throws when argument is not a string', () => {
+    const prog = program(exprStmt(call('forward', [call('input', [numLit(5)])])));
+    expect(() => interpretWithInputs(prog, new Map())).toThrow(SproutRuntimeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// collectInputNames
+// ---------------------------------------------------------------------------
+describe('collectInputNames', () => {
+  it('returns [] for empty program', () => {
+    expect(collectInputNames(program())).toEqual([]);
+  });
+
+  it('returns [name] for a single input call', () => {
+    const prog = program(exprStmt(call('forward', [call('input', [strLit('speed')])])));
+    expect(collectInputNames(prog)).toEqual(['speed']);
+  });
+
+  it('deduplicates repeated names', () => {
+    const prog = program(
+      exprStmt(call('forward', [call('input', [strLit('x')])])),
+      exprStmt(call('forward', [call('input', [strLit('x')])])),
+    );
+    expect(collectInputNames(prog)).toEqual(['x']);
+  });
+
+  it('returns names in order of first appearance', () => {
+    const prog = program(
+      exprStmt(call('forward', [call('input', [strLit('a')])])),
+      exprStmt(call('forward', [call('input', [strLit('b')])])),
+    );
+    expect(collectInputNames(prog)).toEqual(['a', 'b']);
+  });
+
+  it('finds names nested inside a def body', () => {
+    const defBody: Expr = {
+      kind: 'BlockExpr',
+      body: [exprStmt(call('forward', [call('input', [strLit('size')])]))],
+    };
+    const prog = program(defStmt('draw', [], defBody));
+    expect(collectInputNames(prog)).toEqual(['size']);
+  });
+
+  it('ignores input() calls where arg is not a StringLit', () => {
+    const prog = program(exprStmt(call('input', [ident('x')])));
+    expect(collectInputNames(prog)).toEqual([]);
   });
 });

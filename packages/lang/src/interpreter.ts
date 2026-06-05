@@ -74,6 +74,9 @@ class ReturnBundle {
   constructor(public value: SproutValue, public drawing: Drawing) {}
 }
 
+// Module-level input values — set by interpretWithInputs before each run.
+let _inputValues: ReadonlyMap<string, number> = new Map();
+
 // ---------------------------------------------------------------------------
 // Type guards
 // ---------------------------------------------------------------------------
@@ -394,6 +397,11 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (args.length !== 1) throw new SproutRuntimeError(`length expects 1 argument, got ${args.length}`);
     const s = assertString(args[0], 'length');
     return { kind: 'number', value: s.value.length };
+  }],
+  ['input', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`input expects 1 argument, got ${args.length}`);
+    const name = assertString(args[0], 'input');
+    return { kind: 'number', value: _inputValues.get(name.value) ?? 0 } satisfies SproutNumber;
   }],
 ]);
 
@@ -859,5 +867,102 @@ export function callHandler(fn: SproutFunction): Drawing {
       return e.drawing;
     }
     throw e;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Input name collection — AST scan for input("literal") calls
+// ---------------------------------------------------------------------------
+
+export function collectInputNames(program: Program): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  function walkExpr(expr: Expr): void {
+    switch (expr.kind) {
+      case 'CallExpr':
+        if (
+          expr.callee === 'input' &&
+          expr.args.length >= 1 &&
+          expr.args[0].kind === 'StringLit'
+        ) {
+          const name = (expr.args[0] as StringLit).value;
+          if (!seen.has(name)) { seen.add(name); result.push(name); }
+        }
+        for (const arg of expr.args) walkExpr(arg);
+        if (expr.block !== null) walkBlock(expr.block);
+        break;
+      case 'InfixExpr':
+        walkExpr(expr.left); walkExpr(expr.right);
+        break;
+      case 'UnaryExpr':
+        walkExpr(expr.operand);
+        break;
+      case 'BlockExpr':
+        walkBlock(expr);
+        break;
+      case 'RepeatExpr':
+        walkExpr(expr.count); walkBlock(expr.body);
+        break;
+      case 'OnExpr':
+        walkBlock(expr.body);
+        break;
+      case 'IfExpr':
+        walkExpr(expr.cond); walkBlock(expr.then);
+        if (expr.else !== null) walkBlock(expr.else);
+        break;
+      case 'WhileExpr':
+        walkExpr(expr.cond); walkBlock(expr.body);
+        break;
+    }
+  }
+
+  function walkBlock(blk: BlockExpr): void {
+    for (const stmt of blk.body) walkStmt(stmt);
+  }
+
+  function walkStmt(stmt: Stmt): void {
+    switch (stmt.kind) {
+      case 'DefStmt': walkExpr(stmt.body); break;
+      case 'ExprStmt': walkExpr(stmt.expr); break;
+      case 'LetStmt': walkExpr(stmt.init); break;
+      case 'AssignStmt': walkExpr(stmt.value); break;
+      case 'ReturnStmt': walkExpr(stmt.value); break;
+    }
+  }
+
+  for (const stmt of program.stmts) walkStmt(stmt);
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// interpretWithInputs and interpretFullWithInputs
+// ---------------------------------------------------------------------------
+
+export function interpretWithInputs(
+  program: Program,
+  inputs: ReadonlyMap<string, number>,
+  initialEnv: Env = EMPTY_ENV,
+): Drawing {
+  const prev = _inputValues;
+  _inputValues = inputs;
+  try {
+    return interpret(program, initialEnv);
+  } finally {
+    _inputValues = prev;
+  }
+}
+
+export function interpretFullWithInputs(
+  program: Program,
+  inputs: ReadonlyMap<string, number>,
+  initialEnv: Env = EMPTY_ENV,
+): { drawing: Drawing; handlers: Map<string, SproutFunction> } {
+  const prev = _inputValues;
+  _inputValues = inputs;
+  try {
+    return interpretFull(program, initialEnv);
+  } finally {
+    _inputValues = prev;
   }
 }
