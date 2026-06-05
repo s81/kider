@@ -671,7 +671,9 @@ describe('text block', () => {
   it('sprout_text compiles to CallExpr text(str, size)', () => {
     const ws = makeWorkspace();
     const textBlock = ws.newBlock('sprout_text');
-    textBlock.setFieldValue('hello', 'TEXT');
+    const strBlock = ws.newBlock('sprout_string');
+    strBlock.setFieldValue('hello', 'VALUE');
+    textBlock.getInput('STR')!.connection!.connect(strBlock.outputConnection!);
     const sizeNum = ws.newBlock('sprout_number');
     sizeNum.setFieldValue('20', 'NUM');
     textBlock.getInput('SIZE')!.connection!.connect(sizeNum.outputConnection!);
@@ -826,6 +828,121 @@ describe('clearCanvas block', () => {
           kind: 'CallExpr',
           callee: 'clearCanvas',
           args: [],
+          block: null,
+        },
+      }],
+    });
+    ws.dispose();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// String blocks
+// ---------------------------------------------------------------------------
+describe('string blocks', () => {
+  it('sprout_string compiles to StringLit', () => {
+    const ws = makeWorkspace();
+
+    const textBlock = ws.newBlock('sprout_text');
+    const strBlock = ws.newBlock('sprout_string');
+    strBlock.setFieldValue('hi', 'VALUE');
+    const sizeBlock = ws.newBlock('sprout_number');
+    sizeBlock.setFieldValue('20', 'NUM');
+
+    textBlock.getInput('STR')!.connection!.connect(strBlock.outputConnection!);
+    textBlock.getInput('SIZE')!.connection!.connect(sizeBlock.outputConnection!);
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [textBlock];
+
+    const result = compileWorkspace(ws);
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr',
+          callee: 'text',
+          args: [
+            { kind: 'StringLit', value: 'hi' },
+            { kind: 'NumberLit', value: 20 },
+          ],
+          block: null,
+        },
+      }],
+    });
+    ws.dispose();
+  });
+
+  it('sprout_join compiles to join(A, B) CallExpr', () => {
+    const ws = makeWorkspace();
+
+    const textBlock = ws.newBlock('sprout_text');
+    const joinBlock = ws.newBlock('sprout_join');
+    const aBlock = ws.newBlock('sprout_string');
+    aBlock.setFieldValue('hello', 'VALUE');
+    const bBlock = ws.newBlock('sprout_number');
+    bBlock.setFieldValue('42', 'NUM');
+    const sizeBlock = ws.newBlock('sprout_number');
+    sizeBlock.setFieldValue('20', 'NUM');
+
+    joinBlock.getInput('A')!.connection!.connect(aBlock.outputConnection!);
+    joinBlock.getInput('B')!.connection!.connect(bBlock.outputConnection!);
+    textBlock.getInput('STR')!.connection!.connect(joinBlock.outputConnection!);
+    textBlock.getInput('SIZE')!.connection!.connect(sizeBlock.outputConnection!);
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [textBlock];
+
+    const result = compileWorkspace(ws);
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr',
+          callee: 'text',
+          args: [
+            {
+              kind: 'CallExpr',
+              callee: 'join',
+              args: [
+                { kind: 'StringLit', value: 'hello' },
+                { kind: 'NumberLit', value: 42 },
+              ],
+              block: null,
+            },
+            { kind: 'NumberLit', value: 20 },
+          ],
+          block: null,
+        },
+      }],
+    });
+    ws.dispose();
+  });
+
+  it('sprout_length compiles to length(str) CallExpr', () => {
+    const ws = makeWorkspace();
+
+    const fwdBlock = ws.newBlock('sprout_forward');
+    const lenBlock = ws.newBlock('sprout_length');
+    const strBlock = ws.newBlock('sprout_string');
+    strBlock.setFieldValue('hello', 'VALUE');
+
+    lenBlock.getInput('STR')!.connection!.connect(strBlock.outputConnection!);
+    fwdBlock.getInput('DISTANCE')!.connection!.connect(lenBlock.outputConnection!);
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [fwdBlock];
+
+    const result = compileWorkspace(ws);
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr',
+          callee: 'forward',
+          args: [{
+            kind: 'CallExpr',
+            callee: 'length',
+            args: [{ kind: 'StringLit', value: 'hello' }],
+            block: null,
+          }],
           block: null,
         },
       }],

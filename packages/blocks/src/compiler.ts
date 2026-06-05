@@ -4,7 +4,7 @@ import type {
   DefStmt, ExprStmt,
   LetStmt, AssignStmt,
   NumberLit, Ident, InfixExpr, UnaryExpr, CallExpr,
-  BlockExpr, RepeatExpr, OnExpr, IfExpr, WhileExpr, SymbolLit, BoolLit,
+  BlockExpr, RepeatExpr, OnExpr, IfExpr, WhileExpr, SymbolLit, BoolLit, StringLit,
 } from '@sprout/lang';
 
 export function compileWorkspace(ws: Blockly.Workspace): Program {
@@ -212,9 +212,9 @@ function compileExprBlock(block: Blockly.Block): Expr {
       return { kind: 'CallExpr', callee: 'polygon', args: [n, size], block: null };
     }
     case 'sprout_text': {
-      const str = block.getFieldValue('TEXT') as string;
+      const str = compileExpr(mustGetInput(block, 'STR'));
       const size = compileExpr(mustGetInput(block, 'SIZE'));
-      return { kind: 'CallExpr', callee: 'text', args: [{ kind: 'StringLit', value: str }, size], block: null };
+      return { kind: 'CallExpr', callee: 'text', args: [str, size], block: null };
     }
     default:
       throw new Error(`Block type cannot be compiled as expression: ${block.type}`);
@@ -358,6 +358,20 @@ function compileExpr(block: Blockly.Block): Expr {
     }
     case 'sprout_pi':
       return { kind: 'CallExpr', callee: 'pi', args: [], block: null };
+    case 'sprout_string': {
+      const value = block.getFieldValue('VALUE') as string;
+      const lit: StringLit = { kind: 'StringLit', value };
+      return lit;
+    }
+    case 'sprout_join': {
+      const a = compileExpr(mustGetInput(block, 'A'));
+      const b = compileExpr(mustGetInput(block, 'B'));
+      return { kind: 'CallExpr', callee: 'join', args: [a, b], block: null };
+    }
+    case 'sprout_length': {
+      const str = compileExpr(mustGetInput(block, 'STR'));
+      return { kind: 'CallExpr', callee: 'length', args: [str], block: null };
+    }
     default:
       throw new Error(`Unknown value block type: ${block.type}`);
   }

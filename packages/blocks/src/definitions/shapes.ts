@@ -49,9 +49,8 @@ export function registerShapeBlocks(): void {
   };
   Blockly.Blocks['sprout_text'] = {
     init(this: Blockly.Block) {
-      this.appendDummyInput()
-        .appendField('text')
-        .appendField(new Blockly.FieldTextInput('hello'), 'TEXT');
+      this.appendDummyInput().appendField('text');
+      this.appendValueInput('STR').setCheck('String');
       this.appendValueInput('SIZE').setCheck('Number').appendField('size');
       this.setInputsInline(true);
       this.setPreviousStatement(true, null);

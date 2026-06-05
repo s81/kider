@@ -43,4 +43,35 @@ export function registerValueBlocks(): void {
       this.setColour(230);
     },
   };
+
+  Blockly.Blocks['sprout_string'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('"')
+        .appendField(new Blockly.FieldTextInput('hello'), 'VALUE')
+        .appendField('"');
+      this.setOutput(true, 'String');
+      this.setColour(160);
+    },
+  };
+
+  Blockly.Blocks['sprout_join'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('join');
+      this.appendValueInput('A').setCheck(null);
+      this.appendValueInput('B').setCheck(null);
+      this.setOutput(true, 'String');
+      this.setInputsInline(true);
+      this.setColour(160);
+    },
+  };
+
+  Blockly.Blocks['sprout_length'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('STR').setCheck('String').appendField('length of');
+      this.setOutput(true, 'Number');
+      this.setInputsInline(true);
+      this.setColour(160);
+    },
+  };
 }
