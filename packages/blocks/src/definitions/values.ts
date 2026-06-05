@@ -136,12 +136,44 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_map'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('map');
+      this.appendValueInput('FN').setCheck(null).appendField('with');
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(260);
+      this.setTooltip('Apply a function to each item in a list');
+    },
+  };
+
+  Blockly.Blocks['sprout_filter'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('filter');
+      this.appendValueInput('FN').setCheck(null).appendField('where');
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(260);
+      this.setTooltip('Keep items from a list where function returns true');
+    },
+  };
+
   Blockly.Blocks['sprout_stamp'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput().appendField('stamp');
       this.setOutput(true, null);
       this.setInputsInline(true);
       this.setColour(290);
+    },
+  };
+
+  Blockly.Blocks['sprout_random'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('MIN').setCheck('Number').appendField('random from');
+      this.appendValueInput('MAX').setCheck('Number').appendField('to');
+      this.setOutput(true, 'Number');
+      this.setColour(230);
+      this.setTooltip('Random number between min and max (inclusive)');
     },
   };
 }

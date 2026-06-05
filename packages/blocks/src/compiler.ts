@@ -232,6 +232,8 @@ function compileExprBlock(block: Blockly.Block): Expr {
     }
     case 'sprout_for_each':
       return compileForEachExpr(block);
+    case 'sprout_random':
+      return { kind: 'CallExpr', callee: 'random', args: [compileExpr(mustGetInput(block, 'MIN')), compileExpr(mustGetInput(block, 'MAX'))], block: null };
     default:
       throw new Error(`Block type cannot be compiled as expression: ${block.type}`);
   }
@@ -433,6 +435,16 @@ function compileExpr(block: Blockly.Block): Expr {
     case 'sprout_is_empty': {
       const lst = compileExpr(mustGetInput(block, 'LIST'));
       return { kind: 'CallExpr', callee: 'isEmpty', args: [lst], block: null };
+    }
+    case 'sprout_map': {
+      const lst = compileExpr(mustGetInput(block, 'LIST'));
+      const fn = compileExpr(mustGetInput(block, 'FN'));
+      return { kind: 'CallExpr', callee: 'map', args: [lst, fn], block: null };
+    }
+    case 'sprout_filter': {
+      const lst = compileExpr(mustGetInput(block, 'LIST'));
+      const fn = compileExpr(mustGetInput(block, 'FN'));
+      return { kind: 'CallExpr', callee: 'filter', args: [lst, fn], block: null };
     }
     case 'sprout_stamp':
       return { kind: 'CallExpr', callee: 'stamp', args: [], block: null };

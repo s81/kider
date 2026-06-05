@@ -1062,8 +1062,34 @@ describe('math builtins', () => {
   });
 
   // --- random ---
-  it('random(0) = 0', () => {
-    expect(interpret(program(exprStmt(call('forward', [call('random', [numLit(0)])]))))).toEqual(mkSequence([mkForward(0)]));
+  it('random(1, 10) returns a number in [1, 10]', () => {
+    for (let i = 0; i < 20; i++) {
+      const result = interpret(program(exprStmt(call('forward', [call('random', [numLit(1), numLit(10)])]))));
+      expect(result).toMatchObject({ kind: 'sequence' });
+      const seq = result as { kind: 'sequence'; steps: { kind: string; distance: number }[] };
+      const val = seq.steps[0].distance;
+      expect(val).toBeGreaterThanOrEqual(1);
+      expect(val).toBeLessThanOrEqual(10);
+    }
+  });
+  it('random(5, 5) = 5', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('random', [numLit(5), numLit(5)])]))))).toEqual(mkSequence([mkForward(5)]));
+  });
+  it('random(0, 0) = 0', () => {
+    expect(interpret(program(exprStmt(call('forward', [call('random', [numLit(0), numLit(0)])]))))).toEqual(mkSequence([mkForward(0)]));
+  });
+  it('random(10, 1) throws SproutRuntimeError (min > max)', () => {
+    expect(() => interpret(program(exprStmt(call('random', [numLit(10), numLit(1)]))))).toThrow(SproutRuntimeError);
+    expect(() => interpret(program(exprStmt(call('random', [numLit(10), numLit(1)]))))).toThrow(/random/);
+  });
+  it('random with 1 arg throws SproutRuntimeError', () => {
+    expect(() => interpret(program(exprStmt(call('random', [numLit(5)]))))).toThrow(SproutRuntimeError);
+  });
+  it('random with 0 args throws SproutRuntimeError', () => {
+    expect(() => interpret(program(exprStmt(call('random', []))))).toThrow(SproutRuntimeError);
+  });
+  it('random with non-number arg throws SproutRuntimeError', () => {
+    expect(() => interpret(program(exprStmt(call('random', [{ kind: 'StringLit' as const, value: 'a' }, numLit(5)]))))).toThrow(SproutRuntimeError);
   });
 
   // --- pi ---

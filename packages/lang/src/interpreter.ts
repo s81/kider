@@ -363,9 +363,12 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     return { kind: 'number', value: Math.min(a.value, b.value) } satisfies SproutNumber;
   }],
   ['random', (args) => {
-    if (args.length !== 1) throw new SproutRuntimeError(`random expects 1 argument, got ${args.length}`);
-    const n = assertNumber(args[0], 'random');
-    return { kind: 'number', value: Math.random() * n.value } satisfies SproutNumber;
+    if (args.length !== 2) throw new SproutRuntimeError(`random expects 2 arguments, got ${args.length}`);
+    const min = assertNumber(args[0], 'random');
+    const max = assertNumber(args[1], 'random');
+    if (min.value > max.value) throw new SproutRuntimeError(`random: min (${min.value}) must be <= max (${max.value})`);
+    const val = min.value + Math.random() * (max.value - min.value);
+    return { kind: 'number', value: val } satisfies SproutNumber;
   }],
   ['pi', (args) => {
     if (args.length !== 0) throw new SproutRuntimeError(`pi expects 0 arguments, got ${args.length}`);
