@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import * as Blockly from 'blockly';
 import { compileWorkspace } from '@sprout/blocks';
 import {
-  interpretFull,
+  interpretFullWithInputs,
+  collectInputNames,
   callHandler,
   render,
   mkSequence,
@@ -31,6 +32,8 @@ export function App() {
   const [stepsPerFrame, setStepsPerFrame] = useState(3);
   const [editorParseError, setEditorParseError] = useState<string | null>(null);
   const [shareConfirm, setShareConfirm] = useState(false);
+  const [inputNames, setInputNames] = useState<string[]>([]);
+  const [inputValues, setInputValues] = useState<Record<string, number>>({});
 
   useEffect(() => {
     // Clear any stale runtime error from a previous Run when the user edits.
@@ -50,6 +53,23 @@ export function App() {
       }
     }
   }, [editorText, sourceMode]);
+
+  useEffect(() => {
+    try {
+      const text = sourceMode === 'blocks' ? programText : editorText;
+      if (!text.trim()) { setInputNames([]); return; }
+      const prog = parse(text);
+      const names = collectInputNames(prog);
+      setInputNames(names);
+      setInputValues(prev => {
+        const next: Record<string, number> = {};
+        for (const name of names) next[name] = prev[name] ?? 0;
+        return next;
+      });
+    } catch {
+      // Parse error — leave inputNames unchanged
+    }
+  }, [programText, editorText, sourceMode]);
 
   useEffect(() => {
     const ws = wsRef.current;
@@ -148,7 +168,10 @@ export function App() {
       } else {
         program = parse(editorText);
       }
-      const { drawing, handlers: h } = interpretFull(program);
+      const inputMap = new Map(
+        Object.entries(inputValues).map(([k, v]) => [k, v] as [string, number])
+      );
+      const { drawing, handlers: h } = interpretFullWithInputs(program, inputMap);
       accDrawingRef.current = drawing;
       handlersRef.current = h;
       setHandlers(h);
@@ -446,6 +469,48 @@ export function App() {
           </div>
         )}
 
+        {inputNames.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+              padding: '6px 8px',
+              background: '#fff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 4,
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Inputs
+            </div>
+            {inputNames.map(name => (
+              <label
+                key={name}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}
+              >
+                <span style={{ minWidth: 80, color: '#475569' }}>{name}</span>
+                <input
+                  type="number"
+                  value={inputValues[name] ?? 0}
+                  onChange={e =>
+                    setInputValues(prev => ({
+                      ...prev,
+                      [name]: Number(e.target.value) || 0,
+                    }))
+                  }
+                  style={{
+                    width: 72,
+                    padding: '2px 6px',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: 4,
+                    fontSize: 13,
+                  }}
+                />
+              </label>
+            ))}
+          </div>
+        )}
         <TextPanel
           text={sourceMode === 'blocks' ? programText : editorText}
           editable={sourceMode === 'editor'}
