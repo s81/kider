@@ -29,6 +29,7 @@ import {
   type SproutString,
   type SproutVar,
   type SproutFunction,
+  type SproutList,
   type Drawing,
   type Env,
   mkForward,
@@ -47,6 +48,7 @@ import {
   mkText,
   mkBackground,
   mkClearCanvas,
+  mkList,
   PEN_UP,
   PEN_DOWN,
   EMPTY,
@@ -113,6 +115,15 @@ function assertDrawing(v: SproutValue, context: string): Drawing {
   if (!isDrawing(v)) {
     throw new SproutRuntimeError(
       `${context}: expected drawing, got ${v.kind}`
+    );
+  }
+  return v;
+}
+
+function assertList(v: SproutValue, context: string): SproutList {
+  if (v.kind !== 'list') {
+    throw new SproutRuntimeError(
+      `${context}: expected list, got ${v.kind}`
     );
   }
   return v;
@@ -400,6 +411,42 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (args.length !== 1) throw new SproutRuntimeError(`input expects 1 argument, got ${args.length}`);
     const name = assertString(args[0], 'input');
     return { kind: 'number', value: _inputValues.get(name.value) ?? 0 } satisfies SproutNumber;
+  }],
+  // --- List builtins ---
+  ['list', (args) => mkList(args)],
+
+  ['push', (args) => {
+    if (args.length !== 2) {
+      throw new SproutRuntimeError(`push expects 2 arguments, got ${args.length}`);
+    }
+    const lst = assertList(args[0], 'push');
+    return mkList([...lst.items, args[1]]);
+  }],
+
+  ['get', (args) => {
+    const lst = assertList(args[0], 'get');
+    if (args[1].kind !== 'number') {
+      throw new SproutRuntimeError(
+        `get: expected number index, got ${args[1].kind}`
+      );
+    }
+    const i = args[1].value;
+    if (i < 1 || i > lst.items.length) {
+      throw new SproutRuntimeError(
+        `get: index ${i} is out of bounds (size ${lst.items.length})`
+      );
+    }
+    return lst.items[i - 1];
+  }],
+
+  ['size', (args) => {
+    const lst = assertList(args[0], 'size');
+    return { kind: 'number' as const, value: lst.items.length };
+  }],
+
+  ['isEmpty', (args) => {
+    const lst = assertList(args[0], 'isEmpty');
+    return { kind: 'bool' as const, value: lst.items.length === 0 };
   }],
 ]);
 
@@ -936,6 +983,30 @@ export function collectInputNames(program: Program): string[] {
 // ---------------------------------------------------------------------------
 // interpretWithInputs and interpretFullWithInputs
 // ---------------------------------------------------------------------------
+
+/**
+ * Evaluate a program and return the last `SproutValue` produced by an
+ * expression statement.  Non-Drawing values (like lists, numbers, strings)
+ * are returned directly instead of being discarded.  Returns `EMPTY` if
+ * the program produces no expression values.
+ */
+export function interpretValue(
+  program: Program,
+  initialEnv: Env = EMPTY_ENV,
+): SproutValue {
+  let env: Env = initialEnv;
+  let lastValue: SproutValue = EMPTY;
+
+  for (const stmt of program.stmts) {
+    const [val, newEnv] = evalStmtWithEnv(stmt, env);
+    env = newEnv;
+    if (val !== null) {
+      lastValue = val;
+    }
+  }
+
+  return lastValue;
+}
 
 export function interpretWithInputs(
   program: Program,

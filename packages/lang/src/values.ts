@@ -96,9 +96,15 @@ export interface SproutVar {
   readonly cell: { value: SproutValue };
 }
 
+/** An immutable ordered list of Sprout values. */
+export interface SproutList {
+  readonly kind: 'list';
+  readonly items: readonly SproutValue[];
+}
+
 // INVARIANT: Drawing.kind values ('forward','turn','penUp','penDown','sequence',
 // 'beside','above','scale','color','penWidth','empty','circle','rect','ellipse','triangle','polygon','text','background','clearCanvas')
-// must never match SproutNumber/String/Symbol/Bool/Function/Var kinds.
+// must never match SproutNumber/String/Symbol/Bool/Function/Var/List kinds.
 export type SproutValue =
   | SproutNumber
   | SproutString
@@ -106,6 +112,7 @@ export type SproutValue =
   | SproutBool
   | SproutFunction
   | SproutVar
+  | SproutList   // NEW
   | Drawing;
 
 // ---------------------------------------------------------------------------
@@ -166,3 +173,6 @@ export const mkClearCanvas = (): Drawing =>
   ({ kind: 'clearCanvas' });
 
 export const EMPTY: Drawing = { kind: 'empty' };
+
+export const mkList = (items: readonly SproutValue[]): SproutList =>
+  ({ kind: 'list', items });

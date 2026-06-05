@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { interpret, interpretFull, callHandler, collectInputNames, interpretWithInputs, interpretFullWithInputs, SproutRuntimeError } from '../src/interpreter.js';
+import { interpret, interpretFull, interpretValue, callHandler, collectInputNames, interpretWithInputs, interpretFullWithInputs, SproutRuntimeError } from '../src/interpreter.js';
 import {
   EMPTY,
   mkForward,
@@ -14,6 +14,7 @@ import {
   mkText,
   mkBackground,
   mkClearCanvas,
+  mkList,
   PEN_UP,
   PEN_DOWN,
   type SproutFunction,
@@ -1619,5 +1620,146 @@ describe('collectInputNames', () => {
   it('ignores input() calls where arg is not a StringLit', () => {
     const prog = program(exprStmt(call('input', [ident('x')])));
     expect(collectInputNames(prog)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// list builtins
+// ---------------------------------------------------------------------------
+describe('list builtins', () => {
+  describe('list()', () => {
+    it('creates an empty list', () => {
+      const prog = program(exprStmt(call('list', [])));
+      expect(interpretValue(prog)).toEqual(mkList([]));
+    });
+
+    it('creates a list with items', () => {
+      const prog = program(exprStmt(call('list', [numLit(1), numLit(2), numLit(3)])));
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 1 },
+        { kind: 'number', value: 2 },
+        { kind: 'number', value: 3 },
+      ]));
+    });
+
+    it('accepts mixed types', () => {
+      const prog = program(exprStmt(call('list', [numLit(1), strLit('hi')])));
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 1 },
+        { kind: 'string', value: 'hi' },
+      ]));
+    });
+  });
+
+  describe('push()', () => {
+    it('appends a value to the list', () => {
+      const prog = program(exprStmt(
+        call('push', [call('list', [numLit(1), numLit(2)]), numLit(3)])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 1 },
+        { kind: 'number', value: 2 },
+        { kind: 'number', value: 3 },
+      ]));
+    });
+
+    it('does not mutate the original list', () => {
+      const prog = program(
+        letStmt('colors', call('list', [numLit(1)])),
+        letStmt('colors2', call('push', [ident('colors'), numLit(2)])),
+        exprStmt(ident('colors')),
+      );
+      expect(interpretValue(prog)).toEqual(mkList([{ kind: 'number', value: 1 }]));
+    });
+
+    it('throws on wrong arity', () => {
+      const prog = program(exprStmt(call('push', [call('list', [])])));
+      expect(() => interpretValue(prog)).toThrow('push expects 2 arguments, got 1');
+    });
+
+    it('throws if first arg is not a list', () => {
+      const prog = program(exprStmt(call('push', [numLit(1), numLit(2)])));
+      expect(() => interpretValue(prog)).toThrow('push: expected list, got number');
+    });
+  });
+
+  describe('get()', () => {
+    it('returns item at 1-based index', () => {
+      const prog = program(exprStmt(
+        call('get', [call('list', [numLit(10), numLit(20), numLit(30)]), numLit(1)])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 10 });
+    });
+
+    it('returns last item', () => {
+      const prog = program(exprStmt(
+        call('get', [call('list', [numLit(10), numLit(20), numLit(30)]), numLit(3)])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 30 });
+    });
+
+    it('throws on out-of-bounds index', () => {
+      const prog = program(exprStmt(
+        call('get', [call('list', [numLit(1), numLit(2)]), numLit(5)])
+      ));
+      expect(() => interpretValue(prog)).toThrow('get: index 5 is out of bounds (size 2)');
+    });
+
+    it('throws on index 0', () => {
+      const prog = program(exprStmt(
+        call('get', [call('list', [numLit(1)]), numLit(0)])
+      ));
+      expect(() => interpretValue(prog)).toThrow('get: index 0 is out of bounds (size 1)');
+    });
+
+    it('throws if first arg is not a list', () => {
+      const prog = program(exprStmt(call('get', [numLit(5), numLit(1)])));
+      expect(() => interpretValue(prog)).toThrow('get: expected list, got number');
+    });
+
+    it('throws if second arg is not a number', () => {
+      const prog = program(exprStmt(
+        call('get', [call('list', [numLit(1)]), strLit('x')])
+      ));
+      expect(() => interpretValue(prog)).toThrow('get: expected number index, got string');
+    });
+  });
+
+  describe('size()', () => {
+    it('returns 0 for empty list', () => {
+      const prog = program(exprStmt(call('size', [call('list', [])])));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 0 });
+    });
+
+    it('returns item count', () => {
+      const prog = program(exprStmt(
+        call('size', [call('list', [numLit(1), numLit(2), numLit(3)])])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 3 });
+    });
+
+    it('throws if arg is not a list', () => {
+      const prog = program(exprStmt(call('size', [numLit(5)])));
+      expect(() => interpretValue(prog)).toThrow('size: expected list, got number');
+    });
+  });
+
+  describe('isEmpty()', () => {
+    it('returns true for empty list', () => {
+      const prog = program(exprStmt(call('isEmpty', [call('list', [])])));
+      expect(interpretValue(prog)).toEqual({ kind: 'bool', value: true });
+    });
+
+    it('returns false for non-empty list', () => {
+      const prog = program(exprStmt(
+        call('isEmpty', [call('list', [numLit(1), numLit(2)])])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'bool', value: false });
+    });
+
+    it('throws if arg is not a list', () => {
+      const prog = program(exprStmt(call('isEmpty', [strLit('hi')])));
+      expect(() => interpretValue(prog)).toThrow('isEmpty: expected list, got string');
+    });
   });
 });

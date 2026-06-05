@@ -34,12 +34,15 @@ export type {
   SproutBool,
   SproutFunction,
   SproutVar,
+  SproutList,
   Drawing,
   SproutValue,
   Env,
 } from './values.js';
 
 export {
+  // List constructor
+  mkList,
   // Drawing constructors
   mkForward,
   mkTurn,
@@ -66,6 +69,7 @@ export {
 export {
   interpret,
   interpretFull,
+  interpretValue,
   interpretWithInputs,
   interpretFullWithInputs,
   collectInputNames,
