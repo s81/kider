@@ -155,11 +155,17 @@ export interface AssignStmt {
   readonly value: Expr;
 }
 
+/** `return expr` — exits the enclosing function with a value */
+export interface ReturnStmt {
+  readonly kind: 'ReturnStmt';
+  readonly value: Expr;
+}
+
 // ---------------------------------------------------------------------------
 // Stmt union
 // ---------------------------------------------------------------------------
 
-export type Stmt = DefStmt | ExprStmt | LetStmt | AssignStmt;
+export type Stmt = DefStmt | ExprStmt | LetStmt | AssignStmt | ReturnStmt;
 
 // ---------------------------------------------------------------------------
 // Top-level program

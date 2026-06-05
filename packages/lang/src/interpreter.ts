@@ -695,6 +695,8 @@ function evalStmtWithEnv(stmt: Stmt, env: Env): [SproutValue | null, Env] {
       existing.cell.value = evalExpr(stmt.value, env);
       return [null, env];
     }
+    case 'ReturnStmt':
+      throw new SproutRuntimeError('return(...) is not yet implemented');
   }
 }
 

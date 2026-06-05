@@ -126,6 +126,9 @@ export function serializeStmt(stmt: Stmt, indentLevel = 0): string {
       return `${header}\n${bodyStr}\n${indent(indentLevel)}end`;
     }
 
+    case 'ReturnStmt':
+      return `return ${serializeExpr(stmt.value, indentLevel)}`;
+
     default: {
       const _never: never = stmt;
       throw new Error(`Unknown stmt kind: ${(_never as Stmt).kind}`);
