@@ -27,6 +27,7 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     // Functions
     { kind: 'block', type: 'sprout_def' },
     { kind: 'block', type: 'sprout_call_stmt' },
+    { kind: 'block', type: 'sprout_return' },
     // Composition
     { kind: 'block', type: 'sprout_beside' },
     { kind: 'block', type: 'sprout_above' },

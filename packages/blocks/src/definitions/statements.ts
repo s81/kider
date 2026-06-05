@@ -183,6 +183,16 @@ export function registerStatementBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_return'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('VALUE')
+        .appendField('return');
+      this.setPreviousStatement(true, null);
+      // No setNextStatement — nothing should follow a return.
+      this.setColour(290);
+    },
+  };
+
   // Generic function call as statement: callee(arg0, arg1) — up to 2 args
   Blockly.Blocks['sprout_call_stmt'] = {
     init(this: Blockly.Block) {

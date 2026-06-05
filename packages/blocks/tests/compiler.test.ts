@@ -950,3 +950,69 @@ describe('string blocks', () => {
     ws.dispose();
   });
 });
+
+// ---------------------------------------------------------------------------
+// sprout_return block
+// ---------------------------------------------------------------------------
+describe('sprout_return', () => {
+  it('compiles to ReturnStmt with NumberLit value', () => {
+    const ws = makeWorkspace();
+    const returnBlock = ws.newBlock('sprout_return');
+    const numBlock = ws.newBlock('sprout_number');
+    numBlock.setFieldValue('42', 'NUM');
+    returnBlock.getInput('VALUE')!.connection!.connect(numBlock.outputConnection!);
+
+    const defBlock = ws.newBlock('sprout_def');
+    defBlock.setFieldValue('myFn', 'NAME');
+    defBlock.getInput('BODY')!.connection!.connect(returnBlock.previousConnection!);
+
+    const prog = compileWorkspace(ws);
+    expect(prog.stmts).toHaveLength(1);
+    const def = prog.stmts[0];
+    expect(def.kind).toBe('DefStmt');
+    if (def.kind === 'DefStmt') {
+      expect(def.body.kind).toBe('BlockExpr');
+      if (def.body.kind === 'BlockExpr') {
+        expect(def.body.body).toHaveLength(1);
+        const ret = def.body.body[0];
+        expect(ret.kind).toBe('ReturnStmt');
+        if (ret.kind === 'ReturnStmt') {
+          expect(ret.value).toEqual({ kind: 'NumberLit', value: 42 });
+        }
+      }
+    }
+  });
+
+  it('compiles to ReturnStmt with infix expression value', () => {
+    const ws = makeWorkspace();
+    const returnBlock = ws.newBlock('sprout_return');
+    const infixBlock = ws.newBlock('sprout_infix');
+    infixBlock.setFieldValue('+', 'OP');
+    const left = ws.newBlock('sprout_number');
+    left.setFieldValue('2', 'NUM');
+    const right = ws.newBlock('sprout_number');
+    right.setFieldValue('3', 'NUM');
+    infixBlock.getInput('LEFT')!.connection!.connect(left.outputConnection!);
+    infixBlock.getInput('RIGHT')!.connection!.connect(right.outputConnection!);
+    returnBlock.getInput('VALUE')!.connection!.connect(infixBlock.outputConnection!);
+
+    const defBlock = ws.newBlock('sprout_def');
+    defBlock.setFieldValue('myFn', 'NAME');
+    defBlock.getInput('BODY')!.connection!.connect(returnBlock.previousConnection!);
+
+    const prog = compileWorkspace(ws);
+    const def = prog.stmts[0];
+    if (def.kind === 'DefStmt' && def.body.kind === 'BlockExpr') {
+      const ret = def.body.body[0];
+      expect(ret.kind).toBe('ReturnStmt');
+      if (ret.kind === 'ReturnStmt') {
+        expect(ret.value).toEqual({
+          kind: 'InfixExpr',
+          op: '+',
+          left: { kind: 'NumberLit', value: 2 },
+          right: { kind: 'NumberLit', value: 3 },
+        });
+      }
+    }
+  });
+});

@@ -2,7 +2,7 @@ import * as Blockly from 'blockly/node';
 import type {
   Program, Stmt, Expr,
   DefStmt, ExprStmt,
-  LetStmt, AssignStmt,
+  LetStmt, AssignStmt, ReturnStmt,
   NumberLit, Ident, InfixExpr, UnaryExpr, CallExpr,
   BlockExpr, RepeatExpr, OnExpr, IfExpr, WhileExpr, SymbolLit, BoolLit, StringLit,
 } from '@sprout/lang';
@@ -52,6 +52,8 @@ function compileStmt(block: Blockly.Block): Stmt {
       return compileLet(block);
     case 'sprout_set':
       return compileSet(block);
+    case 'sprout_return':
+      return compileReturn(block);
     default:
       throw new Error(`Unknown statement block type: ${block.type}`);
   }
@@ -79,6 +81,11 @@ function compileSet(block: Blockly.Block): AssignStmt {
   const name = block.getFieldValue('NAME') as string;
   const value = compileExpr(mustGetInput(block, 'VALUE'));
   return { kind: 'AssignStmt', name, value };
+}
+
+function compileReturn(block: Blockly.Block): ReturnStmt {
+  const value = compileExpr(mustGetInput(block, 'VALUE'));
+  return { kind: 'ReturnStmt', value };
 }
 
 /**
