@@ -679,6 +679,53 @@ function evalCall(expr: CallExpr, env: Env): SproutValue {
     throw new SproutRuntimeError(`${expr.callee}: trailing do...end blocks are not supported in Phase 1`);
   }
 
+  // Higher-order list builtins (need access to evalExpr).
+  if (expr.callee === 'map') {
+    if (expr.args.length !== 2) throw new SproutRuntimeError(`map expects 2 arguments, got ${expr.args.length}`);
+    const lst = assertList(evalExpr(expr.args[0], env), 'map');
+    const fnVal = evalExpr(expr.args[1], env);
+    if (fnVal.kind !== 'function') throw new SproutRuntimeError(`map: second argument must be a function`);
+    const fn = fnVal as SproutFunction;
+    if (fn.params.length !== 1) throw new SproutRuntimeError(`map: function must take exactly 1 parameter, got ${fn.params.length}`);
+    const mapped = lst.items.map(item => {
+      const childEnv = envExtend(fn.env, [[fn.params[0], item] as [string, SproutValue]]);
+      try {
+        return evalExpr(fn.body, childEnv);
+      } catch (e) {
+        if (e instanceof ReturnSignal) {
+          return e.value;
+        }
+        throw e;
+      }
+    });
+    return mkList(mapped);
+  }
+
+  if (expr.callee === 'filter') {
+    if (expr.args.length !== 2) throw new SproutRuntimeError(`filter expects 2 arguments, got ${expr.args.length}`);
+    const lst = assertList(evalExpr(expr.args[0], env), 'filter');
+    const fnVal = evalExpr(expr.args[1], env);
+    if (fnVal.kind !== 'function') throw new SproutRuntimeError(`filter: second argument must be a function`);
+    const fn = fnVal as SproutFunction;
+    if (fn.params.length !== 1) throw new SproutRuntimeError(`filter: function must take exactly 1 parameter, got ${fn.params.length}`);
+    const filtered = lst.items.filter(item => {
+      const childEnv = envExtend(fn.env, [[fn.params[0], item] as [string, SproutValue]]);
+      let result: SproutValue;
+      try {
+        result = evalExpr(fn.body, childEnv);
+      } catch (e) {
+        if (e instanceof ReturnSignal) {
+          result = e.value;
+        } else {
+          throw e;
+        }
+      }
+      if (result.kind !== 'bool') throw new SproutRuntimeError(`filter: predicate must return a bool, got ${result.kind}`);
+      return result.value;
+    });
+    return mkList(filtered);
+  }
+
   // Check built-ins first.
   const builtin = BUILTINS.get(expr.callee);
   if (builtin !== undefined) {

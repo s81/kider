@@ -1771,6 +1771,135 @@ describe('list builtins', () => {
       expect(() => interpretValue(prog)).toThrow('isEmpty: expected list, got string');
     });
   });
+
+  describe('map()', () => {
+    it('applies function to each item', () => {
+      // def double(x) = x * 2; map(list(1,2,3), double)
+      const prog = program(
+        defStmt('double', ['x'], infix('*', ident('x'), numLit(2))),
+        exprStmt(call('map', [
+          call('list', [numLit(1), numLit(2), numLit(3)]),
+          ident('double'),
+        ])),
+      );
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 2 },
+        { kind: 'number', value: 4 },
+        { kind: 'number', value: 6 },
+      ]));
+    });
+
+    it('returns empty list for empty input', () => {
+      const prog = program(
+        defStmt('double', ['x'], infix('*', ident('x'), numLit(2))),
+        exprStmt(call('map', [call('list', []), ident('double')])),
+      );
+      expect(interpretValue(prog)).toEqual(mkList([]));
+    });
+
+    it('throws on wrong arg count', () => {
+      const prog = program(exprStmt(call('map', [call('list', [])])));
+      expect(() => interpretValue(prog)).toThrow('map expects 2 arguments, got 1');
+    });
+
+    it('throws if first arg is not a list', () => {
+      const prog = program(
+        defStmt('id', ['x'], ident('x')),
+        exprStmt(call('map', [numLit(1), ident('id')])),
+      );
+      expect(() => interpretValue(prog)).toThrow('map: expected list, got number');
+    });
+
+    it('throws if second arg is not a function', () => {
+      const prog = program(exprStmt(
+        call('map', [call('list', [numLit(1)]), numLit(42)])
+      ));
+      expect(() => interpretValue(prog)).toThrow('map: second argument must be a function');
+    });
+
+    it('throws if function takes 0 parameters', () => {
+      const prog = program(
+        defStmt('noParam', [], numLit(1)),
+        exprStmt(call('map', [call('list', [numLit(1)]), ident('noParam')])),
+      );
+      expect(() => interpretValue(prog)).toThrow('must take exactly 1 parameter');
+    });
+  });
+
+  describe('filter()', () => {
+    it('keeps items where function returns true', () => {
+      // def gt2(x) = x > 2; filter(list(1,2,3,4), gt2)
+      const prog = program(
+        defStmt('gt2', ['x'], infix('>', ident('x'), numLit(2))),
+        exprStmt(call('filter', [
+          call('list', [numLit(1), numLit(2), numLit(3), numLit(4)]),
+          ident('gt2'),
+        ])),
+      );
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 3 },
+        { kind: 'number', value: 4 },
+      ]));
+    });
+
+    it('returns empty list for empty input', () => {
+      const prog = program(
+        defStmt('gt2', ['x'], infix('>', ident('x'), numLit(2))),
+        exprStmt(call('filter', [call('list', []), ident('gt2')])),
+      );
+      expect(interpretValue(prog)).toEqual(mkList([]));
+    });
+
+    it('returns empty list when no items pass', () => {
+      const prog = program(
+        defStmt('gt10', ['x'], infix('>', ident('x'), numLit(10))),
+        exprStmt(call('filter', [
+          call('list', [numLit(1), numLit(2)]),
+          ident('gt10'),
+        ])),
+      );
+      expect(interpretValue(prog)).toEqual(mkList([]));
+    });
+
+    it('throws on wrong arg count', () => {
+      const prog = program(exprStmt(call('filter', [call('list', [])])));
+      expect(() => interpretValue(prog)).toThrow('filter expects 2 arguments, got 1');
+    });
+
+    it('throws if first arg is not a list', () => {
+      const prog = program(
+        defStmt('id', ['x'], ident('x')),
+        exprStmt(call('filter', [strLit('hi'), ident('id')])),
+      );
+      expect(() => interpretValue(prog)).toThrow('filter: expected list, got string');
+    });
+
+    it('throws if second arg is not a function', () => {
+      const prog = program(exprStmt(
+        call('filter', [call('list', [numLit(1)]), boolLit(true)])
+      ));
+      expect(() => interpretValue(prog)).toThrow('filter: second argument must be a function');
+    });
+
+    it('throws if function takes 0 parameters', () => {
+      const prog = program(
+        defStmt('noParam', [], boolLit(true)),
+        exprStmt(call('filter', [call('list', [numLit(1)]), ident('noParam')])),
+      );
+      expect(() => interpretValue(prog)).toThrow('must take exactly 1 parameter');
+    });
+
+    it('throws if predicate returns a non-bool', () => {
+      const prog = program(
+        defStmt('retNum', ['x'], numLit(42)),
+        exprStmt(call('filter', [
+          call('list', [numLit(1)]),
+          ident('retNum'),
+        ])),
+      );
+      expect(() => interpretValue(prog)).toThrow('predicate must return a bool');
+    });
+  });
 });
 
 describe('stamp builtin', () => {
