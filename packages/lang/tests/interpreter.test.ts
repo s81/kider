@@ -15,6 +15,7 @@ import {
   mkBackground,
   mkClearCanvas,
   mkStamp,
+  mkArc,
   mkList,
   PEN_UP,
   PEN_DOWN,
@@ -1776,6 +1777,28 @@ describe('stamp builtin', () => {
   it('returns a stamp Drawing', () => {
     const prog = program(exprStmt(call('stamp', [])));
     expect(interpretFull(prog).drawing).toEqual(mkSequence([mkStamp()]));
+  });
+});
+
+describe('arc builtin', () => {
+  it('arc(100, 90) returns a Drawing with kind arc, radius 100, angle 90', () => {
+    const prog = program(exprStmt(call('arc', [numLit(100), numLit(90)])));
+    expect(interpretFull(prog).drawing).toEqual(mkSequence([mkArc(100, 90)]));
+  });
+
+  it('arc(50, -45) returns arc with negative angle', () => {
+    const prog = program(exprStmt(call('arc', [numLit(50), numLit(-45)])));
+    expect(interpretFull(prog).drawing).toEqual(mkSequence([mkArc(50, -45)]));
+  });
+
+  it('arc with wrong arg count throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('arc', [numLit(100)])));
+    expect(() => interpretFull(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('arc with zero args throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('arc', [])));
+    expect(() => interpretFull(prog)).toThrow(SproutRuntimeError);
   });
 });
 

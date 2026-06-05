@@ -50,6 +50,7 @@ import {
   mkBackground,
   mkClearCanvas,
   mkStamp,
+  mkArc,
   mkList,
   PEN_UP,
   PEN_DOWN,
@@ -88,7 +89,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
     case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'penWidth': case 'empty':
-    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas': case 'stamp':
+    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas': case 'stamp': case 'arc':
       return true;
     default:
       return false;
@@ -265,6 +266,12 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     return mkClearCanvas();
   }],
   ['stamp', (_args) => mkStamp()],
+  ['arc', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`arc expects 2 arguments, got ${args.length}`);
+    const radius = assertNumber(args[0], 'arc');
+    const angle = assertNumber(args[1], 'arc');
+    return mkArc(radius.value, angle.value);
+  }],
   ['puts', (args) => {
     // Side-effect for kids: print to console (best-effort) and return EMPTY.
     if (args.length >= 1) {

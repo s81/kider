@@ -48,6 +48,7 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_triangle':
     case 'sprout_polygon':
     case 'sprout_text':
+    case 'sprout_arc':
       return { kind: 'ExprStmt', expr: compileExprBlock(block) };
     case 'sprout_let':
       return compileLet(block);
@@ -223,6 +224,11 @@ function compileExprBlock(block: Blockly.Block): Expr {
       const str = compileExpr(mustGetInput(block, 'STR'));
       const size = compileExpr(mustGetInput(block, 'SIZE'));
       return { kind: 'CallExpr', callee: 'text', args: [str, size], block: null };
+    }
+    case 'sprout_arc': {
+      const radius = compileExpr(mustGetInput(block, 'RADIUS'));
+      const angle = compileExpr(mustGetInput(block, 'ANGLE'));
+      return { kind: 'CallExpr', callee: 'arc', args: [radius, angle], block: null };
     }
     case 'sprout_for_each':
       return compileForEachExpr(block);

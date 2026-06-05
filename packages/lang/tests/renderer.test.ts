@@ -17,6 +17,7 @@ import {
   mkBackground,
   mkClearCanvas,
   mkStamp,
+  mkArc,
 } from '../src/values.js';
 import type { CanvasCommand } from '../src/renderer.js';
 
@@ -615,5 +616,39 @@ describe('stamp rendering', () => {
     expect(render(mkSequence([mkTurn(90), mkStamp()]))).toContainEqual(
       { kind: 'drawStamp', x: 0, y: 0, heading: 90 }
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// arc rendering
+// ---------------------------------------------------------------------------
+describe('render(mkArc)', () => {
+  it('produces lineTo commands when pen is down', () => {
+    const cmds = render(mkArc(100, 90));
+    const lineToCount = cmds.filter(c => c.kind === 'lineTo').length;
+    // 90/5 = 18 steps, each produces a lineTo
+    expect(lineToCount).toBe(18);
+  });
+
+  it('produces moveTo commands when pen is up', () => {
+    const cmds = render(mkSequence([PEN_UP, mkArc(100, 90)]));
+    const lineToCount = cmds.filter(c => c.kind === 'lineTo').length;
+    expect(lineToCount).toBe(0);
+    // should have moveTo commands for each arc step
+    const moveToCount = cmds.filter(c => c.kind === 'moveTo').length;
+    expect(moveToCount).toBeGreaterThan(0);
+  });
+
+  it('uses at least 4 steps for small angles', () => {
+    // angle=1 would give 1 step via round(1/5)=0, but min 4 is enforced
+    const cmds = render(mkArc(100, 1));
+    const lineToCount = cmds.filter(c => c.kind === 'lineTo').length;
+    expect(lineToCount).toBe(4);
+  });
+
+  it('negative angle (clockwise) also produces arc steps', () => {
+    const cmds = render(mkArc(100, -90));
+    const lineToCount = cmds.filter(c => c.kind === 'lineTo').length;
+    expect(lineToCount).toBe(18);
   });
 });

@@ -19,6 +19,17 @@ export function registerStatementBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_arc'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('RADIUS').setCheck('Number').appendField('arc radius');
+      this.appendValueInput('ANGLE').setCheck('Number').appendField('angle');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(160);
+      this.setTooltip('Draw a circular arc');
+    },
+  };
+
   Blockly.Blocks['sprout_pen_up'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput().appendField('pen up');

@@ -77,6 +77,8 @@ function scaleDrawing(factor: number, d: Drawing): Drawing {
       return { kind: 'text', str: d.str, size: d.size * factor };
     case 'stamp':
       return d;
+    case 'arc':
+      return { kind: 'arc', radius: d.radius * factor, angle: d.angle };
     case 'background':
       return d;
     case 'clearCanvas':
@@ -231,6 +233,26 @@ function renderInto(
       state.penDown = true;
       out.push({ kind: 'moveTo', x: 0, y: 0 });
       return;
+
+    case 'arc': {
+      const steps = Math.max(4, Math.abs(Math.round(drawing.angle / 5)));
+      const stepAngle = drawing.angle / steps;
+      const stepDist = (2 * Math.PI * Math.abs(drawing.radius) / 360) * Math.abs(drawing.angle / steps);
+      for (let i = 0; i < steps; i++) {
+        const rad = state.heading * DEG_TO_RAD;
+        const newX = state.x + stepDist * Math.sin(rad);
+        const newY = state.y - stepDist * Math.cos(rad);
+        if (state.penDown) {
+          out.push({ kind: 'lineTo', x: newX, y: newY });
+        } else {
+          out.push({ kind: 'moveTo', x: newX, y: newY });
+        }
+        state.x = newX;
+        state.y = newY;
+        state.heading = ((state.heading + stepAngle) % 360 + 360) % 360;
+      }
+      return;
+    }
   }
 }
 
@@ -378,6 +400,25 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
       state.heading = 0;
       state.penDown = true;
       return;
+
+    case 'arc': {
+      const steps = Math.max(4, Math.abs(Math.round(drawing.angle / 5)));
+      const stepAngle = drawing.angle / steps;
+      const stepDist = (2 * Math.PI * Math.abs(drawing.radius) / 360) * Math.abs(drawing.angle / steps);
+      for (let i = 0; i < steps; i++) {
+        const rad = state.heading * DEG_TO_RAD;
+        const newX = state.x + stepDist * Math.sin(rad);
+        const newY = state.y - stepDist * Math.cos(rad);
+        state.x = newX;
+        state.y = newY;
+        if (newX < bbox.minX) bbox.minX = newX;
+        if (newX > bbox.maxX) bbox.maxX = newX;
+        if (newY < bbox.minY) bbox.minY = newY;
+        if (newY > bbox.maxY) bbox.maxY = newY;
+        state.heading = ((state.heading + stepAngle) % 360 + 360) % 360;
+      }
+      return;
+    }
   }
 }
 

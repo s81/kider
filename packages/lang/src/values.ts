@@ -81,6 +81,7 @@ export type Drawing =
   | { readonly kind: 'stamp' }
   | { readonly kind: 'background'; readonly color: string }
   | { readonly kind: 'clearCanvas' }
+  | { readonly kind: 'arc';        readonly radius: number; readonly angle: number }
   | { readonly kind: 'empty' };
 
 // ---------------------------------------------------------------------------
@@ -104,7 +105,7 @@ export interface SproutList {
 }
 
 // INVARIANT: Drawing.kind values ('forward','turn','penUp','penDown','sequence',
-// 'beside','above','scale','color','penWidth','empty','circle','rect','ellipse','triangle','polygon','text','background','clearCanvas','stamp')
+// 'beside','above','scale','color','penWidth','empty','circle','rect','ellipse','triangle','polygon','text','background','clearCanvas','stamp','arc')
 // must never match SproutNumber/String/Symbol/Bool/Function/Var/List kinds.
 export type SproutValue =
   | SproutNumber
@@ -174,6 +175,9 @@ export const mkClearCanvas = (): Drawing =>
   ({ kind: 'clearCanvas' });
 
 export const mkStamp = (): Drawing => ({ kind: 'stamp' });
+
+export const mkArc = (radius: number, angle: number): Drawing =>
+  ({ kind: 'arc', radius, angle });
 
 export const EMPTY: Drawing = { kind: 'empty' };
 
