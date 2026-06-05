@@ -21,6 +21,7 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_repeat' },
     { kind: 'block', type: 'sprout_if' },
     { kind: 'block', type: 'sprout_while' },
+    { kind: 'block', type: 'sprout_for_each' },
     { kind: 'block', type: 'sprout_on_event' },
     // Variables
     { kind: 'block', type: 'sprout_let' },

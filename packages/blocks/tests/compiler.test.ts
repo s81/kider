@@ -2,7 +2,7 @@ import * as Blockly from 'blockly/node';
 import { describe, it, expect, beforeAll } from 'vitest';
 import { registerAllBlocks } from '../src/definitions/index.js';
 import { compileWorkspace } from '../src/compiler.js';
-import type { LetStmt, AssignStmt, WhileExpr } from '@sprout/lang';
+import type { LetStmt, AssignStmt, WhileExpr, ForEachExpr } from '@sprout/lang';
 import { program as squareProgram } from '../../../examples/square.fixture.js';
 import { program as polygonProgram } from '../../../examples/polygon.fixture.js';
 import { program as besideProgram } from '../../../examples/beside.fixture.js';
@@ -1213,5 +1213,38 @@ describe('stamp block', () => {
       name: 's',
       init: { kind: 'CallExpr', callee: 'stamp', args: [], block: null },
     });
+  });
+});
+
+describe('for each block', () => {
+  it('sprout_for_each compiles to ExprStmt wrapping ForEachExpr', () => {
+    const ws = makeWorkspace();
+    const forEachBlock = ws.newBlock('sprout_for_each');
+    forEachBlock.setFieldValue('myItem', 'ITEM');
+
+    const listBlock = ws.newBlock('sprout_list');
+    forEachBlock.getInput('LIST')!.connection!.connect(listBlock.outputConnection!);
+
+    const fwdBlock = ws.newBlock('sprout_forward');
+    const distBlock = ws.newBlock('sprout_number');
+    distBlock.setFieldValue('10', 'NUM');
+    fwdBlock.getInput('DISTANCE')!.connection!.connect(distBlock.outputConnection!);
+    forEachBlock.getInput('BODY')!.connection!.connect(fwdBlock.previousConnection!);
+
+    const result = compileWorkspace(ws);
+    const expected: ForEachExpr = {
+      kind: 'ForEachExpr',
+      item: 'myItem',
+      list: { kind: 'CallExpr', callee: 'list', args: [], block: null },
+      body: {
+        kind: 'BlockExpr',
+        body: [{
+          kind: 'ExprStmt',
+          expr: { kind: 'CallExpr', callee: 'forward', args: [{ kind: 'NumberLit', value: 10 }], block: null },
+        }],
+      },
+    };
+    expect(result).toEqual({ kind: 'Program', stmts: [{ kind: 'ExprStmt', expr: expected }] });
+    ws.dispose();
   });
 });

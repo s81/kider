@@ -4,7 +4,7 @@ import type {
   DefStmt, ExprStmt,
   LetStmt, AssignStmt, ReturnStmt,
   NumberLit, Ident, InfixExpr, UnaryExpr, CallExpr,
-  BlockExpr, RepeatExpr, OnExpr, IfExpr, WhileExpr, SymbolLit, BoolLit, StringLit,
+  BlockExpr, RepeatExpr, OnExpr, IfExpr, WhileExpr, ForEachExpr, SymbolLit, BoolLit, StringLit,
 } from '@sprout/lang';
 
 export function compileWorkspace(ws: Blockly.Workspace): Program {
@@ -41,6 +41,7 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_scale':
     case 'sprout_if':
     case 'sprout_while':
+    case 'sprout_for_each':
     case 'sprout_circle':
     case 'sprout_rect':
     case 'sprout_ellipse':
@@ -223,6 +224,8 @@ function compileExprBlock(block: Blockly.Block): Expr {
       const size = compileExpr(mustGetInput(block, 'SIZE'));
       return { kind: 'CallExpr', callee: 'text', args: [str, size], block: null };
     }
+    case 'sprout_for_each':
+      return compileForEachExpr(block);
     default:
       throw new Error(`Block type cannot be compiled as expression: ${block.type}`);
   }
@@ -241,6 +244,17 @@ function compileOnExpr(block: Blockly.Block): OnExpr {
   const firstBodyBlock = block.getInputTargetBlock('BODY');
   const body = compileBlockExpr(firstBodyBlock);
   return { kind: 'OnExpr', event, body };
+}
+
+function compileForEachExpr(block: Blockly.Block): ForEachExpr {
+  const item = block.getFieldValue('ITEM') as string;
+  const listBlock = block.getInputTargetBlock('LIST');
+  const list = listBlock
+    ? compileExpr(listBlock)
+    : { kind: 'CallExpr' as const, callee: 'list', args: [], block: null };
+  const firstBodyBlock = block.getInputTargetBlock('BODY');
+  const body = compileBlockExpr(firstBodyBlock);
+  return { kind: 'ForEachExpr', item, list, body };
 }
 
 function compileCallBlock(block: Blockly.Block): CallExpr {

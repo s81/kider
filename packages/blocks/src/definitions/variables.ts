@@ -36,4 +36,19 @@ export function registerVariableBlocks(): void {
       this.setColour(230);
     },
   };
+
+  Blockly.Blocks['sprout_for_each'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('for each')
+        .appendField(new Blockly.FieldTextInput('item') as unknown as Blockly.Field, 'ITEM')
+        .appendField('in');
+      this.appendValueInput('LIST');
+      this.appendStatementInput('BODY').appendField('do');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setInputsInline(true);
+      this.setColour(120);
+    },
+  };
 }
