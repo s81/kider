@@ -651,4 +651,16 @@ describe('render(mkArc)', () => {
     const lineToCount = cmds.filter(c => c.kind === 'lineTo').length;
     expect(lineToCount).toBe(18);
   });
+
+  it('arc(100, 0) renders nothing (zero angle guard)', () => {
+    const cmds = render(mkArc(100, 0));
+    const lineToCount = cmds.filter(c => c.kind === 'lineTo').length;
+    expect(lineToCount).toBe(0);
+  });
+
+  it('arc(0, 90) renders nothing (zero radius guard)', () => {
+    const cmds = render(mkArc(0, 90));
+    const lineToCount = cmds.filter(c => c.kind === 'lineTo').length;
+    expect(lineToCount).toBe(0);
+  });
 });

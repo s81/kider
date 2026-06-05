@@ -1800,6 +1800,11 @@ describe('arc builtin', () => {
     const prog = program(exprStmt(call('arc', [])));
     expect(() => interpretFull(prog)).toThrow(SproutRuntimeError);
   });
+
+  it('arc(-50, 90) throws SproutRuntimeError for negative radius', () => {
+    const prog = program(exprStmt(call('arc', [numLit(-50), numLit(90)])));
+    expect(() => interpretFull(prog)).toThrow(SproutRuntimeError);
+  });
 });
 
 describe('for each loop', () => {

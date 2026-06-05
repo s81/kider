@@ -270,6 +270,7 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (args.length !== 2) throw new SproutRuntimeError(`arc expects 2 arguments, got ${args.length}`);
     const radius = assertNumber(args[0], 'arc');
     const angle = assertNumber(args[1], 'arc');
+    if (radius.value < 0) throw new SproutRuntimeError(`arc: radius must be non-negative, got ${radius.value}`);
     return mkArc(radius.value, angle.value);
   }],
   ['puts', (args) => {

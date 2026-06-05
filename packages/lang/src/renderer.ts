@@ -235,6 +235,7 @@ function renderInto(
       return;
 
     case 'arc': {
+      if (drawing.angle === 0 || drawing.radius === 0) return;
       const steps = Math.max(4, Math.abs(Math.round(drawing.angle / 5)));
       const stepAngle = drawing.angle / steps;
       const stepDist = (2 * Math.PI * Math.abs(drawing.radius) / 360) * Math.abs(drawing.angle / steps);
@@ -402,6 +403,7 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
       return;
 
     case 'arc': {
+      if (drawing.angle === 0 || drawing.radius === 0) return;
       const steps = Math.max(4, Math.abs(Math.round(drawing.angle / 5)));
       const stepAngle = drawing.angle / steps;
       const stepDist = (2 * Math.PI * Math.abs(drawing.radius) / 360) * Math.abs(drawing.angle / steps);
