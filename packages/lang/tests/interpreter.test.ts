@@ -1834,13 +1834,16 @@ describe('for each loop', () => {
     // inner x=7 draws forward(7), outer x=99 draws forward(99) after loop
     // interpretFull drawing:
     //   mkSequence([
-    //     mkSequence([mkSequence([mkForward(7)])]),  ← for each result
-    //     mkForward(99),                              ← forward(x) using outer x
+    //     mkSequence([mkSequence([mkForward(7)])]),  ← for each result (one iteration)
+    //     mkForward(99),                              ← forward(x) using restored outer x
     //   ])
     const result = interpretFull(prog).drawing;
-    const json = JSON.stringify(result);
-    expect(json).toContain('"distance":7');
-    expect(json).toContain('"distance":99');
+    expect(result).toEqual(
+      mkSequence([
+        mkSequence([mkSequence([mkForward(7)])]),
+        mkForward(99),
+      ])
+    );
   });
 
   it('item variable does not leak out of loop', () => {
@@ -1865,11 +1868,8 @@ describe('for each loop', () => {
       exprStmt(call('forward', [ident('result')])),
     );
     const drawing = interpretFull(prog).drawing;
-    const json = JSON.stringify(drawing);
-    // forward(1) must appear — f() returned 1 after first iteration
-    expect(json).toContain('"distance":1');
-    // forward(2) and forward(3) must NOT appear — loop was exited early
-    expect(json).not.toContain('"distance":2');
-    expect(json).not.toContain('"distance":3');
+    // f() returned 1 on first iteration; forward(result) draws forward(1)
+    // interpretFull wraps the single top-level forward(result) call: mkSequence([mkForward(1)])
+    expect(drawing).toEqual(mkSequence([mkForward(1)]));
   });
 });
