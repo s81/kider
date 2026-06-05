@@ -1322,3 +1322,60 @@ describe('== for strings', () => {
     expect(fn).toThrow(SproutRuntimeError);
   });
 });
+
+// ---------------------------------------------------------------------------
+// join builtin
+// ---------------------------------------------------------------------------
+describe('join builtin', () => {
+  it('join() returns ""', () => {
+    const prog = program(exprStmt(call('text', [call('join', []), numLit(20)])));
+    expect(interpret(prog)).toEqual(mkSequence([mkText('', 20)]));
+  });
+
+  it('join("hello") returns "hello"', () => {
+    const prog = program(exprStmt(call('text', [call('join', [strLit('hello')]), numLit(20)])));
+    expect(interpret(prog)).toEqual(mkSequence([mkText('hello', 20)]));
+  });
+
+  it('join("Score: ", 42) returns "Score: 42"', () => {
+    const prog = program(exprStmt(call('text', [call('join', [strLit('Score: '), numLit(42)]), numLit(20)])));
+    expect(interpret(prog)).toEqual(mkSequence([mkText('Score: 42', 20)]));
+  });
+
+  it('join(true, "!") returns "true!"', () => {
+    const prog = program(exprStmt(call('text', [call('join', [boolLit(true), strLit('!')]), numLit(20)])));
+    expect(interpret(prog)).toEqual(mkSequence([mkText('true!', 20)]));
+  });
+
+  it('join("a", "b", "c") returns "abc"', () => {
+    const prog = program(exprStmt(call('text', [call('join', [strLit('a'), strLit('b'), strLit('c')]), numLit(20)])));
+    expect(interpret(prog)).toEqual(mkSequence([mkText('abc', 20)]));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// length builtin
+// ---------------------------------------------------------------------------
+describe('length builtin', () => {
+  it('length("hello") returns 5', () => {
+    const prog = program(exprStmt(call('forward', [call('length', [strLit('hello')])])));
+    expect(interpret(prog)).toEqual(mkSequence([mkForward(5)]));
+  });
+
+  it('length("") returns 0', () => {
+    const prog = program(exprStmt(call('forward', [call('length', [strLit('')])])));
+    expect(interpret(prog)).toEqual(mkSequence([mkForward(0)]));
+  });
+
+  it('length(42) throws SproutRuntimeError', () => {
+    const fn = () => interpret(program(exprStmt(call('length', [numLit(42)]))));
+    expect(fn).toThrow(SproutRuntimeError);
+    expect(fn).toThrow(/length/);
+  });
+
+  it('length("a", "b") throws SproutRuntimeError', () => {
+    const fn = () => interpret(program(exprStmt(call('length', [strLit('a'), strLit('b')]))));
+    expect(fn).toThrow(SproutRuntimeError);
+    expect(fn).toThrow(/length/);
+  });
+});

@@ -377,6 +377,15 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (size.value <= 0) throw new SproutRuntimeError(`text expects size > 0, got ${size.value}`);
     return mkText(str.value, size.value);
   }],
+  // --- String builtins ---
+  ['join', (args) => {
+    return { kind: 'string', value: args.map(a => toStr(a, 'join')).join('') };
+  }],
+  ['length', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`length expects 1 argument, got ${args.length}`);
+    const s = assertString(args[0], 'length');
+    return { kind: 'number', value: s.value.length };
+  }],
 ]);
 
 // ---------------------------------------------------------------------------
