@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { interpret, interpretFull, interpretValue, callHandler, collectInputNames, interpretWithInputs, interpretFullWithInputs, setMousePosition, SproutRuntimeError } from '../src/interpreter.js';
 import {
   EMPTY,
@@ -1618,6 +1618,8 @@ describe('input builtin', () => {
 // mouseX / mouseY builtins
 // ---------------------------------------------------------------------------
 describe('mouseX / mouseY builtins', () => {
+  beforeEach(() => setMousePosition(0, 0));
+
   it('mouseX() returns 0 by default', () => {
     const prog = program(exprStmt(call('forward', [call('mouseX', [])])));
     expect(interpret(prog)).toEqual(mkSequence([mkForward(0)]));
