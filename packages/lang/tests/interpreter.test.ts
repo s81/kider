@@ -1351,6 +1351,12 @@ describe('join builtin', () => {
     const prog = program(exprStmt(call('text', [call('join', [strLit('a'), strLit('b'), strLit('c')]), numLit(20)])));
     expect(interpret(prog)).toEqual(mkSequence([mkText('abc', 20)]));
   });
+
+  it('join with drawing argument throws SproutRuntimeError', () => {
+    const fn = () => interpret(program(exprStmt(call('join', [call('circle', [numLit(50)])]))));
+    expect(fn).toThrow(SproutRuntimeError);
+    expect(fn).toThrow(/join/);
+  });
 });
 
 // ---------------------------------------------------------------------------
