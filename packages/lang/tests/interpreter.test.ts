@@ -1250,3 +1250,75 @@ describe('clearCanvas builtin', () => {
     expect(interpret(prog)).toEqual(mkSequence([mkForward(50), mkClearCanvas()]));
   });
 });
+
+// ---------------------------------------------------------------------------
+// String + operator
+// ---------------------------------------------------------------------------
+describe('+ with strings', () => {
+  it('"a" + "b" concatenates to "ab"', () => {
+    const prog = program(exprStmt(call('text', [infix('+', strLit('a'), strLit('b')), numLit(20)])));
+    expect(interpret(prog)).toEqual(mkSequence([mkText('ab', 20)]));
+  });
+
+  it('"Score: " + 42 concatenates to "Score: 42"', () => {
+    const prog = program(exprStmt(call('text', [infix('+', strLit('Score: '), numLit(42)), numLit(20)])));
+    expect(interpret(prog)).toEqual(mkSequence([mkText('Score: 42', 20)]));
+  });
+
+  it('42 + " pts" concatenates to "42 pts"', () => {
+    const prog = program(exprStmt(call('text', [infix('+', numLit(42), strLit(' pts')), numLit(20)])));
+    expect(interpret(prog)).toEqual(mkSequence([mkText('42 pts', 20)]));
+  });
+
+  it('3 + 4 still adds numbers', () => {
+    const prog = program(exprStmt(call('forward', [infix('+', numLit(3), numLit(4))])));
+    expect(interpret(prog)).toEqual(mkSequence([mkForward(7)]));
+  });
+
+  it('"x" + true concatenates to "xtrue"', () => {
+    const prog = program(exprStmt(call('text', [infix('+', strLit('x'), boolLit(true)), numLit(20)])));
+    expect(interpret(prog)).toEqual(mkSequence([mkText('xtrue', 20)]));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// String == operator
+// ---------------------------------------------------------------------------
+describe('== for strings', () => {
+  it('"hello" == "hello" is true', () => {
+    const prog = program(exprStmt(ifExpr(
+      infix('==', strLit('hello'), strLit('hello')),
+      [exprStmt(call('forward', [numLit(1)]))]
+    )));
+    // IfExpr returns evalBlock(then) = mkSequence([mkForward(1)]);
+    // interpret wraps that in its own outer sequence.
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(1)])]));
+  });
+
+  it('"hello" == "world" is false', () => {
+    const prog = program(exprStmt(ifExpr(
+      infix('==', strLit('hello'), strLit('world')),
+      [exprStmt(call('forward', [numLit(1)]))]
+    )));
+    // IfExpr returns EMPTY; interpret collects it and wraps: mkSequence([EMPTY])
+    expect(interpret(prog)).toEqual(mkSequence([EMPTY]));
+  });
+
+  it('"hello" != "world" is true', () => {
+    const prog = program(exprStmt(ifExpr(
+      infix('!=', strLit('hello'), strLit('world')),
+      [exprStmt(call('forward', [numLit(1)]))]
+    )));
+    // IfExpr returns evalBlock(then) = mkSequence([mkForward(1)]);
+    // interpret wraps that in its own outer sequence.
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(1)])]));
+  });
+
+  it('"hello" == 42 throws SproutRuntimeError', () => {
+    const fn = () => interpret(program(exprStmt(ifExpr(
+      infix('==', strLit('hello'), numLit(42)),
+      [exprStmt(call('forward', [numLit(1)]))]
+    ))));
+    expect(fn).toThrow(SproutRuntimeError);
+  });
+});

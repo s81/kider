@@ -108,6 +108,14 @@ function assertDrawing(v: SproutValue, context: string): Drawing {
   return v;
 }
 
+function toStr(v: SproutValue, context: string): string {
+  if (v.kind === 'string') return v.value;
+  if (v.kind === 'number') return String(v.value);
+  if (v.kind === 'bool') return String(v.value);
+  if (v.kind === 'symbol') return `:${v.name}`;
+  throw new SproutRuntimeError(`${context}: cannot convert ${v.kind} to string`);
+}
+
 // ---------------------------------------------------------------------------
 // Env helpers
 // ---------------------------------------------------------------------------
@@ -474,7 +482,7 @@ function evalInfix(expr: InfixExpr, env: Env): SproutValue {
     if (rv.kind !== 'bool') throw new SproutRuntimeError(`or: expected bool, got ${rv.kind}`);
     return rv;
   }
-  // == and != work on numbers or bools (same kind required)
+  // == and != work on numbers, bools, or strings (same kind required)
   if (expr.op === '==' || expr.op === '!=') {
     const lv = evalExpr(expr.left, env);
     const rv = evalExpr(expr.right, env);
@@ -483,25 +491,62 @@ function evalInfix(expr: InfixExpr, env: Env): SproutValue {
       eq = lv.value === rv.value;
     } else if (lv.kind === 'bool' && rv.kind === 'bool') {
       eq = lv.value === rv.value;
+    } else if (lv.kind === 'string' && rv.kind === 'string') {
+      eq = lv.value === rv.value;
     } else {
       throw new SproutRuntimeError(`${expr.op}: cannot compare ${lv.kind} and ${rv.kind}`);
     }
     return { kind: 'bool', value: expr.op === '==' ? eq : !eq };
   }
-  // Arithmetic and numeric comparisons
-  const left = assertNumber(evalExpr(expr.left, env), `(${expr.op}) left operand`);
-  const right = assertNumber(evalExpr(expr.right, env), `(${expr.op}) right operand`);
+  // Arithmetic and numeric comparisons — + is polymorphic (string concat or numeric add)
+  const leftVal = evalExpr(expr.left, env);
+  const rightVal = evalExpr(expr.right, env);
   switch (expr.op) {
-    case '+':  return { kind: 'number', value: left.value + right.value };
-    case '-':  return { kind: 'number', value: left.value - right.value };
-    case '*':  return { kind: 'number', value: left.value * right.value };
-    case '/':
+    case '+': {
+      if (leftVal.kind === 'number' && rightVal.kind === 'number') {
+        return { kind: 'number', value: leftVal.value + rightVal.value };
+      }
+      if (leftVal.kind === 'string' || rightVal.kind === 'string') {
+        return { kind: 'string', value: toStr(leftVal, '+') + toStr(rightVal, '+') };
+      }
+      throw new SproutRuntimeError(`+: cannot add ${leftVal.kind} and ${rightVal.kind}`);
+    }
+    case '-': {
+      const left = assertNumber(leftVal, '(-) left operand');
+      const right = assertNumber(rightVal, '(-) right operand');
+      return { kind: 'number', value: left.value - right.value };
+    }
+    case '*': {
+      const left = assertNumber(leftVal, '(*) left operand');
+      const right = assertNumber(rightVal, '(*) right operand');
+      return { kind: 'number', value: left.value * right.value };
+    }
+    case '/': {
+      const left = assertNumber(leftVal, '(/) left operand');
+      const right = assertNumber(rightVal, '(/) right operand');
       if (right.value === 0) throw new SproutRuntimeError('Division by zero');
       return { kind: 'number', value: left.value / right.value };
-    case '<':  return { kind: 'bool', value: left.value <  right.value };
-    case '>':  return { kind: 'bool', value: left.value >  right.value };
-    case '<=': return { kind: 'bool', value: left.value <= right.value };
-    case '>=': return { kind: 'bool', value: left.value >= right.value };
+    }
+    case '<': {
+      const left = assertNumber(leftVal, '(<) left operand');
+      const right = assertNumber(rightVal, '(<) right operand');
+      return { kind: 'bool', value: left.value < right.value };
+    }
+    case '>': {
+      const left = assertNumber(leftVal, '(>) left operand');
+      const right = assertNumber(rightVal, '(>) right operand');
+      return { kind: 'bool', value: left.value > right.value };
+    }
+    case '<=': {
+      const left = assertNumber(leftVal, '(<=) left operand');
+      const right = assertNumber(rightVal, '(<=) right operand');
+      return { kind: 'bool', value: left.value <= right.value };
+    }
+    case '>=': {
+      const left = assertNumber(leftVal, '(>=) left operand');
+      const right = assertNumber(rightVal, '(>=) right operand');
+      return { kind: 'bool', value: left.value >= right.value };
+    }
   }
 }
 
