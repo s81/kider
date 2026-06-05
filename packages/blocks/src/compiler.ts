@@ -379,6 +379,15 @@ function compileExpr(block: Blockly.Block): Expr {
       const str = compileExpr(mustGetInput(block, 'STR'));
       return { kind: 'CallExpr', callee: 'length', args: [str], block: null };
     }
+    case 'sprout_input': {
+      const name = block.getFieldValue('NAME') as string;
+      return {
+        kind: 'CallExpr',
+        callee: 'input',
+        args: [{ kind: 'StringLit', value: name }],
+        block: null,
+      };
+    }
     default:
       throw new Error(`Unknown value block type: ${block.type}`);
   }

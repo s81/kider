@@ -1016,3 +1016,33 @@ describe('sprout_return', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// sprout_input — value block: input("name")
+// ---------------------------------------------------------------------------
+describe('sprout_input', () => {
+  it('compiles to input("name") CallExpr with StringLit arg', () => {
+    const ws = makeWorkspace();
+    const fwdBlock = ws.newBlock('sprout_forward');
+    const inputBlock = ws.newBlock('sprout_input');
+    inputBlock.setFieldValue('speed', 'NAME');
+    fwdBlock.getInput('DISTANCE')!.connection!.connect(inputBlock.outputConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr',
+          callee: 'forward',
+          args: [{
+            kind: 'CallExpr',
+            callee: 'input',
+            args: [{ kind: 'StringLit', value: 'speed' }],
+            block: null,
+          }],
+          block: null,
+        },
+      }],
+    });
+  });
+});

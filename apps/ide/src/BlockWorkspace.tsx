@@ -38,6 +38,7 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_length' },
     // Values
     { kind: 'block', type: 'sprout_number' },
+    { kind: 'block', type: 'sprout_input' },
     { kind: 'block', type: 'sprout_bool' },
     { kind: 'block', type: 'sprout_ident' },
     { kind: 'block', type: 'sprout_infix' },

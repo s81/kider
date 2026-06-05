@@ -74,4 +74,14 @@ export function registerValueBlocks(): void {
       this.setColour(160);
     },
   };
+
+  Blockly.Blocks['sprout_input'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('input')
+        .appendField(new Blockly.FieldTextInput('name'), 'NAME');
+      this.setOutput(true, 'Number');
+      this.setColour(45);
+    },
+  };
 }
