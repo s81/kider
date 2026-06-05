@@ -1500,4 +1500,36 @@ describe('return statement', () => {
       exprStmt(whileExpr(boolLit(true), [returnStmt(numLit(1))])),
     ))).toThrow(SproutRuntimeError);
   });
+
+  it('return inside repeat inside a function exits the function', () => {
+    // def first(n) { repeat 3 do return n end }
+    // let x = first(7)
+    // forward(x)
+    const prog = program(
+      defStmt('first', ['n'], block([
+        exprStmt(repeat(numLit(3), [
+          returnStmt(ident('n')),
+        ])),
+      ])),
+      letStmt('x', call('first', [numLit(7)])),
+      exprStmt(call('forward', [ident('x')])),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkForward(7)]));
+  });
+
+  it('return inside while inside a function exits the function', () => {
+    // def f() { while true do return 42 end }
+    // let x = f()
+    // forward(x)
+    const prog = program(
+      defStmt('f', [], block([
+        exprStmt(whileExpr(boolLit(true), [
+          returnStmt(numLit(42)),
+        ])),
+      ])),
+      letStmt('x', call('f', [])),
+      exprStmt(call('forward', [ident('x')])),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkForward(42)]));
+  });
 });
