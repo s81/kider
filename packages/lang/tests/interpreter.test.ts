@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { interpret, interpretFull, callHandler, collectInputNames, interpretWithInputs, SproutRuntimeError } from '../src/interpreter.js';
+import { interpret, interpretFull, callHandler, collectInputNames, interpretWithInputs, interpretFullWithInputs, SproutRuntimeError } from '../src/interpreter.js';
 import {
   EMPTY,
   mkForward,
@@ -1558,6 +1558,23 @@ describe('input builtin', () => {
   it('throws when argument is not a string', () => {
     const prog = program(exprStmt(call('forward', [call('input', [numLit(5)])])));
     expect(() => interpretWithInputs(prog, new Map())).toThrow(SproutRuntimeError);
+  });
+
+  it('interpretFullWithInputs passes inputs to handlers', () => {
+    // Program: def handler draws forward(input("speed")) steps
+    // then register on :timer do handler() end
+    // The test calls interpretFullWithInputs and checks the drawing is correct.
+    const handlerBody: Expr = {
+      kind: 'BlockExpr',
+      body: [exprStmt(call('forward', [call('input', [strLit('speed')])]))],
+    };
+    const prog = program(
+      defStmt('go', [], handlerBody),
+      exprStmt(call('forward', [call('input', [strLit('speed')])])),
+    );
+    const inputs = new Map<string, number>([['speed', 7]]);
+    const { drawing } = interpretFullWithInputs(prog, inputs);
+    expect(drawing).toEqual(mkSequence([mkForward(7)]));
   });
 });
 

@@ -1,6 +1,4 @@
 // Tree-walking interpreter for the Sprout visual programming language.
-// Programs are pure and immutable — evaluation produces a Drawing value,
-// never mutates state.
 
 import type {
   Program,
@@ -886,7 +884,7 @@ export function collectInputNames(program: Program): string[] {
           expr.args.length >= 1 &&
           expr.args[0].kind === 'StringLit'
         ) {
-          const name = (expr.args[0] as StringLit).value;
+          const name = expr.args[0].value;
           if (!seen.has(name)) { seen.add(name); result.push(name); }
         }
         for (const arg of expr.args) walkExpr(arg);
