@@ -35,8 +35,12 @@ const whileExpr = (cond: Expr, body: Stmt[]): WhileExpr => ({
   body: { kind: 'BlockExpr', body },
 });
 
-const forEachE = (item: string, list: Expr, body: Stmt[]): Expr =>
-  ({ kind: 'ForEachExpr', item, list, body: { kind: 'BlockExpr', body } } as unknown as Expr);
+const forEachE = (item: string, list: Expr, body: Stmt[]): Expr => ({
+  kind: 'ForEachExpr' as const,
+  item,
+  list,
+  body: { kind: 'BlockExpr', body },
+});
 
 const program = (...stmts: Stmt[]): Program => ({ kind: 'Program', stmts });
 

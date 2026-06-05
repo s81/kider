@@ -1823,16 +1823,24 @@ describe('for each loop', () => {
     expect(() => interpretFull(prog)).toThrow('for each: expected list, got number');
   });
 
-  it('item variable is in scope inside body', () => {
+  it('item variable shadows outer and outer is restored after loop', () => {
     const prog = program(
+      letStmt('x', numLit(99)),
       exprStmt(forEachExpr('x', call('list', [numLit(7)]), [
         exprStmt(call('forward', [ident('x')])),
       ])),
+      exprStmt(call('forward', [ident('x')])),
     );
-    // evalForEach → mkSequence([mkSequence([mkForward(7)])])
-    // interpretFull wraps → mkSequence([mkSequence([mkSequence([mkForward(7)])])])
-    const iterDrawing = mkSequence([mkForward(7)]);
-    expect(interpretFull(prog).drawing).toEqual(mkSequence([mkSequence([iterDrawing])]));
+    // inner x=7 draws forward(7), outer x=99 draws forward(99) after loop
+    // interpretFull drawing:
+    //   mkSequence([
+    //     mkSequence([mkSequence([mkForward(7)])]),  ← for each result
+    //     mkForward(99),                              ← forward(x) using outer x
+    //   ])
+    const result = interpretFull(prog).drawing;
+    const json = JSON.stringify(result);
+    expect(json).toContain('"distance":7');
+    expect(json).toContain('"distance":99');
   });
 
   it('item variable does not leak out of loop', () => {
@@ -1841,5 +1849,27 @@ describe('for each loop', () => {
       exprStmt(ident('x')),
     );
     expect(() => interpretFull(prog)).toThrow();
+  });
+
+  it('return inside for each body exits function early', () => {
+    // def f() { for each x in list(1, 2, 3) do return x end }
+    // let result = f()       → f() returns 1 (first item), stops iterating
+    // forward(result)        → draws forward(1)
+    const prog = program(
+      defStmt('f', [], block([
+        exprStmt(forEachExpr('x', call('list', [numLit(1), numLit(2), numLit(3)]), [
+          returnStmt(ident('x')),
+        ])),
+      ])),
+      letStmt('result', call('f', [])),
+      exprStmt(call('forward', [ident('result')])),
+    );
+    const drawing = interpretFull(prog).drawing;
+    const json = JSON.stringify(drawing);
+    // forward(1) must appear — f() returned 1 after first iteration
+    expect(json).toContain('"distance":1');
+    // forward(2) and forward(3) must NOT appear — loop was exited early
+    expect(json).not.toContain('"distance":2');
+    expect(json).not.toContain('"distance":3');
   });
 });
