@@ -64,13 +64,6 @@ export function registerMathBlocks(): void {
       this.setColour(230);
     },
   };
-  Blockly.Blocks['sprout_random'] = {
-    init(this: Blockly.Block) {
-      this.appendValueInput('X').setCheck(null).appendField('random');
-      this.setOutput(true, null);
-      this.setColour(230);
-    },
-  };
   Blockly.Blocks['sprout_pow'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('A').setCheck(null).appendField('pow');

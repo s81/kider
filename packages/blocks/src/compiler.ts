@@ -361,10 +361,6 @@ function compileExpr(block: Blockly.Block): Expr {
       const x = compileExpr(mustGetInput(block, 'X'));
       return { kind: 'CallExpr', callee: 'round', args: [x], block: null };
     }
-    case 'sprout_random': {
-      const x = compileExpr(mustGetInput(block, 'X'));
-      return { kind: 'CallExpr', callee: 'random', args: [x], block: null };
-    }
     case 'sprout_pow': {
       const a = compileExpr(mustGetInput(block, 'A'));
       const b = compileExpr(mustGetInput(block, 'B'));
