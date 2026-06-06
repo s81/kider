@@ -228,6 +228,16 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_pop'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('pop from');
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(180);
+      this.setTooltip('Return a new list with the last item removed');
+    },
+  };
+
   Blockly.Blocks['sprout_is_empty'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('LIST').setCheck(null).appendField('is');

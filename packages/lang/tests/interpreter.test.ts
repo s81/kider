@@ -2112,6 +2112,52 @@ describe('list builtins', () => {
       expect(() => interpretValue(prog)).toThrow('last expects 1 argument, got 0');
     });
   });
+
+  describe('pop()', () => {
+    it('returns new list with last item removed', () => {
+      const prog = program(exprStmt(
+        call('pop', [call('list', [numLit(1), numLit(2), numLit(3)])])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 1 },
+        { kind: 'number', value: 2 },
+      ]));
+    });
+
+    it('returns empty list when popping singleton', () => {
+      const prog = program(exprStmt(
+        call('pop', [call('list', [numLit(99)])])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([]));
+    });
+
+    it('does not mutate the original list', () => {
+      const prog = program(
+        letStmt('original', call('list', [numLit(1), numLit(2)])),
+        letStmt('shorter', call('pop', [ident('original')])),
+        exprStmt(ident('original')),
+      );
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 1 },
+        { kind: 'number', value: 2 },
+      ]));
+    });
+
+    it('throws on empty list', () => {
+      const prog = program(exprStmt(call('pop', [call('list', [])])));
+      expect(() => interpretValue(prog)).toThrow('pop: list is empty');
+    });
+
+    it('throws if arg is not a list', () => {
+      const prog = program(exprStmt(call('pop', [numLit(5)])));
+      expect(() => interpretValue(prog)).toThrow('pop: expected list, got number');
+    });
+
+    it('throws on wrong arity', () => {
+      const prog = program(exprStmt(call('pop', [])));
+      expect(() => interpretValue(prog)).toThrow('pop expects 1 argument, got 0');
+    });
+  });
 });
 
 describe('stamp builtin', () => {

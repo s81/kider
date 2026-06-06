@@ -1246,6 +1246,29 @@ describe('new list blocks', () => {
       },
     });
   });
+
+  it('sprout_pop compiles to pop(list)', () => {
+    const ws = makeWorkspace();
+    const popBlock = ws.newBlock('sprout_pop');
+    const listIdent = ws.newBlock('sprout_ident');
+    listIdent.setFieldValue('items', 'NAME');
+    popBlock.getInput('LIST')!.connection!.connect(listIdent.outputConnection!);
+
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('shorter', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(popBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 'shorter',
+      init: {
+        kind: 'CallExpr', callee: 'pop',
+        args: [{ kind: 'Ident', name: 'items' }],
+        block: null,
+      },
+    });
+  });
 });
 
 describe('stamp block', () => {

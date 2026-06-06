@@ -550,6 +550,13 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (lst.items.length === 0) throw new SproutRuntimeError(`last: list is empty`);
     return lst.items[lst.items.length - 1];
   }],
+
+  ['pop', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`pop expects 1 argument, got ${args.length}`);
+    const lst = assertList(args[0], 'pop');
+    if (lst.items.length === 0) throw new SproutRuntimeError(`pop: list is empty`);
+    return mkList(lst.items.slice(0, -1));
+  }],
 ]);
 
 // ---------------------------------------------------------------------------
