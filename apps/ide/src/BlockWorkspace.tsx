@@ -8,6 +8,9 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     // Motion
     { kind: 'block', type: 'sprout_forward' },
     { kind: 'block', type: 'sprout_turn' },
+    { kind: 'block', type: 'sprout_arc' },
+    { kind: 'block', type: 'sprout_goto' },
+    { kind: 'block', type: 'sprout_home' },
     { kind: 'block', type: 'sprout_stamp' },
     // Pen
     { kind: 'block', type: 'sprout_pen_up' },
