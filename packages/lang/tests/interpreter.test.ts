@@ -2500,4 +2500,14 @@ describe('range builtin', () => {
     const prog = program(exprStmt(call('range', [numLit(5), numLit(3)])));
     expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
   });
+
+  it('range with float start throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('range', [numLit(1.5), numLit(5)])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('range with float end throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('range', [numLit(0), numLit(4.5)])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
 });

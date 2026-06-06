@@ -525,6 +525,8 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (args.length !== 2) throw new SproutRuntimeError(`range expects 2 arguments, got ${args.length}`);
     const start = assertNumber(args[0], 'range');
     const end = assertNumber(args[1], 'range');
+    if (!Number.isInteger(start.value)) throw new SproutRuntimeError(`range: start must be an integer, got ${start.value}`);
+    if (!Number.isInteger(end.value)) throw new SproutRuntimeError(`range: end must be an integer, got ${end.value}`);
     if (start.value > end.value) {
       throw new SproutRuntimeError(`range: start (${start.value}) must be <= end (${end.value})`);
     }
