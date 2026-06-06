@@ -2546,9 +2546,61 @@ describe('contains builtin', () => {
     expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
   });
 
-  it('contains with non-string first arg throws SproutRuntimeError', () => {
+  it('contains with non-string, non-list first arg throws SproutRuntimeError', () => {
     const prog = program(exprStmt(call('contains', [numLit(1), strLit('x')])));
     expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// contains — list overload
+// ---------------------------------------------------------------------------
+describe('contains — list membership', () => {
+  it('returns true when number is in list', () => {
+    const prog = program(exprStmt(
+      call('contains', [call('list', [numLit(1), numLit(2), numLit(3)]), numLit(2)])
+    ));
+    expect(interpretValue(prog)).toEqual({ kind: 'bool', value: true });
+  });
+
+  it('returns false when number is not in list', () => {
+    const prog = program(exprStmt(
+      call('contains', [call('list', [numLit(1), numLit(2)]), numLit(9)])
+    ));
+    expect(interpretValue(prog)).toEqual({ kind: 'bool', value: false });
+  });
+
+  it('returns true when string is in list', () => {
+    const prog = program(exprStmt(
+      call('contains', [call('list', [strLit('a'), strLit('b')]), strLit('a')])
+    ));
+    expect(interpretValue(prog)).toEqual({ kind: 'bool', value: true });
+  });
+
+  it('returns true when bool is in list', () => {
+    const prog = program(exprStmt(
+      call('contains', [call('list', [boolLit(true), boolLit(false)]), boolLit(false)])
+    ));
+    expect(interpretValue(prog)).toEqual({ kind: 'bool', value: true });
+  });
+
+  it('returns false for empty list', () => {
+    const prog = program(exprStmt(
+      call('contains', [call('list', []), numLit(1)])
+    ));
+    expect(interpretValue(prog)).toEqual({ kind: 'bool', value: false });
+  });
+
+  it('throws when item type is list', () => {
+    const prog = program(exprStmt(
+      call('contains', [call('list', [call('list', [])]), call('list', [])])
+    ));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('throws when first arg is not string or list', () => {
+    const prog = program(exprStmt(call('contains', [numLit(5), numLit(1)])));
+    expect(() => interpretValue(prog)).toThrow('contains: expected string or list, got number');
   });
 });
 

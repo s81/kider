@@ -45,6 +45,7 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     // Lists — Query
     { kind: 'block', type: 'sprout_size' },
     { kind: 'block', type: 'sprout_is_empty' },
+    { kind: 'block', type: 'sprout_contains' },
     // Lists — Modify
     { kind: 'block', type: 'sprout_push' },
     { kind: 'block', type: 'sprout_pop' },

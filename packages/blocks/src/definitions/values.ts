@@ -259,6 +259,17 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_contains'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('contains');
+      this.appendValueInput('ITEM').setCheck(null).appendField('item');
+      this.setOutput(true, 'Boolean');
+      this.setInputsInline(true);
+      this.setColour(180);
+      this.setTooltip('Check if a list contains an item');
+    },
+  };
+
   Blockly.Blocks['sprout_is_empty'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('LIST').setCheck(null).appendField('is');

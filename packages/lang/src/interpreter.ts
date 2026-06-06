@@ -446,9 +446,31 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
   }],
   ['contains', (args) => {
     if (args.length !== 2) throw new SproutRuntimeError(`contains expects 2 arguments, got ${args.length}`);
-    const str = assertString(args[0], 'contains');
-    const sub = assertString(args[1], 'contains');
-    return { kind: 'bool', value: str.value.includes(sub.value) };
+    if (args[0].kind === 'string') {
+      const sub = assertString(args[1], 'contains');
+      return { kind: 'bool', value: (args[0] as SproutString).value.includes(sub.value) };
+    }
+    if (args[0].kind === 'list') {
+      const list = args[0] as SproutList;
+      const item = args[1];
+      if (item.kind === 'list' || item.kind === 'drawing' || item.kind === 'function') {
+        throw new SproutRuntimeError(`contains: cannot compare items of type ${item.kind}`);
+      }
+      for (const el of list.items) {
+        if (el.kind === item.kind) {
+          if ((el.kind === 'number' || el.kind === 'string' || el.kind === 'bool') &&
+              (el as { value: unknown }).value === (item as { value: unknown }).value) {
+            return { kind: 'bool', value: true };
+          }
+          if (el.kind === 'symbol' && item.kind === 'symbol' &&
+              (el as { kind: 'symbol'; name: string }).name === (item as { kind: 'symbol'; name: string }).name) {
+            return { kind: 'bool', value: true };
+          }
+        }
+      }
+      return { kind: 'bool', value: false };
+    }
+    throw new SproutRuntimeError(`contains: expected string or list, got ${args[0].kind}`);
   }],
   ['toUpper', (args) => {
     if (args.length !== 1) throw new SproutRuntimeError(`toUpper expects 1 argument, got ${args.length}`);
