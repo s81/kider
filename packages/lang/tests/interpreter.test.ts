@@ -2890,6 +2890,6 @@ describe('show builtin', () => {
 
   it('show with non-string label throws SproutRuntimeError', () => {
     const prog = program(exprStmt(call('show', [numLit(1), numLit(2)])));
-    expect(() => interpretFull(prog)).toThrow('show: label must be a string, got number');
+    expect(() => interpretFull(prog)).toThrow('show: expected string, got number');
   });
 });

@@ -490,8 +490,8 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
   }],
   ['show', (args) => {
     if (args.length !== 2) throw new SproutRuntimeError(`show expects 2 arguments, got ${args.length}`);
-    if (args[0].kind !== 'string') throw new SproutRuntimeError(`show: label must be a string, got ${args[0].kind}`);
-    _hudValues.set((args[0] as { kind: 'string'; value: string }).value, formatValue(args[1]));
+    const label = assertString(args[0], 'show');
+    _hudValues.set(label.value, formatValue(args[1]));
     return EMPTY;
   }],
   ['toUpper', (args) => {
