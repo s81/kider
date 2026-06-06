@@ -276,4 +276,16 @@ export function registerStatementBlocks(): void {
       this.setColour(230);
     },
   };
+
+  Blockly.Blocks['sprout_show'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LABEL').setCheck('String').appendField('show label');
+      this.appendValueInput('VALUE').setCheck(null).appendField('value');
+      this.setInputsInline(true);
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(290);
+      this.setTooltip('Show a value on the canvas HUD');
+    },
+  };
 }

@@ -58,6 +58,11 @@ function compileStmt(block: Blockly.Block): Stmt {
       return compileSet(block);
     case 'sprout_return':
       return compileReturn(block);
+    case 'sprout_show': {
+      const label = compileExpr(mustGetInput(block, 'LABEL'));
+      const value = compileExpr(mustGetInput(block, 'VALUE'));
+      return { kind: 'ExprStmt', expr: { kind: 'CallExpr', callee: 'show', args: [label, value], block: null } };
+    }
     default:
       throw new Error(`Unknown statement block type: ${block.type}`);
   }
