@@ -509,6 +509,17 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     const lst = assertList(args[0], 'isEmpty');
     return { kind: 'bool' as const, value: lst.items.length === 0 };
   }],
+
+  ['at', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`at expects 2 arguments, got ${args.length}`);
+    const lst = assertList(args[0], 'at');
+    const idx = assertNumber(args[1], 'at');
+    const i = idx.value;
+    if (i < 0 || i >= lst.items.length) {
+      throw new SproutRuntimeError(`at: index ${i} out of bounds (list length ${lst.items.length})`);
+    }
+    return lst.items[i];
+  }],
 ]);
 
 // ---------------------------------------------------------------------------

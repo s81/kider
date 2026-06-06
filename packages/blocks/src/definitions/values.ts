@@ -186,6 +186,17 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_at'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('at');
+      this.appendValueInput('INDEX').setCheck('Number').appendField('index');
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(200);
+      this.setTooltip('Get item at 0-based index from list');
+    },
+  };
+
   Blockly.Blocks['sprout_is_empty'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('LIST').setCheck(null).appendField('is');

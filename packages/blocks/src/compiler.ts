@@ -459,6 +459,11 @@ function compileExpr(block: Blockly.Block): Expr {
       const lst = compileExpr(mustGetInput(block, 'LIST'));
       return { kind: 'CallExpr', callee: 'size', args: [lst], block: null };
     }
+    case 'sprout_at': {
+      const list = compileExpr(mustGetInput(block, 'LIST'));
+      const index = compileExpr(mustGetInput(block, 'INDEX'));
+      return { kind: 'CallExpr', callee: 'at', args: [list, index], block: null };
+    }
     case 'sprout_is_empty': {
       const lst = compileExpr(mustGetInput(block, 'LIST'));
       return { kind: 'CallExpr', callee: 'isEmpty', args: [lst], block: null };
