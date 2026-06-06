@@ -7,9 +7,10 @@ interface Props {
   animated?: boolean;
   stepsPerFrame?: number;
   onClick?: () => void;
+  hud?: Record<string, string>;
 }
 
-export function Stage({ commands, animated = false, stepsPerFrame = 3, onClick }: Props) {
+export function Stage({ commands, animated = false, stepsPerFrame = 3, onClick, hud }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -39,19 +40,42 @@ export function Stage({ commands, animated = false, stepsPerFrame = 3, onClick }
     return () => cancelAnimationFrame(rafId);
   }, [commands, animated, stepsPerFrame]);
 
+  const hudEntries = hud ? Object.entries(hud) : [];
+
   return (
-    <canvas
-      ref={canvasRef}
-      width={STAGE_W}
-      height={STAGE_H}
-      onClick={onClick}
-      style={{
-        border: '1px solid #e2e8f0',
-        borderRadius: 4,
-        background: '#fff',
-        display: 'block',
-        cursor: onClick ? 'crosshair' : 'default',
-      }}
-    />
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <canvas
+        ref={canvasRef}
+        width={STAGE_W}
+        height={STAGE_H}
+        onClick={onClick}
+        style={{
+          border: '1px solid #e2e8f0',
+          borderRadius: 4,
+          background: '#fff',
+          display: 'block',
+          cursor: onClick ? 'crosshair' : 'default',
+        }}
+      />
+      {hudEntries.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          bottom: 8,
+          left: 8,
+          background: 'rgba(0,0,0,0.55)',
+          borderRadius: 4,
+          padding: '4px 8px',
+          color: '#20c997',
+          fontFamily: 'monospace',
+          fontSize: 13,
+          lineHeight: '1.6',
+          pointerEvents: 'none',
+        }}>
+          {hudEntries.map(([label, value]) => (
+            <div key={label}>{label}: {value}</div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
