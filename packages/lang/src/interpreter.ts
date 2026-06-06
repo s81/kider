@@ -98,6 +98,20 @@ function formatValue(v: SproutValue): string {
   }
 }
 
+function extractVariables(env: Env): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, val] of env) {
+    if (key.startsWith(':')) continue;
+    if (val.kind === 'function') continue;
+    if (val.kind === 'var') {
+      const inner = (val as { kind: 'var'; cell: { value: SproutValue } }).cell.value;
+      if (inner.kind === 'function') continue;
+      result[key] = formatValue(inner);
+    }
+  }
+  return result;
+}
+
 // Module-level mouse position — set by setMousePosition before each frame.
 let _mouseX: number = 0;
 let _mouseY: number = 0;
@@ -1151,7 +1165,7 @@ export function interpretFull(
     drawing: drawings.length === 0 ? EMPTY : mkSequence(drawings),
     handlers,
     hud: Object.fromEntries(_hudValues),
-    variables: {},
+    variables: extractVariables(env),
   };
 }
 
@@ -1159,13 +1173,15 @@ export function interpretFull(
  * Invoke a zero-parameter event handler closure and return the Drawing it
  * produces.  Returns EMPTY if the body produces a non-Drawing value.
  */
-export function callHandler(fn: SproutFunction): Drawing {
+export function callHandler(fn: SproutFunction): { drawing: Drawing; hud: Record<string, string>; variables: Record<string, string> } {
+  _hudValues = new Map();
   try {
     const result = evalExpr(fn.body, fn.env);
-    return isDrawing(result) ? result : EMPTY;
+    const drawing = isDrawing(result) ? result : EMPTY;
+    return { drawing, hud: Object.fromEntries(_hudValues), variables: extractVariables(fn.env) };
   } catch (e) {
     if (e instanceof ReturnBundle) {
-      return e.drawing;
+      return { drawing: e.drawing, hud: Object.fromEntries(_hudValues), variables: extractVariables(fn.env) };
     }
     throw e;
   }

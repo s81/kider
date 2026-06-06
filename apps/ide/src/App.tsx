@@ -124,7 +124,7 @@ export function App() {
       if (!fn || accDrawingRef.current === null) return;
       e.preventDefault();
       try {
-        const delta = callHandler(fn);
+        const { drawing: delta } = callHandler(fn);
         applyHandlerDelta(delta);
       } catch (err) {
         setError(err instanceof SproutRuntimeError ? err.message : String(err));
@@ -181,7 +181,7 @@ export function App() {
         timerRef.current = setInterval(() => {
           if (accDrawingRef.current === null) return;
           try {
-            const delta = callHandler(timerFn);
+            const { drawing: delta } = callHandler(timerFn);
             applyHandlerDelta(delta);
           } catch (e) {
             setError(e instanceof SproutRuntimeError ? e.message : String(e));
@@ -211,7 +211,7 @@ export function App() {
     const clickFn = handlers.get(':click');
     if (!clickFn || accDrawingRef.current === null) return;
     try {
-      const delta = callHandler(clickFn);
+      const { drawing: delta } = callHandler(clickFn);
       applyHandlerDelta(delta);
     } catch (e) {
       setError(e instanceof SproutRuntimeError ? e.message : String(e));

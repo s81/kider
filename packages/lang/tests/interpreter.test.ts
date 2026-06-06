@@ -541,7 +541,7 @@ describe('callHandler', () => {
     );
     const { handlers } = interpretFull(prog);
     const fn = handlers.get(':click')!;
-    const delta = callHandler(fn);
+    const { drawing: delta } = callHandler(fn);
     expect(delta).toEqual(mkSequence([mkForward(30)]));
   });
 
@@ -551,7 +551,7 @@ describe('callHandler', () => {
     );
     const { handlers } = interpretFull(prog);
     const fn = handlers.get(':click')!;
-    const delta = callHandler(fn);
+    const { drawing: delta } = callHandler(fn);
     expect(delta).toEqual(mkSequence([EMPTY]));
   });
 
@@ -562,7 +562,7 @@ describe('callHandler', () => {
     );
     const { handlers } = interpretFull(prog);
     const fn = handlers.get(':click')!;
-    const delta = callHandler(fn);
+    const { drawing: delta } = callHandler(fn);
     expect(delta).toEqual(mkSequence([mkForward(5)]));
   });
 });
@@ -1523,7 +1523,7 @@ describe('return statement', () => {
       exprStmt(onExpr('click', [exprStmt(call('draw', [numLit(40)]))])),
     ));
     const fn = handlers.get(':click')!;
-    const drawing = callHandler(fn);
+    const { drawing } = callHandler(fn);
     expect(drawing).toMatchObject({ kind: 'sequence' });
   });
 
@@ -2891,5 +2891,83 @@ describe('show builtin', () => {
   it('show with non-string label throws SproutRuntimeError', () => {
     const prog = program(exprStmt(call('show', [numLit(1), numLit(2)])));
     expect(() => interpretFull(prog)).toThrow('show: expected string, got number');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// variables field on interpretFull
+// ---------------------------------------------------------------------------
+describe('interpretFull variables field', () => {
+  it('let x = 5 → variables has { x: "5" }', () => {
+    const prog = program(letStmt('x', numLit(5)));
+    const { variables } = interpretFull(prog);
+    expect(variables).toEqual({ x: '5' });
+  });
+
+  it('let x = 5 then x = 9 → variables has { x: "9" }', () => {
+    const prog = program(
+      letStmt('x', numLit(5)),
+      assignStmt('x', numLit(9)),
+    );
+    const { variables } = interpretFull(prog);
+    expect(variables).toEqual({ x: '9' });
+  });
+
+  it('def f() = 1 → f excluded from variables', () => {
+    const prog = program(defStmt('f', [], numLit(1)));
+    const { variables } = interpretFull(prog);
+    expect(variables).toEqual({});
+  });
+
+  it('let x = 5 and def f() = 1 → only x in variables', () => {
+    const prog = program(
+      letStmt('x', numLit(5)),
+      defStmt('f', [], numLit(1)),
+    );
+    const { variables } = interpretFull(prog);
+    expect(variables).toEqual({ x: '5' });
+  });
+
+  it('let xs = list(1,2,3) → variables has { xs: "[3 items]" }', () => {
+    const prog = program(letStmt('xs', call('list', [numLit(1), numLit(2), numLit(3)])));
+    const { variables } = interpretFull(prog);
+    expect(variables).toEqual({ xs: '[3 items]' });
+  });
+
+  it('empty program → variables is {}', () => {
+    const prog = program();
+    const { variables } = interpretFull(prog);
+    expect(variables).toEqual({});
+  });
+});
+
+// ---------------------------------------------------------------------------
+// callHandler return type
+// ---------------------------------------------------------------------------
+describe('callHandler hud and variables', () => {
+  it('callHandler returns hud entries written by show() inside handler', () => {
+    const { handlers } = interpretFull(program(
+      exprStmt({ kind: 'OnExpr' as const, event: { kind: 'SymbolLit' as const, name: 'click' }, body: { kind: 'BlockExpr' as const, body: [
+        exprStmt(call('show', [strLit('Score'), numLit(99)])),
+      ]} })
+    ));
+    const fn = handlers.get(':click')!;
+    expect(fn).toBeDefined();
+    const result = callHandler(fn);
+    expect(result.hud).toEqual({ Score: '99' });
+  });
+
+  it('callHandler returns variables reflecting mutated let-bindings', () => {
+    const prog = program(
+      letStmt('score', numLit(0)),
+      exprStmt({ kind: 'OnExpr' as const, event: { kind: 'SymbolLit' as const, name: 'click' }, body: { kind: 'BlockExpr' as const, body: [
+        assignStmt('score', infix('+', ident('score'), numLit(1))),
+      ]} }),
+    );
+    const { handlers } = interpretFull(prog);
+    const fn = handlers.get(':click')!;
+    callHandler(fn);
+    const result = callHandler(fn);
+    expect(result.variables).toEqual({ score: '2' });
   });
 });
