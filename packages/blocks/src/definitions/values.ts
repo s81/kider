@@ -249,6 +249,16 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_reverse'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('reverse');
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(180);
+      this.setTooltip('Return a new list in reverse order');
+    },
+  };
+
   Blockly.Blocks['sprout_is_empty'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('LIST').setCheck(null).appendField('is');

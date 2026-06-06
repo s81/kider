@@ -1298,6 +1298,29 @@ describe('new list blocks', () => {
       },
     });
   });
+
+  it('sprout_reverse compiles to reverse(list)', () => {
+    const ws = makeWorkspace();
+    const revBlock = ws.newBlock('sprout_reverse');
+    const listIdent = ws.newBlock('sprout_ident');
+    listIdent.setFieldValue('items', 'NAME');
+    revBlock.getInput('LIST')!.connection!.connect(listIdent.outputConnection!);
+
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('rev', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(revBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 'rev',
+      init: {
+        kind: 'CallExpr', callee: 'reverse',
+        args: [{ kind: 'Ident', name: 'items' }],
+        block: null,
+      },
+    });
+  });
 });
 
 describe('stamp block', () => {

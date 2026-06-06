@@ -2224,6 +2224,54 @@ describe('list builtins', () => {
       expect(() => interpretValue(prog)).toThrow('concat expects 2 arguments, got 1');
     });
   });
+
+  describe('reverse()', () => {
+    it('reverses a list', () => {
+      const prog = program(exprStmt(
+        call('reverse', [call('list', [numLit(1), numLit(2), numLit(3)])])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 3 },
+        { kind: 'number', value: 2 },
+        { kind: 'number', value: 1 },
+      ]));
+    });
+
+    it('returns empty list when reversing empty list', () => {
+      const prog = program(exprStmt(call('reverse', [call('list', [])])));
+      expect(interpretValue(prog)).toEqual(mkList([]));
+    });
+
+    it('returns singleton unchanged', () => {
+      const prog = program(exprStmt(
+        call('reverse', [call('list', [numLit(42)])])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([{ kind: 'number', value: 42 }]));
+    });
+
+    it('does not mutate the original list', () => {
+      const prog = program(
+        letStmt('original', call('list', [numLit(1), numLit(2), numLit(3)])),
+        letStmt('rev', call('reverse', [ident('original')])),
+        exprStmt(ident('original')),
+      );
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 1 },
+        { kind: 'number', value: 2 },
+        { kind: 'number', value: 3 },
+      ]));
+    });
+
+    it('throws if arg is not a list', () => {
+      const prog = program(exprStmt(call('reverse', [numLit(5)])));
+      expect(() => interpretValue(prog)).toThrow('reverse: expected list, got number');
+    });
+
+    it('throws on wrong arity', () => {
+      const prog = program(exprStmt(call('reverse', [])));
+      expect(() => interpretValue(prog)).toThrow('reverse expects 1 argument, got 0');
+    });
+  });
 });
 
 describe('stamp builtin', () => {

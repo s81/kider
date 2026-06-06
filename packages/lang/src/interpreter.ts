@@ -564,6 +564,11 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     const lst2 = assertList(args[1], 'concat');
     return mkList([...lst1.items, ...lst2.items]);
   }],
+  ['reverse', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`reverse expects 1 argument, got ${args.length}`);
+    const lst = assertList(args[0], 'reverse');
+    return mkList([...lst.items].reverse());
+  }],
 ]);
 
 // ---------------------------------------------------------------------------
