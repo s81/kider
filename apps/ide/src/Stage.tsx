@@ -7,10 +7,11 @@ interface Props {
   animated?: boolean;
   stepsPerFrame?: number;
   onClick?: () => void;
+  onMouseMove?: (x: number, y: number) => void;
   hud?: Record<string, string>;
 }
 
-export function Stage({ commands, animated = false, stepsPerFrame = 3, onClick, hud }: Props) {
+export function Stage({ commands, animated = false, stepsPerFrame = 3, onClick, onMouseMove, hud }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -49,6 +50,10 @@ export function Stage({ commands, animated = false, stepsPerFrame = 3, onClick, 
         width={STAGE_W}
         height={STAGE_H}
         onClick={onClick}
+        onMouseMove={onMouseMove ? (e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          onMouseMove(e.clientX - rect.left - STAGE_W / 2, e.clientY - rect.top - STAGE_H / 2);
+        } : undefined}
         style={{
           border: '1px solid #e2e8f0',
           borderRadius: 4,

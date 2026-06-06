@@ -7,6 +7,7 @@ import {
   callHandler,
   render,
   mkSequence,
+  setMousePosition,
   SproutRuntimeError,
 } from '@sprout/lang';
 import { parse, ParseError } from '@sprout/parser';
@@ -528,6 +529,7 @@ export function App() {
           animated={animated}
           stepsPerFrame={stepsPerFrame}
           onClick={hasClickHandler ? handleCanvasClick : undefined}
+          onMouseMove={setMousePosition}
           hud={hud}
         />
         <VariableInspector variables={variables} />
