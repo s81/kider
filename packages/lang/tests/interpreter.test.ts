@@ -2785,3 +2785,48 @@ describe('range builtin', () => {
     expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
   });
 });
+
+// ---------------------------------------------------------------------------
+// at builtin
+// ---------------------------------------------------------------------------
+describe('at builtin', () => {
+  it('at(list(10,20,30), 0) returns 10', () => {
+    const prog = program(exprStmt(call('at', [call('list', [numLit(10), numLit(20), numLit(30)]), numLit(0)])));
+    expect(interpretValue(prog)).toEqual({ kind: 'number', value: 10 });
+  });
+
+  it('at(list(10,20,30), 2) returns 30', () => {
+    const prog = program(exprStmt(call('at', [call('list', [numLit(10), numLit(20), numLit(30)]), numLit(2)])));
+    expect(interpretValue(prog)).toEqual({ kind: 'number', value: 30 });
+  });
+
+  it('at(list(10,20,30), 1) returns 20', () => {
+    const prog = program(exprStmt(call('at', [call('list', [numLit(10), numLit(20), numLit(30)]), numLit(1)])));
+    expect(interpretValue(prog)).toEqual({ kind: 'number', value: 20 });
+  });
+
+  it('at with wrong arg count throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('at', [call('list', [numLit(1)])])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('at with non-list first arg throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('at', [numLit(42), numLit(0)])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('at with non-number index throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('at', [call('list', [numLit(1)]), strLit('x')])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('at with out-of-bounds index throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('at', [call('list', [numLit(1)]), numLit(5)])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('at with negative index throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('at', [call('list', [numLit(1)]), numLit(-1)])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+});
