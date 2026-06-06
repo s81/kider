@@ -16,6 +16,7 @@ import type { SaveState } from './storage.js';
 import { BlockWorkspace } from './BlockWorkspace.js';
 import { TextPanel } from './TextPanel.js';
 import { Stage } from './Stage.js';
+import { VariableInspector } from './VariableInspector.js';
 
 type SourceMode = 'blocks' | 'editor';
 
@@ -34,6 +35,8 @@ export function App() {
   const [shareConfirm, setShareConfirm] = useState(false);
   const [inputNames, setInputNames] = useState<string[]>([]);
   const [inputValues, setInputValues] = useState<Record<string, number>>({});
+  const [hud, setHud] = useState<Record<string, string>>({});
+  const [variables, setVariables] = useState<Record<string, string>>({});
 
   useEffect(() => {
     // Clear any stale runtime error from a previous Run when the user edits.
@@ -124,8 +127,7 @@ export function App() {
       if (!fn || accDrawingRef.current === null) return;
       e.preventDefault();
       try {
-        const { drawing: delta } = callHandler(fn);
-        applyHandlerDelta(delta);
+        applyHandlerDelta(callHandler(fn));
       } catch (err) {
         setError(err instanceof SproutRuntimeError ? err.message : String(err));
       }
@@ -140,7 +142,8 @@ export function App() {
     };
   }, []);
 
-  function applyHandlerDelta(delta: Drawing) {
+  function applyHandlerDelta(result: { drawing: Drawing; hud: Record<string, string>; variables: Record<string, string> }) {
+    const { drawing: delta, hud: newHud, variables: newVars } = result;
     const deltaCommands = render(delta);
     const usesClear = deltaCommands.some(c => c.kind === 'clearCanvas');
     if (usesClear) {
@@ -151,6 +154,8 @@ export function App() {
       accDrawingRef.current = next;
       setCommands(render(next));
     }
+    setHud(newHud);
+    setVariables(newVars);
   }
 
   function handleRun() {
@@ -171,18 +176,19 @@ export function App() {
       const inputMap = new Map(
         Object.entries(inputValues).map(([k, v]) => [k, v] as [string, number])
       );
-      const { drawing, handlers: h } = interpretFullWithInputs(program, inputMap);
+      const { drawing, handlers: h, hud: newHud, variables: newVars } = interpretFullWithInputs(program, inputMap);
       accDrawingRef.current = drawing;
       handlersRef.current = h;
       setHandlers(h);
       setCommands(render(drawing));
+      setHud(newHud);
+      setVariables(newVars);
       const timerFn = h.get(':timer');
       if (timerFn) {
         timerRef.current = setInterval(() => {
           if (accDrawingRef.current === null) return;
           try {
-            const { drawing: delta } = callHandler(timerFn);
-            applyHandlerDelta(delta);
+            applyHandlerDelta(callHandler(timerFn));
           } catch (e) {
             setError(e instanceof SproutRuntimeError ? e.message : String(e));
             if (timerRef.current !== null) {
@@ -211,8 +217,7 @@ export function App() {
     const clickFn = handlers.get(':click');
     if (!clickFn || accDrawingRef.current === null) return;
     try {
-      const { drawing: delta } = callHandler(clickFn);
-      applyHandlerDelta(delta);
+      applyHandlerDelta(callHandler(clickFn));
     } catch (e) {
       setError(e instanceof SproutRuntimeError ? e.message : String(e));
     }
@@ -523,7 +528,9 @@ export function App() {
           animated={animated}
           stepsPerFrame={stepsPerFrame}
           onClick={hasClickHandler ? handleCanvasClick : undefined}
+          hud={hud}
         />
+        <VariableInspector variables={variables} />
 
         {error && (
           <pre
