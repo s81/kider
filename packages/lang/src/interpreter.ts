@@ -1097,6 +1097,7 @@ const EMPTY_ENV: Env = new Map<string, SproutValue>();
  * result.  Def statements extend the environment for subsequent statements.
  */
 export function interpret(program: Program, initialEnv: Env = EMPTY_ENV): Drawing {
+  _hudValues = new Map();
   let env: Env = initialEnv;
   const drawings: Drawing[] = [];
 
