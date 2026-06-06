@@ -516,7 +516,7 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     const idx = assertNumber(args[1], 'at');
     const i = idx.value;
     if (i < 0 || i >= lst.items.length) {
-      throw new SproutRuntimeError(`at: index ${i} out of bounds (list length ${lst.items.length})`);
+      throw new SproutRuntimeError(`at: index ${i} is out of bounds (size ${lst.items.length})`);
     }
     return lst.items[i];
   }],

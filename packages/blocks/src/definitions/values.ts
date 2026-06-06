@@ -192,7 +192,7 @@ export function registerValueBlocks(): void {
       this.appendValueInput('INDEX').setCheck('Number').appendField('index');
       this.setOutput(true, null);
       this.setInputsInline(true);
-      this.setColour(200);
+      this.setColour(180);
       this.setTooltip('Get item at 0-based index from list');
     },
   };
