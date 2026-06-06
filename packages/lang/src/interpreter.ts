@@ -536,6 +536,20 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     }
     return mkList(items);
   }],
+
+  ['first', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`first expects 1 argument, got ${args.length}`);
+    const lst = assertList(args[0], 'first');
+    if (lst.items.length === 0) throw new SproutRuntimeError(`first: list is empty`);
+    return lst.items[0];
+  }],
+
+  ['last', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`last expects 1 argument, got ${args.length}`);
+    const lst = assertList(args[0], 'last');
+    if (lst.items.length === 0) throw new SproutRuntimeError(`last: list is empty`);
+    return lst.items[lst.items.length - 1];
+  }],
 ]);
 
 // ---------------------------------------------------------------------------

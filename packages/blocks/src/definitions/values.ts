@@ -208,6 +208,26 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_first'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('first of');
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(180);
+      this.setTooltip('Get the first item from a list');
+    },
+  };
+
+  Blockly.Blocks['sprout_last'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('last of');
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(180);
+      this.setTooltip('Get the last item from a list');
+    },
+  };
+
   Blockly.Blocks['sprout_is_empty'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('LIST').setCheck(null).appendField('is');

@@ -1540,16 +1540,16 @@ describe('return statement', () => {
   });
 
   it('return inside repeat inside a function exits the function', () => {
-    // def first(n) { repeat 3 do return n end }
-    // let x = first(7)
+    // def myFunc(n) { repeat 3 do return n end }
+    // let x = myFunc(7)
     // forward(x)
     const prog = program(
-      defStmt('first', ['n'], block([
+      defStmt('myFunc', ['n'], block([
         exprStmt(repeat(numLit(3), [
           returnStmt(ident('n')),
         ])),
       ])),
-      letStmt('x', call('first', [numLit(7)])),
+      letStmt('x', call('myFunc', [numLit(7)])),
       exprStmt(call('forward', [ident('x')])),
     );
     expect(interpret(prog)).toEqual(mkSequence([mkForward(7)]));
@@ -2048,6 +2048,68 @@ describe('list builtins', () => {
         exprStmt(call('reduce', [call('list', [numLit(1)]), ident('oneParam'), numLit(0)])),
       );
       expect(() => interpretValue(prog)).toThrow('reduce: function must take exactly 2 parameters, got 1');
+    });
+  });
+
+  describe('first()', () => {
+    it('returns the first item', () => {
+      const prog = program(exprStmt(
+        call('first', [call('list', [numLit(10), numLit(20), numLit(30)])])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 10 });
+    });
+
+    it('returns the only item in a singleton list', () => {
+      const prog = program(exprStmt(
+        call('first', [call('list', [numLit(42)])])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 42 });
+    });
+
+    it('throws on empty list', () => {
+      const prog = program(exprStmt(call('first', [call('list', [])])));
+      expect(() => interpretValue(prog)).toThrow('first: list is empty');
+    });
+
+    it('throws if arg is not a list', () => {
+      const prog = program(exprStmt(call('first', [numLit(5)])));
+      expect(() => interpretValue(prog)).toThrow('first: expected list, got number');
+    });
+
+    it('throws on wrong arity', () => {
+      const prog = program(exprStmt(call('first', [])));
+      expect(() => interpretValue(prog)).toThrow('first expects 1 argument, got 0');
+    });
+  });
+
+  describe('last()', () => {
+    it('returns the last item', () => {
+      const prog = program(exprStmt(
+        call('last', [call('list', [numLit(10), numLit(20), numLit(30)])])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 30 });
+    });
+
+    it('returns the only item in a singleton list', () => {
+      const prog = program(exprStmt(
+        call('last', [call('list', [numLit(42)])])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 42 });
+    });
+
+    it('throws on empty list', () => {
+      const prog = program(exprStmt(call('last', [call('list', [])])));
+      expect(() => interpretValue(prog)).toThrow('last: list is empty');
+    });
+
+    it('throws if arg is not a list', () => {
+      const prog = program(exprStmt(call('last', [strLit('hi')])));
+      expect(() => interpretValue(prog)).toThrow('last: expected list, got string');
+    });
+
+    it('throws on wrong arity', () => {
+      const prog = program(exprStmt(call('last', [])));
+      expect(() => interpretValue(prog)).toThrow('last expects 1 argument, got 0');
     });
   });
 });

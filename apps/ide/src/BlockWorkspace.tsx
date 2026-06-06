@@ -40,6 +40,8 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     // Lists — Access
     { kind: 'block', type: 'sprout_at' },
     { kind: 'block', type: 'sprout_get' },
+    { kind: 'block', type: 'sprout_first' },
+    { kind: 'block', type: 'sprout_last' },
     // Lists — Query
     { kind: 'block', type: 'sprout_size' },
     { kind: 'block', type: 'sprout_is_empty' },

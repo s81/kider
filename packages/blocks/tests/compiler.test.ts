@@ -1200,6 +1200,54 @@ describe('list blocks', () => {
   });
 });
 
+describe('new list blocks', () => {
+  it('sprout_first compiles to first(list)', () => {
+    const ws = makeWorkspace();
+    const firstBlock = ws.newBlock('sprout_first');
+    const listIdent = ws.newBlock('sprout_ident');
+    listIdent.setFieldValue('items', 'NAME');
+    firstBlock.getInput('LIST')!.connection!.connect(listIdent.outputConnection!);
+
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('head', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(firstBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 'head',
+      init: {
+        kind: 'CallExpr', callee: 'first',
+        args: [{ kind: 'Ident', name: 'items' }],
+        block: null,
+      },
+    });
+  });
+
+  it('sprout_last compiles to last(list)', () => {
+    const ws = makeWorkspace();
+    const lastBlock = ws.newBlock('sprout_last');
+    const listIdent = ws.newBlock('sprout_ident');
+    listIdent.setFieldValue('items', 'NAME');
+    lastBlock.getInput('LIST')!.connection!.connect(listIdent.outputConnection!);
+
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('tail', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(lastBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 'tail',
+      init: {
+        kind: 'CallExpr', callee: 'last',
+        args: [{ kind: 'Ident', name: 'items' }],
+        block: null,
+      },
+    });
+  });
+});
+
 describe('stamp block', () => {
   it('sprout_stamp compiles to stamp()', () => {
     const ws = makeWorkspace();
