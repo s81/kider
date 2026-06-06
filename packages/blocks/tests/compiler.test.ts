@@ -1269,6 +1269,35 @@ describe('new list blocks', () => {
       },
     });
   });
+
+  it('sprout_concat compiles to concat(list1, list2)', () => {
+    const ws = makeWorkspace();
+    const concatBlock = ws.newBlock('sprout_concat');
+    const a = ws.newBlock('sprout_ident');
+    a.setFieldValue('xs', 'NAME');
+    const b = ws.newBlock('sprout_ident');
+    b.setFieldValue('ys', 'NAME');
+    concatBlock.getInput('LIST1')!.connection!.connect(a.outputConnection!);
+    concatBlock.getInput('LIST2')!.connection!.connect(b.outputConnection!);
+
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('all', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(concatBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 'all',
+      init: {
+        kind: 'CallExpr', callee: 'concat',
+        args: [
+          { kind: 'Ident', name: 'xs' },
+          { kind: 'Ident', name: 'ys' },
+        ],
+        block: null,
+      },
+    });
+  });
 });
 
 describe('stamp block', () => {

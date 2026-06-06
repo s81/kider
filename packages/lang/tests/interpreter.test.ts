@@ -2158,6 +2158,72 @@ describe('list builtins', () => {
       expect(() => interpretValue(prog)).toThrow('pop expects 1 argument, got 0');
     });
   });
+
+  describe('concat()', () => {
+    it('joins two lists', () => {
+      const prog = program(exprStmt(
+        call('concat', [
+          call('list', [numLit(1), numLit(2)]),
+          call('list', [numLit(3), numLit(4)]),
+        ])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 1 },
+        { kind: 'number', value: 2 },
+        { kind: 'number', value: 3 },
+        { kind: 'number', value: 4 },
+      ]));
+    });
+
+    it('handles empty first list', () => {
+      const prog = program(exprStmt(
+        call('concat', [call('list', []), call('list', [numLit(1), numLit(2)])])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 1 },
+        { kind: 'number', value: 2 },
+      ]));
+    });
+
+    it('handles empty second list', () => {
+      const prog = program(exprStmt(
+        call('concat', [call('list', [numLit(1), numLit(2)]), call('list', [])])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 1 },
+        { kind: 'number', value: 2 },
+      ]));
+    });
+
+    it('does not mutate the original lists', () => {
+      const prog = program(
+        letStmt('a', call('list', [numLit(1)])),
+        letStmt('b', call('list', [numLit(2)])),
+        letStmt('c', call('concat', [ident('a'), ident('b')])),
+        exprStmt(ident('a')),
+      );
+      expect(interpretValue(prog)).toEqual(mkList([{ kind: 'number', value: 1 }]));
+    });
+
+    it('throws if first arg is not a list', () => {
+      const prog = program(exprStmt(
+        call('concat', [numLit(1), call('list', [])])
+      ));
+      expect(() => interpretValue(prog)).toThrow('concat: expected list, got number');
+    });
+
+    it('throws if second arg is not a list', () => {
+      const prog = program(exprStmt(
+        call('concat', [call('list', []), strLit('hi')])
+      ));
+      expect(() => interpretValue(prog)).toThrow('concat: expected list, got string');
+    });
+
+    it('throws on wrong arity', () => {
+      const prog = program(exprStmt(call('concat', [call('list', [])])));
+      expect(() => interpretValue(prog)).toThrow('concat expects 2 arguments, got 1');
+    });
+  });
 });
 
 describe('stamp builtin', () => {

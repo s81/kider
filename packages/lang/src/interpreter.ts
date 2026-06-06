@@ -557,6 +557,13 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (lst.items.length === 0) throw new SproutRuntimeError(`pop: list is empty`);
     return mkList(lst.items.slice(0, -1));
   }],
+
+  ['concat', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`concat expects 2 arguments, got ${args.length}`);
+    const lst1 = assertList(args[0], 'concat');
+    const lst2 = assertList(args[1], 'concat');
+    return mkList([...lst1.items, ...lst2.items]);
+  }],
 ]);
 
 // ---------------------------------------------------------------------------

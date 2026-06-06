@@ -497,6 +497,11 @@ function compileExpr(block: Blockly.Block): Expr {
       const lst = compileExpr(mustGetInput(block, 'LIST'));
       return { kind: 'CallExpr', callee: 'pop', args: [lst], block: null };
     }
+    case 'sprout_concat': {
+      const lst1 = compileExpr(mustGetInput(block, 'LIST1'));
+      const lst2 = compileExpr(mustGetInput(block, 'LIST2'));
+      return { kind: 'CallExpr', callee: 'concat', args: [lst1, lst2], block: null };
+    }
     case 'sprout_stamp':
       return { kind: 'CallExpr', callee: 'stamp', args: [], block: null };
     default:

@@ -48,6 +48,7 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     // Lists — Modify
     { kind: 'block', type: 'sprout_push' },
     { kind: 'block', type: 'sprout_pop' },
+    { kind: 'block', type: 'sprout_concat' },
     // Lists — Transform
     { kind: 'block', type: 'sprout_map' },
     { kind: 'block', type: 'sprout_filter' },
