@@ -2830,3 +2830,66 @@ describe('at builtin', () => {
     expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
   });
 });
+
+// ---------------------------------------------------------------------------
+// show builtin + hud field
+// ---------------------------------------------------------------------------
+describe('show builtin', () => {
+  it('show("Score", 5) — hud has { Score: "5" }', () => {
+    const prog = program(
+      exprStmt(call('show', [strLit('Score'), numLit(5)]))
+    );
+    const { hud } = interpretFull(prog);
+    expect(hud).toEqual({ Score: '5' });
+  });
+
+  it('show called twice with same label replaces value', () => {
+    const prog = program(
+      exprStmt(call('show', [strLit('Score'), numLit(5)])),
+      exprStmt(call('show', [strLit('Score'), numLit(6)])),
+    );
+    const { hud } = interpretFull(prog);
+    expect(hud).toEqual({ Score: '6' });
+  });
+
+  it('show called with two different labels produces two entries', () => {
+    const prog = program(
+      exprStmt(call('show', [strLit('Score'), numLit(5)])),
+      exprStmt(call('show', [strLit('Lives'), numLit(3)])),
+    );
+    const { hud } = interpretFull(prog);
+    expect(hud).toEqual({ Score: '5', Lives: '3' });
+  });
+
+  it('hud is empty when show is never called', () => {
+    const prog = program(exprStmt(numLit(1)));
+    const { hud } = interpretFull(prog);
+    expect(hud).toEqual({});
+  });
+
+  it('show with list value formats as "[3 items]"', () => {
+    const prog = program(
+      exprStmt(call('show', [strLit('xs'), call('list', [numLit(1), numLit(2), numLit(3)])]))
+    );
+    const { hud } = interpretFull(prog);
+    expect(hud).toEqual({ xs: '[3 items]' });
+  });
+
+  it('show with bool value formats as "true"', () => {
+    const prog = program(
+      exprStmt(call('show', [strLit('flag'), boolLit(true)]))
+    );
+    const { hud } = interpretFull(prog);
+    expect(hud).toEqual({ flag: 'true' });
+  });
+
+  it('show with wrong arity throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('show', [strLit('x')])));
+    expect(() => interpretFull(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('show with non-string label throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('show', [numLit(1), numLit(2)])));
+    expect(() => interpretFull(prog)).toThrow('show: label must be a string, got number');
+  });
+});

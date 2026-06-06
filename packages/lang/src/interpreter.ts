@@ -82,6 +82,22 @@ class ReturnBundle {
 // Module-level input values — set by interpretWithInputs before each run.
 let _inputValues: ReadonlyMap<string, number> = new Map();
 
+// Module-level HUD values — written by show() during each run.
+let _hudValues: Map<string, string> = new Map();
+
+function formatValue(v: SproutValue): string {
+  switch (v.kind) {
+    case 'number': return String(v.value);
+    case 'string': return v.value;
+    case 'bool': return String(v.value);
+    case 'symbol': return `:${(v as { kind: 'symbol'; name: string }).name}`;
+    case 'list': return `[${(v as { kind: 'list'; items: readonly unknown[] }).items.length} items]`;
+    case 'function': return 'fn';
+    case 'var': return formatValue((v as { kind: 'var'; cell: { value: SproutValue } }).cell.value);
+    default: return `<${(v as { kind: string }).kind}>`;
+  }
+}
+
 // Module-level mouse position — set by setMousePosition before each frame.
 let _mouseX: number = 0;
 let _mouseY: number = 0;
@@ -471,6 +487,12 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
       return { kind: 'bool', value: false };
     }
     throw new SproutRuntimeError(`contains: expected string or list, got ${args[0].kind}`);
+  }],
+  ['show', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`show expects 2 arguments, got ${args.length}`);
+    if (args[0].kind !== 'string') throw new SproutRuntimeError(`show: label must be a string, got ${args[0].kind}`);
+    _hudValues.set((args[0] as { kind: 'string'; value: string }).value, formatValue(args[1]));
+    return EMPTY;
   }],
   ['toUpper', (args) => {
     if (args.length !== 1) throw new SproutRuntimeError(`toUpper expects 1 argument, got ${args.length}`);
@@ -1104,7 +1126,8 @@ export function interpret(program: Program, initialEnv: Env = EMPTY_ENV): Drawin
 export function interpretFull(
   program: Program,
   initialEnv: Env = EMPTY_ENV,
-): { drawing: Drawing; handlers: Map<string, SproutFunction> } {
+): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string> } {
+  _hudValues = new Map();
   let env: Env = initialEnv;
   const drawings: Drawing[] = [];
 
@@ -1126,6 +1149,8 @@ export function interpretFull(
   return {
     drawing: drawings.length === 0 ? EMPTY : mkSequence(drawings),
     handlers,
+    hud: Object.fromEntries(_hudValues),
+    variables: {},
   };
 }
 
@@ -1264,7 +1289,7 @@ export function interpretFullWithInputs(
   program: Program,
   inputs: ReadonlyMap<string, number>,
   initialEnv: Env = EMPTY_ENV,
-): { drawing: Drawing; handlers: Map<string, SproutFunction> } {
+): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string> } {
   const prev = _inputValues;
   _inputValues = inputs;
   try {
