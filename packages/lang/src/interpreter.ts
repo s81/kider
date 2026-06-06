@@ -627,6 +627,55 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     const lst = assertList(args[0], 'reverse');
     return mkList([...lst.items].reverse());
   }],
+
+  ['indexOf', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`indexOf expects 2 arguments, got ${args.length}`);
+    const lst = assertList(args[0], 'indexOf');
+    const item = args[1];
+    if (item.kind === 'list' || item.kind === 'drawing' || item.kind === 'function') {
+      throw new SproutRuntimeError(`indexOf: cannot compare items of type ${item.kind}`);
+    }
+    const idx = lst.items.findIndex(el => {
+      if (el.kind !== item.kind) return false;
+      if (el.kind === 'number' || el.kind === 'string' || el.kind === 'bool') {
+        return (el as { value: unknown }).value === (item as { value: unknown }).value;
+      }
+      if (el.kind === 'symbol' && item.kind === 'symbol') {
+        return (el as { kind: 'symbol'; name: string }).name === (item as { kind: 'symbol'; name: string }).name;
+      }
+      return false;
+    });
+    return { kind: 'number', value: idx } satisfies SproutNumber;
+  }],
+
+  ['slice', (args) => {
+    if (args.length !== 3) throw new SproutRuntimeError(`slice expects 3 arguments, got ${args.length}`);
+    const lst = assertList(args[0], 'slice');
+    if (args[1].kind !== 'number') throw new SproutRuntimeError(`slice: start must be a number`);
+    if (args[2].kind !== 'number') throw new SproutRuntimeError(`slice: end must be a number`);
+    const start = Math.max(0, Math.floor((args[1] as SproutNumber).value));
+    const end = Math.min(lst.items.length, Math.floor((args[2] as SproutNumber).value));
+    return mkList(lst.items.slice(start, end));
+  }],
+
+  ['sort', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`sort expects 1 argument, got ${args.length}`);
+    const lst = assertList(args[0], 'sort');
+    if (lst.items.length === 0) return mkList([]);
+    const firstKind = lst.items[0].kind;
+    if (firstKind !== 'number' && firstKind !== 'string') {
+      throw new SproutRuntimeError(`sort: can only sort lists of numbers or strings`);
+    }
+    if (lst.items.some(it => it.kind !== firstKind)) {
+      throw new SproutRuntimeError(`sort: cannot sort mixed types`);
+    }
+    const sorted = [...lst.items].sort((a, b) => {
+      if (a.kind === 'number' && b.kind === 'number') return a.value - b.value;
+      if (a.kind === 'string' && b.kind === 'string') return a.value < b.value ? -1 : a.value > b.value ? 1 : 0;
+      return 0;
+    });
+    return mkList(sorted);
+  }],
 ]);
 
 // ---------------------------------------------------------------------------

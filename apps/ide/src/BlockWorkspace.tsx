@@ -45,6 +45,8 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_get' },
     { kind: 'block', type: 'sprout_first' },
     { kind: 'block', type: 'sprout_last' },
+    { kind: 'block', type: 'sprout_index_of' },
+    { kind: 'block', type: 'sprout_slice' },
     // Lists — Query
     { kind: 'block', type: 'sprout_size' },
     { kind: 'block', type: 'sprout_is_empty' },
@@ -54,6 +56,7 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_pop' },
     { kind: 'block', type: 'sprout_concat' },
     { kind: 'block', type: 'sprout_reverse' },
+    { kind: 'block', type: 'sprout_sort' },
     // Lists — Transform
     { kind: 'block', type: 'sprout_map' },
     { kind: 'block', type: 'sprout_filter' },

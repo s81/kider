@@ -270,6 +270,39 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_index_of'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('indexOf');
+      this.appendValueInput('ITEM').setCheck(null).appendField('item');
+      this.setOutput(true, 'Number');
+      this.setInputsInline(true);
+      this.setColour(180);
+      this.setTooltip('Return 0-based index of item in list, or -1 if not found');
+    },
+  };
+
+  Blockly.Blocks['sprout_slice'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('slice');
+      this.appendValueInput('START').setCheck(null).appendField('from');
+      this.appendValueInput('END').setCheck(null).appendField('to');
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(180);
+      this.setTooltip('Return a sublist from start (inclusive) to end (exclusive)');
+    },
+  };
+
+  Blockly.Blocks['sprout_sort'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('sort');
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(180);
+      this.setTooltip('Return a sorted copy of the list');
+    },
+  };
+
   Blockly.Blocks['sprout_is_empty'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('LIST').setCheck(null).appendField('is');

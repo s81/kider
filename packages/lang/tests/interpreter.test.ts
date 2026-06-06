@@ -2272,6 +2272,152 @@ describe('list builtins', () => {
       expect(() => interpretValue(prog)).toThrow('reverse expects 1 argument, got 0');
     });
   });
+
+  describe('indexOf()', () => {
+    it('returns 0-based index of matching number', () => {
+      const prog = program(exprStmt(
+        call('indexOf', [call('list', [numLit(10), numLit(20), numLit(30)]), numLit(20)])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 1 });
+    });
+
+    it('returns -1 when item not found', () => {
+      const prog = program(exprStmt(
+        call('indexOf', [call('list', [numLit(1), numLit(2)]), numLit(99)])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: -1 });
+    });
+
+    it('returns index of matching string', () => {
+      const prog = program(exprStmt(
+        call('indexOf', [call('list', [strLit('a'), strLit('b'), strLit('c')]), strLit('b')])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 1 });
+    });
+
+    it('returns first index when duplicates exist', () => {
+      const prog = program(exprStmt(
+        call('indexOf', [call('list', [numLit(5), numLit(5), numLit(5)]), numLit(5)])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 0 });
+    });
+
+    it('returns -1 on empty list', () => {
+      const prog = program(exprStmt(
+        call('indexOf', [call('list', []), numLit(1)])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: -1 });
+    });
+
+    it('throws on wrong arity', () => {
+      const prog = program(exprStmt(call('indexOf', [call('list', [])])));
+      expect(() => interpretValue(prog)).toThrow('indexOf expects 2 arguments, got 1');
+    });
+
+    it('throws if first arg is not a list', () => {
+      const prog = program(exprStmt(call('indexOf', [numLit(5), numLit(1)])));
+      expect(() => interpretValue(prog)).toThrow('indexOf: expected list, got number');
+    });
+  });
+
+  describe('slice()', () => {
+    it('returns sublist from start to end (exclusive)', () => {
+      const prog = program(exprStmt(
+        call('slice', [call('list', [numLit(1), numLit(2), numLit(3), numLit(4)]), numLit(1), numLit(3)])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([{ kind: 'number', value: 2 }, { kind: 'number', value: 3 }]));
+    });
+
+    it('returns full list when start=0 end=length', () => {
+      const prog = program(exprStmt(
+        call('slice', [call('list', [numLit(1), numLit(2)]), numLit(0), numLit(2)])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([{ kind: 'number', value: 1 }, { kind: 'number', value: 2 }]));
+    });
+
+    it('clamps out-of-bounds end', () => {
+      const prog = program(exprStmt(
+        call('slice', [call('list', [numLit(1), numLit(2)]), numLit(0), numLit(100)])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([{ kind: 'number', value: 1 }, { kind: 'number', value: 2 }]));
+    });
+
+    it('returns empty list when start >= end', () => {
+      const prog = program(exprStmt(
+        call('slice', [call('list', [numLit(1), numLit(2), numLit(3)]), numLit(2), numLit(1)])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([]));
+    });
+
+    it('throws on wrong arity', () => {
+      const prog = program(exprStmt(call('slice', [call('list', []), numLit(0)])));
+      expect(() => interpretValue(prog)).toThrow('slice expects 3 arguments, got 2');
+    });
+
+    it('throws if first arg is not a list', () => {
+      const prog = program(exprStmt(call('slice', [numLit(5), numLit(0), numLit(1)])));
+      expect(() => interpretValue(prog)).toThrow('slice: expected list, got number');
+    });
+  });
+
+  describe('sort()', () => {
+    it('sorts numbers ascending', () => {
+      const prog = program(exprStmt(
+        call('sort', [call('list', [numLit(3), numLit(1), numLit(2)])])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 1 },
+        { kind: 'number', value: 2 },
+        { kind: 'number', value: 3 },
+      ]));
+    });
+
+    it('sorts strings lexicographically', () => {
+      const prog = program(exprStmt(
+        call('sort', [call('list', [strLit('banana'), strLit('apple'), strLit('cherry')])])
+      ));
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'string', value: 'apple' },
+        { kind: 'string', value: 'banana' },
+        { kind: 'string', value: 'cherry' },
+      ]));
+    });
+
+    it('returns empty list unchanged', () => {
+      const prog = program(exprStmt(call('sort', [call('list', [])])));
+      expect(interpretValue(prog)).toEqual(mkList([]));
+    });
+
+    it('does not mutate original list', () => {
+      const prog = program(
+        letStmt('original', call('list', [numLit(3), numLit(1), numLit(2)])),
+        letStmt('sorted', call('sort', [ident('original')])),
+        exprStmt(ident('original')),
+      );
+      expect(interpretValue(prog)).toEqual(mkList([
+        { kind: 'number', value: 3 },
+        { kind: 'number', value: 1 },
+        { kind: 'number', value: 2 },
+      ]));
+    });
+
+    it('throws on mixed types', () => {
+      const prog = program(exprStmt(
+        call('sort', [call('list', [numLit(1), strLit('a')])])
+      ));
+      expect(() => interpretValue(prog)).toThrow('sort: cannot sort mixed types');
+    });
+
+    it('throws if arg is not a list', () => {
+      const prog = program(exprStmt(call('sort', [numLit(5)])));
+      expect(() => interpretValue(prog)).toThrow('sort: expected list, got number');
+    });
+
+    it('throws on wrong arity', () => {
+      const prog = program(exprStmt(call('sort', [])));
+      expect(() => interpretValue(prog)).toThrow('sort expects 1 argument, got 0');
+    });
+  });
 });
 
 describe('stamp builtin', () => {
