@@ -18,6 +18,8 @@ import {
   mkClearCanvas,
   mkStamp,
   mkArc,
+  mkGoto,
+  mkHome,
 } from '../src/values.js';
 import type { CanvasCommand } from '../src/renderer.js';
 
@@ -662,5 +664,59 @@ describe('render(mkArc)', () => {
     const cmds = render(mkArc(0, 90));
     const lineToCount = cmds.filter(c => c.kind === 'lineTo').length;
     expect(lineToCount).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// goto rendering
+// ---------------------------------------------------------------------------
+describe('goto rendering', () => {
+  it('render(mkGoto(50, 100)) emits moveTo(50, 100)', () => {
+    expect(render(mkGoto(50, 100))).toEqual([moveTo(50, 100)]);
+  });
+
+  it('goto does not draw a line even when pen is down', () => {
+    const cmds = render(mkSequence([mkForward(50), mkGoto(10, 20)]));
+    expect(cmds).toEqual([lineTo(0, -50), moveTo(10, 20)]);
+  });
+
+  it('sequence [forward(50), goto(0,0), forward(30)] continues from goto position', () => {
+    const cmds = render(mkSequence([mkForward(50), mkGoto(0, 0), mkForward(30)]));
+    expect(cmds).toEqual([lineTo(0, -50), moveTo(0, 0), lineTo(0, -30)]);
+  });
+
+  it('measure(mkGoto(50, 100)) returns width=0, height=0', () => {
+    expect(measure(mkGoto(50, 100))).toEqual({ width: 0, height: 0 });
+  });
+
+  it('scale(2, goto) leaves coordinates unchanged', () => {
+    expect(render({ kind: 'scale', factor: 2, drawing: mkGoto(50, 100) })).toEqual([moveTo(50, 100)]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// home rendering
+// ---------------------------------------------------------------------------
+describe('home rendering', () => {
+  it('render(mkHome()) emits moveTo(0, 0)', () => {
+    expect(render(mkHome())).toEqual([moveTo(0, 0)]);
+  });
+
+  it('home resets position — forward after home starts from origin', () => {
+    const cmds = render(mkSequence([mkForward(50), mkHome(), mkForward(30)]));
+    expect(cmds).toEqual([lineTo(0, -50), moveTo(0, 0), lineTo(0, -30)]);
+  });
+
+  it('home resets heading — forward after home with prior turn goes north', () => {
+    const cmds = render(mkSequence([mkTurn(90), mkHome(), mkForward(30)]));
+    expect(cmds).toEqual([moveTo(0, 0), lineTo(0, -30)]);
+  });
+
+  it('measure(mkHome()) returns width=0, height=0', () => {
+    expect(measure(mkHome())).toEqual({ width: 0, height: 0 });
+  });
+
+  it('scale(2, home) leaves it unchanged', () => {
+    expect(render({ kind: 'scale', factor: 2, drawing: mkHome() })).toEqual([moveTo(0, 0)]);
   });
 });

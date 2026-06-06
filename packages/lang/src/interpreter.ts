@@ -51,6 +51,8 @@ import {
   mkClearCanvas,
   mkStamp,
   mkArc,
+  mkGoto,
+  mkHome,
   mkList,
   PEN_UP,
   PEN_DOWN,
@@ -93,7 +95,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
     case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'penWidth': case 'empty':
-    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas': case 'stamp': case 'arc':
+    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas': case 'stamp': case 'arc': case 'goto': case 'home':
       return true;
     default:
       return false;
@@ -276,6 +278,16 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     const angle = assertNumber(args[1], 'arc');
     if (radius.value < 0) throw new SproutRuntimeError(`arc: radius must be non-negative, got ${radius.value}`);
     return mkArc(radius.value, angle.value);
+  }],
+  ['goto', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`goto expects 2 arguments, got ${args.length}`);
+    const x = assertNumber(args[0], 'goto');
+    const y = assertNumber(args[1], 'goto');
+    return mkGoto(x.value, y.value);
+  }],
+  ['home', (args) => {
+    if (args.length !== 0) throw new SproutRuntimeError(`home expects 0 arguments, got ${args.length}`);
+    return mkHome();
   }],
   ['puts', (args) => {
     // Side-effect for kids: print to console (best-effort) and return EMPTY.

@@ -30,6 +30,27 @@ export function registerStatementBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_goto'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('X').setCheck('Number').appendField('goto x');
+      this.appendValueInput('Y').setCheck('Number').appendField('y');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(160);
+      this.setTooltip('Teleport turtle to absolute position (x, y)');
+    },
+  };
+
+  Blockly.Blocks['sprout_home'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('home');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(160);
+      this.setTooltip('Return turtle to origin (0, 0) with heading north');
+    },
+  };
+
   Blockly.Blocks['sprout_pen_up'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput().appendField('pen up');

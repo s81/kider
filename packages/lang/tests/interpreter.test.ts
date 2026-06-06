@@ -16,6 +16,8 @@ import {
   mkClearCanvas,
   mkStamp,
   mkArc,
+  mkGoto,
+  mkHome,
   mkList,
   PEN_UP,
   PEN_DOWN,
@@ -2176,5 +2178,60 @@ describe('for each loop', () => {
     // f() returned 1 on first iteration; forward(result) draws forward(1)
     // interpretFull wraps the single top-level forward(result) call: mkSequence([mkForward(1)])
     expect(drawing).toEqual(mkSequence([mkForward(1)]));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// goto builtin
+// ---------------------------------------------------------------------------
+describe('goto builtin', () => {
+  it('goto(50, 100) returns a goto Drawing', () => {
+    const prog = program(exprStmt(call('goto', [numLit(50), numLit(100)])));
+    expect(interpretFull(prog).drawing).toEqual(mkSequence([mkGoto(50, 100)]));
+  });
+
+  it('goto(0, 0) returns a goto Drawing at origin', () => {
+    const prog = program(exprStmt(call('goto', [numLit(0), numLit(0)])));
+    expect(interpretFull(prog).drawing).toEqual(mkSequence([mkGoto(0, 0)]));
+  });
+
+  it('goto(-30, 40) accepts negative coordinates', () => {
+    const prog = program(exprStmt(call('goto', [numLit(-30), numLit(40)])));
+    expect(interpretFull(prog).drawing).toEqual(mkSequence([mkGoto(-30, 40)]));
+  });
+
+  it('goto with wrong arg count throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('goto', [numLit(50)])));
+    expect(() => interpretFull(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('goto with zero args throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('goto', [])));
+    expect(() => interpretFull(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('goto with non-number first arg throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('goto', [strLit('a'), numLit(0)])));
+    expect(() => interpretFull(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('goto with non-number second arg throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('goto', [numLit(0), strLit('b')])));
+    expect(() => interpretFull(prog)).toThrow(SproutRuntimeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// home builtin
+// ---------------------------------------------------------------------------
+describe('home builtin', () => {
+  it('home() returns a home Drawing', () => {
+    const prog = program(exprStmt(call('home', [])));
+    expect(interpretFull(prog).drawing).toEqual(mkSequence([mkHome()]));
+  });
+
+  it('home with any args throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('home', [numLit(0)])));
+    expect(() => interpretFull(prog)).toThrow(SproutRuntimeError);
   });
 });

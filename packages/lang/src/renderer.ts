@@ -83,6 +83,10 @@ function scaleDrawing(factor: number, d: Drawing): Drawing {
       return d;
     case 'clearCanvas':
       return d;
+    case 'goto':
+      return d;
+    case 'home':
+      return d;
   }
 }
 
@@ -254,6 +258,19 @@ function renderInto(
       }
       return;
     }
+
+    case 'goto':
+      state.x = drawing.x;
+      state.y = drawing.y;
+      out.push({ kind: 'moveTo', x: drawing.x, y: drawing.y });
+      return;
+
+    case 'home':
+      state.x = 0;
+      state.y = 0;
+      state.heading = 0;
+      out.push({ kind: 'moveTo', x: 0, y: 0 });
+      return;
   }
 }
 
@@ -421,6 +438,17 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
       }
       return;
     }
+
+    case 'goto':
+      state.x = drawing.x;
+      state.y = drawing.y;
+      return;
+
+    case 'home':
+      state.x = 0;
+      state.y = 0;
+      state.heading = 0;
+      return;
   }
 }
 
