@@ -406,6 +406,24 @@ function compileExpr(block: Blockly.Block): Expr {
       const str = compileExpr(mustGetInput(block, 'STR'));
       return { kind: 'CallExpr', callee: 'length', args: [str], block: null };
     }
+    case 'sprout_split': {
+      const str = compileExpr(mustGetInput(block, 'STR'));
+      const sep = compileExpr(mustGetInput(block, 'SEP'));
+      return { kind: 'CallExpr', callee: 'split', args: [str, sep], block: null };
+    }
+    case 'sprout_contains': {
+      const str = compileExpr(mustGetInput(block, 'STR'));
+      const sub = compileExpr(mustGetInput(block, 'SUB'));
+      return { kind: 'CallExpr', callee: 'contains', args: [str, sub], block: null };
+    }
+    case 'sprout_to_upper': {
+      const str = compileExpr(mustGetInput(block, 'STR'));
+      return { kind: 'CallExpr', callee: 'toUpper', args: [str], block: null };
+    }
+    case 'sprout_to_lower': {
+      const str = compileExpr(mustGetInput(block, 'STR'));
+      return { kind: 'CallExpr', callee: 'toLower', args: [str], block: null };
+    }
     case 'sprout_input': {
       const name = block.getFieldValue('NAME') as string;
       return {

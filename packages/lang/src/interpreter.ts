@@ -437,6 +437,29 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     const s = assertString(args[0], 'length');
     return { kind: 'number', value: s.value.length };
   }],
+  ['split', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`split expects 2 arguments, got ${args.length}`);
+    const str = assertString(args[0], 'split');
+    const sep = assertString(args[1], 'split');
+    const parts = str.value.split(sep.value);
+    return mkList(parts.map(p => ({ kind: 'string' as const, value: p })));
+  }],
+  ['contains', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`contains expects 2 arguments, got ${args.length}`);
+    const str = assertString(args[0], 'contains');
+    const sub = assertString(args[1], 'contains');
+    return { kind: 'bool', value: str.value.includes(sub.value) };
+  }],
+  ['toUpper', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`toUpper expects 1 argument, got ${args.length}`);
+    const s = assertString(args[0], 'toUpper');
+    return { kind: 'string', value: s.value.toUpperCase() };
+  }],
+  ['toLower', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`toLower expects 1 argument, got ${args.length}`);
+    const s = assertString(args[0], 'toLower');
+    return { kind: 'string', value: s.value.toLowerCase() };
+  }],
   ['input', (args) => {
     if (args.length !== 1) throw new SproutRuntimeError(`input expects 1 argument, got ${args.length}`);
     const name = assertString(args[0], 'input');

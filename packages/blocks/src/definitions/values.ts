@@ -75,6 +75,48 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_split'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('STR').setCheck('String').appendField('split');
+      this.appendValueInput('SEP').setCheck('String').appendField('by');
+      this.setOutput(true, 'Array');
+      this.setInputsInline(true);
+      this.setColour(160);
+      this.setTooltip('Split a string into a list by separator');
+    },
+  };
+
+  Blockly.Blocks['sprout_contains'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('STR').setCheck('String').appendField('contains');
+      this.appendValueInput('SUB').setCheck('String').appendField('in');
+      this.setOutput(true, 'Boolean');
+      this.setInputsInline(true);
+      this.setColour(160);
+      this.setTooltip('Check if a string contains a substring');
+    },
+  };
+
+  Blockly.Blocks['sprout_to_upper'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('STR').setCheck('String').appendField('toUpper');
+      this.setOutput(true, 'String');
+      this.setInputsInline(true);
+      this.setColour(160);
+      this.setTooltip('Convert string to uppercase');
+    },
+  };
+
+  Blockly.Blocks['sprout_to_lower'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('STR').setCheck('String').appendField('toLower');
+      this.setOutput(true, 'String');
+      this.setInputsInline(true);
+      this.setColour(160);
+      this.setTooltip('Convert string to lowercase');
+    },
+  };
+
   Blockly.Blocks['sprout_input'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput()

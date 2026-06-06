@@ -2235,3 +2235,163 @@ describe('home builtin', () => {
     expect(() => interpretFull(prog)).toThrow(SproutRuntimeError);
   });
 });
+
+// ---------------------------------------------------------------------------
+// split builtin
+// ---------------------------------------------------------------------------
+describe('split builtin', () => {
+  it('split("a,b,c", ",") returns list ["a","b","c"]', () => {
+    const prog = program(exprStmt(call('split', [strLit('a,b,c'), strLit(',')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'list', items: [
+      { kind: 'string', value: 'a' },
+      { kind: 'string', value: 'b' },
+      { kind: 'string', value: 'c' },
+    ]});
+  });
+
+  it('split("hello world", " ") returns list ["hello","world"]', () => {
+    const prog = program(exprStmt(call('split', [strLit('hello world'), strLit(' ')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'list', items: [
+      { kind: 'string', value: 'hello' },
+      { kind: 'string', value: 'world' },
+    ]});
+  });
+
+  it('split("abc", "") returns list of individual characters', () => {
+    const prog = program(exprStmt(call('split', [strLit('abc'), strLit('')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'list', items: [
+      { kind: 'string', value: 'a' },
+      { kind: 'string', value: 'b' },
+      { kind: 'string', value: 'c' },
+    ]});
+  });
+
+  it('split("hello", "x") returns list with the whole string', () => {
+    const prog = program(exprStmt(call('split', [strLit('hello'), strLit('x')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'list', items: [{ kind: 'string', value: 'hello' }]});
+  });
+
+  it('split with wrong arg count throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('split', [strLit('hello')])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('split with non-string first arg throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('split', [numLit(42), strLit(',')])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('split with non-string second arg throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('split', [strLit('hello'), numLit(1)])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// contains builtin
+// ---------------------------------------------------------------------------
+describe('contains builtin', () => {
+  it('contains("hello world", "world") returns true', () => {
+    const prog = program(exprStmt(call('contains', [strLit('hello world'), strLit('world')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'bool', value: true });
+  });
+
+  it('contains("hello", "xyz") returns false', () => {
+    const prog = program(exprStmt(call('contains', [strLit('hello'), strLit('xyz')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'bool', value: false });
+  });
+
+  it('contains("hello", "") returns true', () => {
+    const prog = program(exprStmt(call('contains', [strLit('hello'), strLit('')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'bool', value: true });
+  });
+
+  it('contains("", "") returns true', () => {
+    const prog = program(exprStmt(call('contains', [strLit(''), strLit('')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'bool', value: true });
+  });
+
+  it('contains with wrong arg count throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('contains', [strLit('hello')])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('contains with non-string first arg throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('contains', [numLit(1), strLit('x')])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// toUpper builtin
+// ---------------------------------------------------------------------------
+describe('toUpper builtin', () => {
+  it('toUpper("hello") returns "HELLO"', () => {
+    const prog = program(exprStmt(call('toUpper', [strLit('hello')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'string', value: 'HELLO' });
+  });
+
+  it('toUpper("Hello World") returns "HELLO WORLD"', () => {
+    const prog = program(exprStmt(call('toUpper', [strLit('Hello World')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'string', value: 'HELLO WORLD' });
+  });
+
+  it('toUpper("123") returns "123" unchanged', () => {
+    const prog = program(exprStmt(call('toUpper', [strLit('123')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'string', value: '123' });
+  });
+
+  it('toUpper with wrong arg count throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('toUpper', [])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('toUpper with non-string arg throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('toUpper', [numLit(42)])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// toLower builtin
+// ---------------------------------------------------------------------------
+describe('toLower builtin', () => {
+  it('toLower("HELLO") returns "hello"', () => {
+    const prog = program(exprStmt(call('toLower', [strLit('HELLO')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'string', value: 'hello' });
+  });
+
+  it('toLower("Hello World") returns "hello world"', () => {
+    const prog = program(exprStmt(call('toLower', [strLit('Hello World')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'string', value: 'hello world' });
+  });
+
+  it('toLower("ABC123") returns "abc123"', () => {
+    const prog = program(exprStmt(call('toLower', [strLit('ABC123')])));
+    const result = interpretValue(prog);
+    expect(result).toEqual({ kind: 'string', value: 'abc123' });
+  });
+
+  it('toLower with wrong arg count throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('toLower', [])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('toLower with non-string arg throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('toLower', [numLit(42)])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+});
