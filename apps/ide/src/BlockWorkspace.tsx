@@ -34,12 +34,21 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_beside' },
     { kind: 'block', type: 'sprout_above' },
     { kind: 'block', type: 'sprout_scale' },
-    // Lists
+    // Lists — Create
     { kind: 'block', type: 'sprout_list' },
-    { kind: 'block', type: 'sprout_push' },
+    { kind: 'block', type: 'sprout_range' },
+    // Lists — Access
+    { kind: 'block', type: 'sprout_at' },
     { kind: 'block', type: 'sprout_get' },
+    // Lists — Query
     { kind: 'block', type: 'sprout_size' },
     { kind: 'block', type: 'sprout_is_empty' },
+    // Lists — Modify
+    { kind: 'block', type: 'sprout_push' },
+    // Lists — Transform
+    { kind: 'block', type: 'sprout_map' },
+    { kind: 'block', type: 'sprout_filter' },
+    { kind: 'block', type: 'sprout_reduce' },
     // Text
     { kind: 'block', type: 'sprout_string' },
     { kind: 'block', type: 'sprout_join' },
