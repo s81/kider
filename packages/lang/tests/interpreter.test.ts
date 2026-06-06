@@ -2440,3 +2440,64 @@ describe('at builtin', () => {
     expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
   });
 });
+
+// ---------------------------------------------------------------------------
+// range builtin
+// ---------------------------------------------------------------------------
+describe('range builtin', () => {
+  it('range(0, 5) returns [0,1,2,3,4]', () => {
+    const prog = program(exprStmt(call('range', [numLit(0), numLit(5)])));
+    expect(interpretValue(prog)).toEqual({
+      kind: 'list',
+      items: [
+        { kind: 'number', value: 0 },
+        { kind: 'number', value: 1 },
+        { kind: 'number', value: 2 },
+        { kind: 'number', value: 3 },
+        { kind: 'number', value: 4 },
+      ],
+    });
+  });
+
+  it('range(3, 6) returns [3,4,5]', () => {
+    const prog = program(exprStmt(call('range', [numLit(3), numLit(6)])));
+    expect(interpretValue(prog)).toEqual({
+      kind: 'list',
+      items: [
+        { kind: 'number', value: 3 },
+        { kind: 'number', value: 4 },
+        { kind: 'number', value: 5 },
+      ],
+    });
+  });
+
+  it('range(5, 5) returns empty list', () => {
+    const prog = program(exprStmt(call('range', [numLit(5), numLit(5)])));
+    expect(interpretValue(prog)).toEqual({ kind: 'list', items: [] });
+  });
+
+  it('range(0, 1) returns [0]', () => {
+    const prog = program(exprStmt(call('range', [numLit(0), numLit(1)])));
+    expect(interpretValue(prog)).toEqual({ kind: 'list', items: [{ kind: 'number', value: 0 }] });
+  });
+
+  it('range with wrong arg count throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('range', [numLit(0)])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('range with non-number start throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('range', [strLit('a'), numLit(5)])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('range with non-number end throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('range', [numLit(0), strLit('b')])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+
+  it('range where start > end throws SproutRuntimeError', () => {
+    const prog = program(exprStmt(call('range', [numLit(5), numLit(3)])));
+    expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+  });
+});

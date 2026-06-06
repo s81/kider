@@ -520,6 +520,20 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     }
     return lst.items[i];
   }],
+
+  ['range', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`range expects 2 arguments, got ${args.length}`);
+    const start = assertNumber(args[0], 'range');
+    const end = assertNumber(args[1], 'range');
+    if (start.value > end.value) {
+      throw new SproutRuntimeError(`range: start (${start.value}) must be <= end (${end.value})`);
+    }
+    const items: SproutValue[] = [];
+    for (let i = start.value; i < end.value; i++) {
+      items.push({ kind: 'number', value: i });
+    }
+    return mkList(items);
+  }],
 ]);
 
 // ---------------------------------------------------------------------------
