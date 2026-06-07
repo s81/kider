@@ -254,6 +254,22 @@ class Parser {
 
       if (name === 'on') {
         this.advance();
+        // New ident form: on timer [every N] do...end
+        if (this.checkIdent('timer')) {
+          this.advance(); // consume 'timer'
+          let interval: Expr | null = null;
+          if (this.checkIdent('every')) {
+            this.advance(); // consume 'every'
+            const prevNoBlock = this.noBlockCall;
+            this.noBlockCall = true;
+            interval = this.parseExpr();
+            this.noBlockCall = prevNoBlock;
+          }
+          const event = { kind: 'SymbolLit' as const, name: 'timer' };
+          const body = this.parseDoBlock();
+          return { kind: 'OnExpr', event, body, interval } satisfies OnExpr;
+        }
+        // Old symbol form: on :event do...end (unchanged, backward compat)
         const symTok = this.eat('SYMBOL') as { kind: 'SYMBOL'; name: string };
         const event = { kind: 'SymbolLit' as const, name: symTok.name };
         const body = this.parseDoBlock();

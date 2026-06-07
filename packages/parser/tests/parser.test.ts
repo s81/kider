@@ -283,6 +283,35 @@ describe('parse — on event', () => {
   });
 });
 
+const onTimerE = (interval: object | null, body: object[]) =>
+  ({ kind: 'OnExpr' as const, event: sym('timer'), body: blockE(body), interval });
+
+describe('parse — on timer (ident form)', () => {
+  it('parses on timer do...end with null interval', () => {
+    expect(parse('on timer do\n  forward(10)\nend')).toEqual(
+      prog(exprS(onTimerE(null, [exprS(callE('forward', [num(10)]))])))
+    );
+  });
+
+  it('parses on timer every 500 do...end', () => {
+    expect(parse('on timer every 500 do\n  forward(10)\nend')).toEqual(
+      prog(exprS(onTimerE(num(500), [exprS(callE('forward', [num(10)]))])))
+    );
+  });
+
+  it('on :timer do...end (old symbol form) still parses with null interval', () => {
+    expect(parse('on :timer do\n  forward(10)\nend')).toEqual(
+      prog(exprS(onE('timer', [exprS(callE('forward', [num(10)]))])))
+    );
+  });
+
+  it('on timer every expr do...end parses interval as expression', () => {
+    const result = parse('on timer every 100 do\n  forward(1)\nend');
+    const expr = (result.stmts[0] as { expr: { interval: { value: number } } }).expr;
+    expect(expr.interval).toEqual(num(100));
+  });
+});
+
 describe('parse — def statement', () => {
   it('parses single-line def with = expr', () => {
     expect(parse('def side = 100')).toEqual(
