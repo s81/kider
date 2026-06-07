@@ -87,7 +87,7 @@ export interface OnExpr {
   // Interpreter should use event.name for the string key.
   readonly event: SymbolLit;
   readonly body: BlockExpr;
-  readonly interval: Expr | null;  // null = default (200ms); only used for timer
+  readonly interval: Expr | null;
 }
 
 /** `if <cond> do ... [else ...] end` */
