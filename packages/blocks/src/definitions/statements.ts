@@ -186,11 +186,23 @@ export function registerStatementBlocks(): void {
             ['up',     'up'],
             ['down',   'down'],
             ['space',  'space'],
-            ['timer',  'timer'],
           ]) as unknown as Blockly.Field,
           'EVENT',
         );
       this.appendStatementInput('BODY');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(65);
+    },
+  };
+
+  Blockly.Blocks['sprout_on_timer'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('on timer every')
+        .appendField(new Blockly.FieldNumber(200, 1) as unknown as Blockly.Field, 'INTERVAL')
+        .appendField('ms');
+      this.appendStatementInput('BODY').appendField('do');
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(65);

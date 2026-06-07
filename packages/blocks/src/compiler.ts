@@ -35,6 +35,7 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_puts':
     case 'sprout_repeat':
     case 'sprout_on_event':
+    case 'sprout_on_timer':
     case 'sprout_call_stmt':
     case 'sprout_beside':
     case 'sprout_above':
@@ -171,6 +172,8 @@ function compileExprBlock(block: Blockly.Block): Expr {
       return compileRepeatExpr(block);
     case 'sprout_on_event':
       return compileOnExpr(block);
+    case 'sprout_on_timer':
+      return compileOnTimerExpr(block);
     case 'sprout_call_stmt':
       return compileCallBlock(block);
     case 'sprout_beside': {
@@ -266,6 +269,16 @@ function compileOnExpr(block: Blockly.Block): OnExpr {
   const firstBodyBlock = block.getInputTargetBlock('BODY');
   const body = compileBlockExpr(firstBodyBlock);
   return { kind: 'OnExpr', event, body, interval: null };
+}
+
+function compileOnTimerExpr(block: Blockly.Block): OnExpr {
+  const interval = Number(block.getFieldValue('INTERVAL'));
+  return {
+    kind: 'OnExpr',
+    event: { kind: 'SymbolLit', name: 'timer' },
+    interval: { kind: 'NumberLit', value: interval },
+    body: compileBlockExpr(block.getInputTargetBlock('BODY')),
+  };
 }
 
 function compileForEachExpr(block: Blockly.Block): ForEachExpr {

@@ -741,7 +741,7 @@ describe('randomColor block', () => {
 });
 
 describe('on event block — new events', () => {
-  const NEW_EVENTS = ['left', 'right', 'up', 'down', 'space', 'timer'] as const;
+  const NEW_EVENTS = ['left', 'right', 'up', 'down', 'space'] as const;
 
   for (const event of NEW_EVENTS) {
     it(`sprout_on_event with EVENT="${event}" compiles to OnExpr(:${event})`, () => {
@@ -766,6 +766,34 @@ describe('on event block — new events', () => {
       ws.dispose();
     });
   }
+});
+
+describe('on timer block', () => {
+  it('sprout_on_timer compiles to OnExpr with interval', () => {
+    const ws = makeWorkspace();
+    const block = ws.newBlock('sprout_on_timer');
+    block.setFieldValue('500', 'INTERVAL');
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [block];
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'ExprStmt',
+      expr: {
+        kind: 'OnExpr',
+        event: { kind: 'SymbolLit', name: 'timer' },
+        interval: { kind: 'NumberLit', value: 500 },
+        body: { kind: 'BlockExpr', body: [] },
+      },
+    });
+  });
+
+  it('sprout_on_timer default interval is 200', () => {
+    const ws = makeWorkspace();
+    const block = ws.newBlock('sprout_on_timer');
+    (ws as unknown as { topBlocks_: Blockly.Block[] }).topBlocks_ = [block];
+    const result = compileWorkspace(ws);
+    const expr = (result.stmts[0] as { expr: { interval: { value: number } } }).expr;
+    expect(expr.interval).toEqual({ kind: 'NumberLit', value: 200 });
+  });
 });
 
 describe('background block', () => {

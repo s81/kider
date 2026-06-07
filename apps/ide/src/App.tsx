@@ -21,8 +21,6 @@ import { VariableInspector } from './VariableInspector.js';
 
 type SourceMode = 'blocks' | 'editor';
 
-const TIMER_INTERVAL_MS = 200;
-
 export function App() {
   const wsRef = useRef<Blockly.Workspace | null>(null);
   const [programText, setProgramText] = useState('');
@@ -38,6 +36,7 @@ export function App() {
   const [inputValues, setInputValues] = useState<Record<string, number>>({});
   const [hud, setHud] = useState<Record<string, string>>({});
   const [variables, setVariables] = useState<Record<string, string>>({});
+  const [timerIntervalMs, setTimerIntervalMs] = useState<number>(200);
 
   useEffect(() => {
     // Clear any stale runtime error from a previous Run when the user edits.
@@ -177,13 +176,14 @@ export function App() {
       const inputMap = new Map(
         Object.entries(inputValues).map(([k, v]) => [k, v] as [string, number])
       );
-      const { drawing, handlers: h, hud: newHud, variables: newVars } = interpretFullWithInputs(program, inputMap);
+      const { drawing, handlers: h, hud: newHud, variables: newVars, timerInterval } = interpretFullWithInputs(program, inputMap);
       accDrawingRef.current = drawing;
       handlersRef.current = h;
       setHandlers(h);
       setCommands(render(drawing));
       setHud(newHud);
       setVariables(newVars);
+      setTimerIntervalMs(timerInterval);
       const timerFn = h.get(':timer');
       if (timerFn) {
         timerRef.current = setInterval(() => {
@@ -199,7 +199,7 @@ export function App() {
             setHandlers(new Map());
             handlersRef.current = new Map();
           }
-        }, TIMER_INTERVAL_MS);
+        }, timerInterval);
       }
     } catch (e) {
       if (e instanceof SproutRuntimeError || e instanceof ParseError) {
@@ -470,7 +470,7 @@ export function App() {
           <div style={{ fontSize: 12, color: '#64748b', textAlign: 'center' }}>
             {[
               hasKeyHandlers ? '← → ↑ ↓ space active' : '',
-              handlers.has(':timer') ? `timer active (${TIMER_INTERVAL_MS}ms)` : '',
+              handlers.has(':timer') ? `timer active (${timerIntervalMs}ms)` : '',
             ].filter(Boolean).join(' · ')}
           </div>
         )}
