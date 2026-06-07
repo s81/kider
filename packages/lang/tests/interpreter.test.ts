@@ -440,6 +440,7 @@ describe('OnExpr', () => {
       kind: 'OnExpr',
       event: { kind: 'SymbolLit', name: 'click' },
       body: { kind: 'BlockExpr', body: [exprStmt(call('forward', [numLit(10)]))] },
+      interval: null,
     };
     const prog = program(exprStmt(onExpr));
     // OnExpr at statement level registers a handler; produces null (no Drawing).
