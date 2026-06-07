@@ -85,6 +85,9 @@ let _inputValues: ReadonlyMap<string, number> = new Map();
 // Module-level HUD values — written by show() during each run.
 let _hudValues: Map<string, string> = new Map();
 
+// Module-level timer interval — set when on timer every N is registered.
+let _timerInterval: number = 200;
+
 function formatValue(v: SproutValue): string {
   switch (v.kind) {
     case 'number': return String(v.value);
@@ -1061,6 +1064,17 @@ function evalStmtWithEnv(stmt: Stmt, env: Env): [SproutValue | null, Env] {
       // Handle OnExpr specially: register handler, update env, no visual output.
       if (stmt.expr.kind === 'OnExpr') {
         const onExpr = stmt.expr;
+        if (onExpr.event.name === 'timer' && onExpr.interval !== null) {
+          const val = evalExpr(onExpr.interval, env);
+          if (val.kind !== 'number' || val.value <= 0) {
+            throw new SproutRuntimeError(
+              `on timer: interval must be a positive number, got ${
+                val.kind === 'number' ? val.value : val.kind
+              }`
+            );
+          }
+          _timerInterval = val.value;
+        }
         const key = ':' + onExpr.event.name;
         const handler: SproutFunction = {
           kind: 'function',
@@ -1161,6 +1175,7 @@ const EMPTY_ENV: Env = new Map<string, SproutValue>();
  */
 export function interpret(program: Program, initialEnv: Env = EMPTY_ENV): Drawing {
   _hudValues = new Map();
+  _timerInterval = 200;
   let env: Env = initialEnv;
   const drawings: Drawing[] = [];
 
@@ -1190,8 +1205,9 @@ export function interpret(program: Program, initialEnv: Env = EMPTY_ENV): Drawin
 export function interpretFull(
   program: Program,
   initialEnv: Env = EMPTY_ENV,
-): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string> } {
+): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string>; timerInterval: number } {
   _hudValues = new Map();
+  _timerInterval = 200;
   let env: Env = initialEnv;
   const drawings: Drawing[] = [];
 
@@ -1215,6 +1231,7 @@ export function interpretFull(
     handlers,
     hud: Object.fromEntries(_hudValues),
     variables: extractVariables(env),
+    timerInterval: _timerInterval,
   };
 }
 
@@ -1355,7 +1372,7 @@ export function interpretFullWithInputs(
   program: Program,
   inputs: ReadonlyMap<string, number>,
   initialEnv: Env = EMPTY_ENV,
-): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string> } {
+): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string>; timerInterval: number } {
   const prev = _inputValues;
   _inputValues = inputs;
   try {

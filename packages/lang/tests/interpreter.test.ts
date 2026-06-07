@@ -3090,6 +3090,65 @@ describe('interpretFull variables field', () => {
 });
 
 // ---------------------------------------------------------------------------
+// on timer interval
+// ---------------------------------------------------------------------------
+describe('on timer interval', () => {
+  it('timerInterval defaults to 200 when no timer handler', () => {
+    const prog = program(exprStmt(call('forward', [numLit(10)])));
+    expect(interpretFull(prog).timerInterval).toBe(200);
+  });
+
+  it('timerInterval defaults to 200 when timer handler has null interval', () => {
+    const prog = program(
+      exprStmt(onExpr('timer', [exprStmt(call('forward', [numLit(10)]))])),
+    );
+    expect(interpretFull(prog).timerInterval).toBe(200);
+  });
+
+  it('timerInterval is set from on timer every N', () => {
+    const prog = program(
+      exprStmt(onExpr('timer', [exprStmt(call('forward', [numLit(10)]))], numLit(500))),
+    );
+    expect(interpretFull(prog).timerInterval).toBe(500);
+  });
+
+  it('timerInterval 1 is the minimum valid value', () => {
+    const prog = program(
+      exprStmt(onExpr('timer', [], numLit(1))),
+    );
+    expect(interpretFull(prog).timerInterval).toBe(1);
+  });
+
+  it('throws when interval is not a number', () => {
+    const prog = program(
+      exprStmt(onExpr('timer', [], { kind: 'StringLit', value: 'fast' } as Expr)),
+    );
+    expect(() => interpretFull(prog)).toThrow('on timer: interval must be a positive number, got string');
+  });
+
+  it('throws when interval is zero', () => {
+    const prog = program(
+      exprStmt(onExpr('timer', [], numLit(0))),
+    );
+    expect(() => interpretFull(prog)).toThrow('on timer: interval must be a positive number, got 0');
+  });
+
+  it('throws when interval is negative', () => {
+    const prog = program(
+      exprStmt(onExpr('timer', [], numLit(-100))),
+    );
+    expect(() => interpretFull(prog)).toThrow('on timer: interval must be a positive number, got -100');
+  });
+
+  it('non-timer events do not affect timerInterval', () => {
+    const prog = program(
+      exprStmt(onExpr('click', [exprStmt(call('forward', [numLit(10)]))])),
+    );
+    expect(interpretFull(prog).timerInterval).toBe(200);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // callHandler return type
 // ---------------------------------------------------------------------------
 describe('callHandler hud and variables', () => {
