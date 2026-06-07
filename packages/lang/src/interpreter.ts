@@ -85,7 +85,7 @@ let _inputValues: ReadonlyMap<string, number> = new Map();
 // Module-level HUD values — written by show() during each run.
 let _hudValues: Map<string, string> = new Map();
 
-// Module-level timer interval — set when on timer every N is registered.
+// Module-level timer interval — set by 'on timer every N' during each run; resets to 200 each run.
 let _timerInterval: number = 200;
 
 function formatValue(v: SproutValue): string {
@@ -1065,15 +1065,11 @@ function evalStmtWithEnv(stmt: Stmt, env: Env): [SproutValue | null, Env] {
       if (stmt.expr.kind === 'OnExpr') {
         const onExpr = stmt.expr;
         if (onExpr.event.name === 'timer' && onExpr.interval !== null) {
-          const val = evalExpr(onExpr.interval, env);
-          if (val.kind !== 'number' || val.value <= 0) {
-            throw new SproutRuntimeError(
-              `on timer: interval must be a positive number, got ${
-                val.kind === 'number' ? val.value : val.kind
-              }`
-            );
+          const n = assertNumber(evalExpr(onExpr.interval, env), 'on timer');
+          if (n.value <= 0) {
+            throw new SproutRuntimeError(`on timer: interval must be a positive number, got ${n.value}`);
           }
-          _timerInterval = val.value;
+          _timerInterval = n.value;
         }
         const key = ':' + onExpr.event.name;
         const handler: SproutFunction = {

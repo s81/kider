@@ -3123,7 +3123,7 @@ describe('on timer interval', () => {
     const prog = program(
       exprStmt(onExpr('timer', [], { kind: 'StringLit', value: 'fast' } as Expr)),
     );
-    expect(() => interpretFull(prog)).toThrow('on timer: interval must be a positive number, got string');
+    expect(() => interpretFull(prog)).toThrow('on timer: expected number, got string');
   });
 
   it('throws when interval is zero', () => {
