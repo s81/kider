@@ -9,6 +9,7 @@ export const program: Program = {
       expr: {
         kind: 'OnExpr',
         event: { kind: 'SymbolLit', name: 'click' },
+        interval: null,
         body: {
           kind: 'BlockExpr',
           body: [

@@ -73,8 +73,12 @@ export function serializeExpr(expr: Expr, indentLevel = 0): string {
     }
 
     case 'OnExpr': {
-      const eventStr = serializeExpr(expr.event, indentLevel);
       const body = serializeBlock(expr.body, indentLevel + 1);
+      if (expr.interval !== null) {
+        const intervalStr = serializeExpr(expr.interval, indentLevel);
+        return `on timer every ${intervalStr} do\n${body}\n${indent(indentLevel)}end`;
+      }
+      const eventStr = serializeExpr(expr.event, indentLevel);
       return `on ${eventStr} do\n${body}\n${indent(indentLevel)}end`;
     }
 

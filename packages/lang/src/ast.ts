@@ -80,13 +80,14 @@ export interface RepeatExpr {
   readonly body: BlockExpr;
 }
 
-/** Event handler: `on :<event> do ... end` */
+/** Event handler: `on :<event> do ... end` or `on timer every N do ... end` */
 export interface OnExpr {
   readonly kind: 'OnExpr';
   // Full SymbolLit node (not just the name string) to preserve source fidelity.
   // Interpreter should use event.name for the string key.
   readonly event: SymbolLit;
   readonly body: BlockExpr;
+  readonly interval: Expr | null;  // null = default (200ms); only used for timer
 }
 
 /** `if <cond> do ... [else ...] end` */

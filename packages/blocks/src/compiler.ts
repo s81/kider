@@ -265,7 +265,7 @@ function compileOnExpr(block: Blockly.Block): OnExpr {
   const event: SymbolLit = { kind: 'SymbolLit', name: eventName };
   const firstBodyBlock = block.getInputTargetBlock('BODY');
   const body = compileBlockExpr(firstBodyBlock);
-  return { kind: 'OnExpr', event, body };
+  return { kind: 'OnExpr', event, body, interval: null };
 }
 
 function compileForEachExpr(block: Blockly.Block): ForEachExpr {

@@ -257,7 +257,7 @@ class Parser {
         const symTok = this.eat('SYMBOL') as { kind: 'SYMBOL'; name: string };
         const event = { kind: 'SymbolLit' as const, name: symTok.name };
         const body = this.parseDoBlock();
-        return { kind: 'OnExpr', event, body } satisfies OnExpr;
+        return { kind: 'OnExpr', event, body, interval: null } satisfies OnExpr;
       }
 
       if (name === 'for') {

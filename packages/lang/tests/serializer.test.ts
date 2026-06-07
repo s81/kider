@@ -19,8 +19,8 @@ const blockExpr = (body: Stmt[]): { kind: 'BlockExpr'; body: Stmt[] } =>
   ({ kind: 'BlockExpr', body });
 const repeatExpr = (count: Expr, bodyStmts: Stmt[]): Expr =>
   ({ kind: 'RepeatExpr', count, body: { kind: 'BlockExpr', body: bodyStmts } });
-const onExpr = (event: string, bodyStmts: Stmt[]): Expr =>
-  ({ kind: 'OnExpr', event: { kind: 'SymbolLit', name: event }, body: { kind: 'BlockExpr', body: bodyStmts } });
+const onExpr = (event: string, bodyStmts: Stmt[], interval: Expr | null = null): Expr =>
+  ({ kind: 'OnExpr', event: { kind: 'SymbolLit', name: event }, body: { kind: 'BlockExpr', body: bodyStmts }, interval });
 
 const exprStmt = (expr: Expr): Stmt => ({ kind: 'ExprStmt', expr });
 const defStmt = (name: string, params: string[], body: Expr): Stmt =>
@@ -211,6 +211,13 @@ describe('OnExpr', () => {
       onExpr('keydown', [exprStmt(call('penUp', []))]),
     );
     expect(result).toBe('on :keydown do\n  penUp()\nend');
+  });
+
+  it('serializes on timer every N do...end when interval is present', () => {
+    const result = serializeExpr(
+      onExpr('timer', [exprStmt(call('forward', [numLit(10)]))], numLit(500)),
+    );
+    expect(result).toBe('on timer every 500 do\n  forward(10)\nend');
   });
 });
 

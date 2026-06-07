@@ -17,7 +17,7 @@ const blockE = (body: object[]) => ({ kind: 'BlockExpr' as const, body });
 const repeatE = (count: object, body: object[]) =>
   ({ kind: 'RepeatExpr' as const, count, body: blockE(body) });
 const onE = (name: string, body: object[]) =>
-  ({ kind: 'OnExpr' as const, event: sym(name), body: blockE(body) });
+  ({ kind: 'OnExpr' as const, event: sym(name), body: blockE(body), interval: null });
 const exprS = (expr: object) => ({ kind: 'ExprStmt' as const, expr });
 const defS = (name: string, params: string[], body: object) =>
   ({ kind: 'DefStmt' as const, name, params, body });

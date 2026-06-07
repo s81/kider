@@ -759,6 +759,7 @@ describe('on event block — new events', () => {
             kind: 'OnExpr',
             event: { kind: 'SymbolLit', name: event },
             body: { kind: 'BlockExpr', body: [] },
+            interval: null,
           },
         }],
       });

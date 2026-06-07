@@ -483,10 +483,11 @@ describe('Integration', () => {
 // ---------------------------------------------------------------------------
 // Additional builder for OnExpr
 // ---------------------------------------------------------------------------
-const onExpr = (eventName: string, bodyStmts: Stmt[]): Expr => ({
+const onExpr = (eventName: string, bodyStmts: Stmt[], interval: Expr | null = null): Expr => ({
   kind: 'OnExpr',
   event: { kind: 'SymbolLit', name: eventName },
   body: { kind: 'BlockExpr', body: bodyStmts },
+  interval,
 });
 
 // ---------------------------------------------------------------------------
