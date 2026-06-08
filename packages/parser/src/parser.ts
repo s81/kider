@@ -231,6 +231,11 @@ class Parser {
         let elseBlock: BlockExpr | null = null;
         if (this.checkIdent('else')) {
           this.advance();
+          if (this.checkIdent('if')) {
+            const innerIf = this.parseExpr();
+            elseBlock = { kind: 'BlockExpr', body: [{ kind: 'ExprStmt', expr: innerIf }] };
+            return { kind: 'IfExpr', cond, then: thenBlock, else: elseBlock } satisfies IfExpr;
+          }
           const elseStmts = this.parseBodyUntil(['end']);
           elseBlock = { kind: 'BlockExpr', body: elseStmts };
         }

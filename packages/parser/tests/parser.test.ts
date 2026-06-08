@@ -471,6 +471,51 @@ describe('parse — if expression', () => {
   });
 });
 
+describe('parse — else if chain', () => {
+  it('parses two-branch else if', () => {
+    expect(parse(
+      'if x > 10 do\n  forward(10)\nelse if x > 5 do\n  forward(5)\nend'
+    )).toEqual(
+      prog(exprS(ifE(
+        infix('>', id('x'), num(10)),
+        [exprS(callE('forward', [num(10)]))],
+        [exprS(ifE(
+          infix('>', id('x'), num(5)),
+          [exprS(callE('forward', [num(5)]))],
+        ))],
+      )))
+    );
+  });
+
+  it('parses three-branch else if chain', () => {
+    expect(parse(
+      'if x > 10 do\n  forward(10)\nelse if x > 5 do\n  forward(5)\nelse\n  forward(1)\nend'
+    )).toEqual(
+      prog(exprS(ifE(
+        infix('>', id('x'), num(10)),
+        [exprS(callE('forward', [num(10)]))],
+        [exprS(ifE(
+          infix('>', id('x'), num(5)),
+          [exprS(callE('forward', [num(5)]))],
+          [exprS(callE('forward', [num(1)]))],
+        ))],
+      )))
+    );
+  });
+
+  it('existing if/else still parses (regression)', () => {
+    expect(parse(
+      'if false do\n  forward(50)\nelse\n  turn(90)\nend'
+    )).toEqual(
+      prog(exprS(ifE(
+        bool_(false),
+        [exprS(callE('forward', [num(50)]))],
+        [exprS(callE('turn', [num(90)]))],
+      )))
+    );
+  });
+});
+
 describe('parse — let / set / while', () => {
   it('parses let statement', () => {
     expect(parse('let x = 5')).toEqual(prog(letS('x', num(5))));
