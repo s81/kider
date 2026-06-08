@@ -754,6 +754,51 @@ describe('IfExpr', () => {
     );
     expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(30)])]));
   });
+
+  it('else-if chain: runs first branch when first condition is true', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        boolLit(true),
+        [exprStmt(call('forward', [numLit(10)]))],
+        [exprStmt(ifExpr(
+          boolLit(true),
+          [exprStmt(call('forward', [numLit(5)]))],
+          [exprStmt(call('forward', [numLit(1)]))],
+        ))],
+      )),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(10)])]));
+  });
+
+  it('else-if chain: runs middle branch when first is false, second is true', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        boolLit(false),
+        [exprStmt(call('forward', [numLit(10)]))],
+        [exprStmt(ifExpr(
+          boolLit(true),
+          [exprStmt(call('forward', [numLit(5)]))],
+          [exprStmt(call('forward', [numLit(1)]))],
+        ))],
+      )),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkSequence([mkForward(5)])])]));
+  });
+
+  it('else-if chain: runs else branch when all conditions are false', () => {
+    const prog = program(
+      exprStmt(ifExpr(
+        boolLit(false),
+        [exprStmt(call('forward', [numLit(10)]))],
+        [exprStmt(ifExpr(
+          boolLit(false),
+          [exprStmt(call('forward', [numLit(5)]))],
+          [exprStmt(call('forward', [numLit(1)]))],
+        ))],
+      )),
+    );
+    expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkSequence([mkForward(1)])])]));
+  });
 });
 
 // ---------------------------------------------------------------------------
