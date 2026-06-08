@@ -421,6 +421,35 @@ describe('IfExpr serialization', () => {
     );
     expect(serializeExpr(expr)).toBe('if 3 < 10 do\n  forward(1)\nend');
   });
+
+  it('flattens two-branch else if chain', () => {
+    const expr = ifExpr(
+      infix('>', numLit(10), numLit(5)),
+      [exprStmt(call('forward', [numLit(10)]))],
+      [exprStmt(ifExpr(
+        infix('>', numLit(5), numLit(3)),
+        [exprStmt(call('forward', [numLit(5)]))],
+      ))],
+    );
+    expect(serializeExpr(expr)).toBe(
+      'if 10 > 5 do\n  forward(10)\nelse if 5 > 3 do\n  forward(5)\nend'
+    );
+  });
+
+  it('flattens three-branch else if chain', () => {
+    const expr = ifExpr(
+      infix('>', numLit(10), numLit(5)),
+      [exprStmt(call('forward', [numLit(10)]))],
+      [exprStmt(ifExpr(
+        infix('>', numLit(5), numLit(3)),
+        [exprStmt(call('forward', [numLit(5)]))],
+        [exprStmt(call('forward', [numLit(1)]))],
+      ))],
+    );
+    expect(serializeExpr(expr)).toBe(
+      'if 10 > 5 do\n  forward(10)\nelse if 5 > 3 do\n  forward(5)\nelse\n  forward(1)\nend'
+    );
+  });
 });
 
 describe('UnaryExpr serialization', () => {

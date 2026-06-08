@@ -2,7 +2,7 @@
 // This is a one-way transformation: AST → Ruby-like display text.
 // There is NO parser; the text panel in the IDE is read-only.
 
-import type { Program, Expr, Stmt, BlockExpr, ForEachExpr } from './ast.js';
+import type { Program, Expr, Stmt, BlockExpr, ForEachExpr, IfExpr } from './ast.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -16,6 +16,26 @@ function serializeBlock(block: BlockExpr, indentLevel: number): string {
   return block.body
     .map(stmt => indent(indentLevel) + serializeStmt(stmt, indentLevel))
     .join('\n');
+}
+
+function serializeIfChain(expr: IfExpr, indentLevel: number, keyword: 'if' | 'else if'): string {
+  const ind = indent(indentLevel);
+  const condStr = serializeExpr(expr.cond, indentLevel);
+  const thenStr = serializeBlock(expr.then, indentLevel + 1);
+  if (expr.else === null) {
+    return `${keyword} ${condStr} do\n${thenStr}\n${ind}end`;
+  }
+  const elseBody = expr.else.body;
+  if (
+    elseBody.length === 1 &&
+    elseBody[0].kind === 'ExprStmt' &&
+    elseBody[0].expr.kind === 'IfExpr'
+  ) {
+    const inner = serializeIfChain(elseBody[0].expr as IfExpr, indentLevel, 'else if');
+    return `${keyword} ${condStr} do\n${thenStr}\n${ind}${inner}`;
+  }
+  const elseStr = serializeBlock(expr.else, indentLevel + 1);
+  return `${keyword} ${condStr} do\n${thenStr}\n${ind}else\n${elseStr}\n${ind}end`;
 }
 
 // ---------------------------------------------------------------------------
@@ -82,15 +102,8 @@ export function serializeExpr(expr: Expr, indentLevel = 0): string {
       return `on ${eventStr} do\n${body}\n${indent(indentLevel)}end`;
     }
 
-    case 'IfExpr': {
-      const condStr = serializeExpr(expr.cond, indentLevel);
-      const thenStr = serializeBlock(expr.then, indentLevel + 1);
-      if (expr.else === null) {
-        return `if ${condStr} do\n${thenStr}\n${indent(indentLevel)}end`;
-      }
-      const elseStr = serializeBlock(expr.else, indentLevel + 1);
-      return `if ${condStr} do\n${thenStr}\n${indent(indentLevel)}else\n${elseStr}\n${indent(indentLevel)}end`;
-    }
+    case 'IfExpr':
+      return serializeIfChain(expr, indentLevel, 'if');
 
     case 'UnaryExpr':
       return `not ${serializeExpr(expr.operand, indentLevel)}`;
