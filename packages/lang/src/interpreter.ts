@@ -1018,46 +1018,39 @@ function evalCall(expr: CallExpr, env: Env): SproutValue {
     return acc;
   }
 
-  // Check built-ins first.
+  // User-defined functions shadow builtins.
+  const fnVal = env.get(expr.callee);
+  if (fnVal !== undefined && fnVal.kind === 'function') {
+    const fn = fnVal as SproutFunction;
+    const evaluatedArgs = expr.args.map(a => evalExpr(a, env));
+    if (fn.params.length !== evaluatedArgs.length) {
+      throw new SproutRuntimeError(
+        `'${expr.callee}' expects ${fn.params.length} argument(s), got ${evaluatedArgs.length}`
+      );
+    }
+    const childEnv = envExtend(fn.env, fn.params.map((p, i) => [p, evaluatedArgs[i]] as [string, SproutValue]));
+    try {
+      return evalExpr(fn.body, childEnv);
+    } catch (e) {
+      if (e instanceof ReturnSignal) {
+        throw new ReturnBundle(e.value, e.drawings);
+      }
+      throw e;
+    }
+  }
+
+  // Check built-ins.
   const builtin = BUILTINS.get(expr.callee);
   if (builtin !== undefined) {
     const args = expr.args.map(a => evalExpr(a, env));
     return builtin(args);
   }
 
-  // Look up user-defined function.
-  const fnVal = env.get(expr.callee);
+  // Unbound or non-function variable.
   if (fnVal === undefined) {
     throw new SproutRuntimeError(`Unbound identifier: '${expr.callee}'`);
   }
-  if (fnVal.kind !== 'function') {
-    throw new SproutRuntimeError(
-      `'${expr.callee}' is not a function (got ${fnVal.kind})`
-    );
-  }
-  const fn = fnVal as SproutFunction;
-
-  // Evaluate arguments in the *current* env (not the closure env).
-  const evaluatedArgs = expr.args.map(a => evalExpr(a, env));
-
-  // Arity check.
-  if (fn.params.length !== evaluatedArgs.length) {
-    throw new SproutRuntimeError(
-      `'${expr.callee}' expects ${fn.params.length} argument(s), got ${evaluatedArgs.length}`
-    );
-  }
-
-  // Build child env: extend the function's *closure* env (lexical scoping).
-  const childEnv = envExtend(fn.env, fn.params.map((p, i) => [p, evaluatedArgs[i]] as [string, SproutValue]));
-
-  try {
-    return evalExpr(fn.body, childEnv);
-  } catch (e) {
-    if (e instanceof ReturnSignal) {
-      throw new ReturnBundle(e.value, e.drawings);
-    }
-    throw e;
-  }
+  throw new SproutRuntimeError(`'${expr.callee}' is not a function (got ${fnVal.kind})`);
 }
 
 function evalWhile(expr: WhileExpr, env: Env): Drawing {
