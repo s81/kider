@@ -113,6 +113,7 @@ export function App() {
   const handlersRef = useRef<Map<string, SproutFunction>>(new Map());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const animTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const generationRef = useRef(0);
   const [drawLimit, setDrawLimit] = useState<number | null>(null);
 
   useEffect(() => {
@@ -147,16 +148,19 @@ export function App() {
   }, []);
 
   function cancelAnimation() {
+    generationRef.current += 1;
     animTimeoutsRef.current.forEach(id => clearTimeout(id));
     animTimeoutsRef.current = [];
     setDrawLimit(null);
   }
 
   function startPlayback(cmds: CanvasCommand[]) {
+    const myGeneration = generationRef.current;
     const segments = buildPlayback(cmds);
     let segIdx = 0;
 
     function playNext() {
+      if (generationRef.current !== myGeneration) return; // cancelled
       if (segIdx >= segments.length) {
         // Animation complete — remove the limit so Stage shows everything normally.
         setDrawLimit(null);
@@ -173,6 +177,8 @@ export function App() {
         animTimeoutsRef.current.push(tid);
       }
     }
+    // Hide everything before we start — first segment may be a wait
+    setDrawLimit(0);
     playNext();
   }
 
