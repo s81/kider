@@ -300,4 +300,17 @@ export function registerStatementBlocks(): void {
       this.setTooltip('Show a value on the canvas HUD');
     },
   };
+
+  Blockly.Blocks['sprout_wait'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('SECS')
+        .setCheck('Number')
+        .appendField('wait');
+      this.appendDummyInput().appendField('seconds');
+      this.setInputsInline(true);
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(330);
+    },
+  };
 }

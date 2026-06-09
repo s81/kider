@@ -18,6 +18,8 @@ import { BlockWorkspace } from './BlockWorkspace.js';
 import { TextPanel } from './TextPanel.js';
 import { Stage } from './Stage.js';
 import { VariableInspector } from './VariableInspector.js';
+import { buildPlayback } from './stage-utils.js';
+import type { PlaybackSegment } from './stage-utils.js';
 
 type SourceMode = 'blocks' | 'editor';
 
@@ -110,6 +112,9 @@ export function App() {
   const [handlers, setHandlers] = useState<Map<string, SproutFunction>>(new Map());
   const handlersRef = useRef<Map<string, SproutFunction>>(new Map());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const animTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const generationRef = useRef(0);
+  const [drawLimit, setDrawLimit] = useState<number | null>(null);
 
   useEffect(() => {
     const KEY_MAP: Record<string, string> = {
@@ -142,6 +147,41 @@ export function App() {
     };
   }, []);
 
+  function cancelAnimation() {
+    generationRef.current += 1;
+    animTimeoutsRef.current.forEach(id => clearTimeout(id));
+    animTimeoutsRef.current = [];
+    setDrawLimit(null);
+  }
+
+  function startPlayback(cmds: CanvasCommand[]) {
+    const myGeneration = generationRef.current;
+    const segments = buildPlayback(cmds);
+    let segIdx = 0;
+
+    function playNext() {
+      if (generationRef.current !== myGeneration) return; // cancelled
+      if (segIdx >= segments.length) {
+        // Animation complete — remove the limit so Stage shows everything normally.
+        setDrawLimit(null);
+        return;
+      }
+      const seg = segments[segIdx++] as PlaybackSegment;
+      if (seg.kind === 'draw') {
+        // Show commands up to (and including) seg.upTo.
+        setDrawLimit(seg.upTo + 1);
+        playNext(); // continue immediately to check for next segment
+      } else {
+        // Hold the current view for durationMs, then continue.
+        const tid = setTimeout(playNext, seg.durationMs);
+        animTimeoutsRef.current.push(tid);
+      }
+    }
+    // Hide everything before we start — first segment may be a wait
+    setDrawLimit(0);
+    playNext();
+  }
+
   function applyHandlerDelta(result: { drawing: Drawing; hud: Record<string, string>; variables: Record<string, string> }) {
     const { drawing: delta, hud: newHud, variables: newVars } = result;
     const deltaCommands = render(delta);
@@ -163,6 +203,7 @@ export function App() {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    cancelAnimation();
     try {
       setError(null);
       let program;
@@ -180,10 +221,15 @@ export function App() {
       accDrawingRef.current = drawing;
       handlersRef.current = h;
       setHandlers(h);
-      setCommands(render(drawing));
+      const cmds = render(drawing);
+      setCommands(cmds);
       setHud(newHud);
       setVariables(newVars);
       setTimerIntervalMs(timerInterval);
+      const hasWait = cmds.some(c => c.kind === 'wait');
+      if (hasWait) {
+        startPlayback(cmds);
+      }
       const timerFn = h.get(':timer');
       if (timerFn) {
         timerRef.current = setInterval(() => {
@@ -528,6 +574,7 @@ export function App() {
           commands={commands}
           animated={animated}
           stepsPerFrame={stepsPerFrame}
+          drawLimit={drawLimit}
           onClick={hasClickHandler ? handleCanvasClick : undefined}
           onMouseMove={setMousePosition}
           hud={hud}

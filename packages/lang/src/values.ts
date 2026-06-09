@@ -84,7 +84,8 @@ export type Drawing =
   | { readonly kind: 'arc';        readonly radius: number; readonly angle: number }
   | { readonly kind: 'goto';       readonly x: number; readonly y: number }
   | { readonly kind: 'home' }
-  | { readonly kind: 'empty' };
+  | { readonly kind: 'empty' }
+  | WaitDrawing;
 
 // ---------------------------------------------------------------------------
 // SproutValue — top-level value union
@@ -106,8 +107,13 @@ export interface SproutList {
   readonly items: readonly SproutValue[];
 }
 
+export interface WaitDrawing {
+  readonly kind: 'wait';
+  readonly seconds: number;
+}
+
 // INVARIANT: Drawing.kind values ('forward','turn','penUp','penDown','sequence',
-// 'beside','above','scale','color','penWidth','empty','circle','rect','ellipse','triangle','polygon','text','background','clearCanvas','stamp','arc','goto','home')
+// 'beside','above','scale','color','penWidth','empty','circle','rect','ellipse','triangle','polygon','text','background','clearCanvas','stamp','arc','goto','home','wait')
 // must never match SproutNumber/String/Symbol/Bool/Function/Var/List kinds.
 export type SproutValue =
   | SproutNumber
@@ -191,3 +197,7 @@ export const EMPTY: Drawing = { kind: 'empty' };
 
 export const mkList = (items: readonly SproutValue[]): SproutList =>
   ({ kind: 'list', items });
+
+export function mkWait(seconds: number): WaitDrawing {
+  return { kind: 'wait', seconds };
+}
