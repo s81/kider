@@ -11,6 +11,9 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_arc' },
     { kind: 'block', type: 'sprout_goto' },
     { kind: 'block', type: 'sprout_home' },
+    { kind: 'block', type: 'sprout_get_x' },
+    { kind: 'block', type: 'sprout_get_y' },
+    { kind: 'block', type: 'sprout_get_heading' },
     { kind: 'block', type: 'sprout_stamp' },
     // Pen
     { kind: 'block', type: 'sprout_pen_up' },

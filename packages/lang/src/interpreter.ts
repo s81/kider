@@ -119,6 +119,11 @@ function extractVariables(env: Env): Record<string, string> {
 let _mouseX: number = 0;
 let _mouseY: number = 0;
 
+// Module-level shadow turtle state — updated by turtle-moving builtins during each run.
+let _turtleX: number = 0;
+let _turtleY: number = 0;
+let _turtleHeading: number = 0; // degrees clockwise from north
+
 // ---------------------------------------------------------------------------
 // Type guards
 // ---------------------------------------------------------------------------
@@ -209,11 +214,15 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
   ['forward', (args) => {
     if (args.length !== 1) throw new SproutRuntimeError(`forward expects 1 argument, got ${args.length}`);
     const d = assertNumber(args[0], 'forward');
+    const rad = _turtleHeading * Math.PI / 180;
+    _turtleX += d.value * Math.sin(rad);
+    _turtleY -= d.value * Math.cos(rad);
     return mkForward(d.value);
   }],
   ['turn', (args) => {
     if (args.length !== 1) throw new SproutRuntimeError(`turn expects 1 argument, got ${args.length}`);
     const deg = assertNumber(args[0], 'turn');
+    _turtleHeading = ((_turtleHeading + deg.value) % 360 + 360) % 360;
     return mkTurn(deg.value);
   }],
   ['penUp', (args) => {
@@ -310,16 +319,33 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     const radius = assertNumber(args[0], 'arc');
     const angle = assertNumber(args[1], 'arc');
     if (radius.value < 0) throw new SproutRuntimeError(`arc: radius must be non-negative, got ${radius.value}`);
+    // Update shadow turtle state to match renderer arc logic
+    if (angle.value !== 0 && radius.value !== 0) {
+      const steps = Math.max(4, Math.abs(Math.round(angle.value / 5)));
+      const stepAngle = angle.value / steps;
+      const stepDist = (2 * Math.PI * Math.abs(radius.value) / 360) * Math.abs(angle.value / steps);
+      for (let i = 0; i < steps; i++) {
+        const rad = _turtleHeading * Math.PI / 180;
+        _turtleX += stepDist * Math.sin(rad);
+        _turtleY -= stepDist * Math.cos(rad);
+        _turtleHeading = ((_turtleHeading + stepAngle) % 360 + 360) % 360;
+      }
+    }
     return mkArc(radius.value, angle.value);
   }],
   ['goto', (args) => {
     if (args.length !== 2) throw new SproutRuntimeError(`goto expects 2 arguments, got ${args.length}`);
     const x = assertNumber(args[0], 'goto');
     const y = assertNumber(args[1], 'goto');
+    _turtleX = x.value;
+    _turtleY = y.value;
     return mkGoto(x.value, y.value);
   }],
   ['home', (args) => {
     if (args.length !== 0) throw new SproutRuntimeError(`home expects 0 arguments, got ${args.length}`);
+    _turtleX = 0;
+    _turtleY = 0;
+    _turtleHeading = 0;
     return mkHome();
   }],
   ['puts', (args) => {
@@ -486,7 +512,7 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (args[0].kind === 'list') {
       const list = args[0] as SproutList;
       const item = args[1];
-      if (item.kind === 'list' || item.kind === 'drawing' || item.kind === 'function') {
+      if (item.kind === 'list' || isDrawing(item) || item.kind === 'function') {
         throw new SproutRuntimeError(`contains: cannot compare items of type ${item.kind}`);
       }
       for (const el of list.items) {
@@ -635,7 +661,7 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (args.length !== 2) throw new SproutRuntimeError(`indexOf expects 2 arguments, got ${args.length}`);
     const lst = assertList(args[0], 'indexOf');
     const item = args[1];
-    if (item.kind === 'list' || item.kind === 'drawing' || item.kind === 'function') {
+    if (item.kind === 'list' || isDrawing(item) || item.kind === 'function') {
       throw new SproutRuntimeError(`indexOf: cannot compare items of type ${item.kind}`);
     }
     const idx = lst.items.findIndex(el => {
@@ -678,6 +704,19 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
       return 0;
     });
     return mkList(sorted);
+  }],
+  // --- Turtle state query builtins ---
+  ['getX', (args) => {
+    if (args.length !== 0) throw new SproutRuntimeError(`getX expects 0 arguments, got ${args.length}`);
+    return { kind: 'number' as const, value: _turtleX };
+  }],
+  ['getY', (args) => {
+    if (args.length !== 0) throw new SproutRuntimeError(`getY expects 0 arguments, got ${args.length}`);
+    return { kind: 'number' as const, value: _turtleY };
+  }],
+  ['getHeading', (args) => {
+    if (args.length !== 0) throw new SproutRuntimeError(`getHeading expects 0 arguments, got ${args.length}`);
+    return { kind: 'number' as const, value: _turtleHeading };
   }],
 ]);
 
@@ -1172,6 +1211,9 @@ const EMPTY_ENV: Env = new Map<string, SproutValue>();
 export function interpret(program: Program, initialEnv: Env = EMPTY_ENV): Drawing {
   _hudValues = new Map();
   _timerInterval = 200;
+  _turtleX = 0;
+  _turtleY = 0;
+  _turtleHeading = 0;
   let env: Env = initialEnv;
   const drawings: Drawing[] = [];
 
@@ -1204,6 +1246,9 @@ export function interpretFull(
 ): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string>; timerInterval: number } {
   _hudValues = new Map();
   _timerInterval = 200;
+  _turtleX = 0;
+  _turtleY = 0;
+  _turtleHeading = 0;
   let env: Env = initialEnv;
   const drawings: Drawing[] = [];
 

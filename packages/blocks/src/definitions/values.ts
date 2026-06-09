@@ -145,6 +145,33 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_get_x'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('turtle x');
+      this.setOutput(true, 'Number');
+      this.setColour(120);
+      this.setTooltip('Current turtle X position');
+    },
+  };
+
+  Blockly.Blocks['sprout_get_y'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('turtle y');
+      this.setOutput(true, 'Number');
+      this.setColour(120);
+      this.setTooltip('Current turtle Y position');
+    },
+  };
+
+  Blockly.Blocks['sprout_get_heading'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('turtle heading');
+      this.setOutput(true, 'Number');
+      this.setColour(120);
+      this.setTooltip('Current turtle heading in degrees');
+    },
+  };
+
   Blockly.Blocks['sprout_list'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput().appendField('list');
