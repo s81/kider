@@ -24,7 +24,8 @@ export type CanvasCommand =
   | { readonly kind: 'drawText';     readonly x: number; readonly y: number; readonly str: string; readonly size: number }
   | { readonly kind: 'drawStamp'; readonly x: number; readonly y: number; readonly heading: number }
   | { readonly kind: 'fillBackground'; readonly color: string }
-  | { readonly kind: 'clearCanvas' };
+  | { readonly kind: 'clearCanvas' }
+  | { readonly kind: 'wait'; readonly durationMs: number };
 
 // ---------------------------------------------------------------------------
 // Turtle state (internal)
@@ -86,6 +87,8 @@ function scaleDrawing(factor: number, d: Drawing): Drawing {
     case 'goto':
       return d;
     case 'home':
+      return d;
+    case 'wait':
       return d;
   }
 }
@@ -238,6 +241,10 @@ function renderInto(
       out.push({ kind: 'moveTo', x: 0, y: 0 });
       return;
 
+    case 'wait':
+      out.push({ kind: 'wait', durationMs: drawing.seconds * 1000 });
+      return;
+
     case 'arc': {
       if (drawing.angle === 0 || drawing.radius === 0) return;
       const steps = Math.max(4, Math.abs(Math.round(drawing.angle / 5)));
@@ -290,6 +297,7 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
     case 'penDown':
     case 'color':
     case 'penWidth':
+    case 'wait':
       return;
 
     case 'turn':

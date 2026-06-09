@@ -36,6 +36,7 @@ export type {
   SproutFunction,
   SproutVar,
   SproutList,
+  WaitDrawing,
   Drawing,
   SproutValue,
   Env,
@@ -62,6 +63,7 @@ export {
   mkBackground,
   mkClearCanvas,
   mkStamp,
+  mkWait,
   // Drawing singleton constants (zero-arg constructors replaced by constants)
   PEN_UP,
   PEN_DOWN,

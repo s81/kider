@@ -52,6 +52,7 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_arc':
     case 'sprout_goto':
     case 'sprout_home':
+    case 'sprout_wait':
       return { kind: 'ExprStmt', expr: compileExprBlock(block) };
     case 'sprout_let':
       return compileLet(block);
@@ -247,6 +248,10 @@ function compileExprBlock(block: Blockly.Block): Expr {
     }
     case 'sprout_home':
       return { kind: 'CallExpr', callee: 'home', args: [], block: null };
+    case 'sprout_wait': {
+      const secs = compileExpr(mustGetInput(block, 'SECS'));
+      return { kind: 'CallExpr', callee: 'wait', args: [secs], block: null };
+    }
     case 'sprout_for_each':
       return compileForEachExpr(block);
     case 'sprout_random':

@@ -246,7 +246,30 @@ export function drawUpTo(
         ctx.moveTo(STAGE_W / 2, STAGE_H / 2);
         break;
       }
+      case 'wait':
+        break;
     }
   }
   ctx.stroke();
+}
+
+export type PlaybackSegment =
+  | { kind: 'draw'; upTo: number }
+  | { kind: 'wait'; durationMs: number };
+
+export function buildPlayback(commands: CanvasCommand[]): PlaybackSegment[] {
+  const segments: PlaybackSegment[] = [];
+  let drawEnd = -1;
+  for (let i = 0; i < commands.length; i++) {
+    const cmd = commands[i];
+    if (cmd.kind === 'wait') {
+      if (drawEnd >= 0) segments.push({ kind: 'draw', upTo: drawEnd });
+      segments.push({ kind: 'wait', durationMs: (cmd as { kind: 'wait'; durationMs: number }).durationMs });
+      drawEnd = -1;
+    } else {
+      drawEnd = i;
+    }
+  }
+  if (drawEnd >= 0) segments.push({ kind: 'draw', upTo: drawEnd });
+  return segments;
 }

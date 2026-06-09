@@ -54,6 +54,7 @@ import {
   mkGoto,
   mkHome,
   mkList,
+  mkWait,
   PEN_UP,
   PEN_DOWN,
   EMPTY,
@@ -128,7 +129,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
     case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'penWidth': case 'empty':
-    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas': case 'stamp': case 'arc': case 'goto': case 'home':
+    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas': case 'stamp': case 'arc': case 'goto': case 'home': case 'wait':
       return true;
     default:
       return false;
@@ -678,6 +679,12 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
       return 0;
     });
     return mkList(sorted);
+  }],
+  ['wait', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`wait expects 1 argument, got ${args.length}`);
+    const secs = assertNumber(args[0], 'wait');
+    if (secs.value < 0) throw new SproutRuntimeError(`wait: seconds must be non-negative, got ${secs.value}`);
+    return mkWait(secs.value);
   }],
 ]);
 

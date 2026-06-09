@@ -6,17 +6,26 @@ interface Props {
   commands: CanvasCommand[];
   animated?: boolean;
   stepsPerFrame?: number;
+  drawLimit?: number | null;
   onClick?: () => void;
   onMouseMove?: (x: number, y: number) => void;
   hud?: Record<string, string>;
 }
 
-export function Stage({ commands, animated = false, stepsPerFrame = 3, onClick, onMouseMove, hud }: Props) {
+export function Stage({ commands, animated = false, stepsPerFrame = 3, drawLimit = null, onClick, onMouseMove, hud }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext('2d')!;
+
+    // drawLimit overrides: used by wait-playback to freeze the view at a specific command index.
+    if (drawLimit !== null) {
+      const limit = drawLimit;
+      drawUpTo(ctx, commands, limit);
+      drawTurtle(ctx, getTurtleState(commands, limit));
+      return;
+    }
 
     if (!animated || commands.length === 0) {
       const limit = commands.length;
@@ -39,7 +48,7 @@ export function Stage({ commands, animated = false, stepsPerFrame = 3, onClick, 
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [commands, animated, stepsPerFrame]);
+  }, [commands, animated, stepsPerFrame, drawLimit]);
 
   const hudEntries = hud ? Object.entries(hud) : [];
 
