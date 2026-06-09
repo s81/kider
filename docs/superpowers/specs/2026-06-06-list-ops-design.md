@@ -70,15 +70,17 @@ Each new builtin requires changes in four places:
 
 ### Final toolbox order (Lists section)
 
+Note: blocks marked with * are new (Track 2); all others either already exist in the toolbox or are wired in Track 1.
+
 ```
 // Create
 sprout_list, sprout_range
 // Access
-sprout_at, sprout_get, sprout_first, sprout_last
+sprout_at, sprout_get, sprout_first*, sprout_last*
 // Query
-sprout_size, sprout_is_empty, sprout_contains
+sprout_size, sprout_is_empty, sprout_contains*
 // Modify
-sprout_push, sprout_pop, sprout_concat, sprout_reverse
+sprout_push, sprout_pop*, sprout_concat*, sprout_reverse*
 // Transform
 sprout_map, sprout_filter, sprout_reduce
 ```
