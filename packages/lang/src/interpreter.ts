@@ -311,6 +311,9 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
   }],
   ['clearCanvas', (args) => {
     if (args.length !== 0) throw new SproutRuntimeError(`clearCanvas expects 0 arguments, got ${args.length}`);
+    _turtleX = 0;
+    _turtleY = 0;
+    _turtleHeading = 0;
     return mkClearCanvas();
   }],
   ['stamp', (_args) => mkStamp()],

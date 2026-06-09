@@ -196,7 +196,40 @@ describe('arc updates heading', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 8. Wrong arity throws SproutRuntimeError
+// 8. clearCanvas resets turtle shadow state
+// ---------------------------------------------------------------------------
+
+describe('clearCanvas resets turtle state', () => {
+  it('getX returns 0 after clearCanvas even after forward', () => {
+    const prog = program(
+      exprStmt(call('forward', [numLit(100)])),
+      exprStmt(call('clearCanvas', [])),
+      letStmt('result', call('getX', [])),
+    );
+    expect(runAndGetVar(prog)).toBeCloseTo(0, 1);
+  });
+
+  it('getY returns 0 after clearCanvas', () => {
+    const prog = program(
+      exprStmt(call('forward', [numLit(100)])),
+      exprStmt(call('clearCanvas', [])),
+      letStmt('result', call('getY', [])),
+    );
+    expect(runAndGetVar(prog)).toBeCloseTo(0, 1);
+  });
+
+  it('getHeading returns 0 after clearCanvas', () => {
+    const prog = program(
+      exprStmt(call('turn', [numLit(90)])),
+      exprStmt(call('clearCanvas', [])),
+      letStmt('result', call('getHeading', [])),
+    );
+    expect(runAndGetVar(prog)).toBeCloseTo(0, 1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 9. Wrong arity throws SproutRuntimeError
 // ---------------------------------------------------------------------------
 
 describe('wrong arity throws SproutRuntimeError', () => {
