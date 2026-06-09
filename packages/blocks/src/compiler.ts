@@ -455,6 +455,12 @@ function compileExpr(block: Blockly.Block): Expr {
       return { kind: 'CallExpr', callee: 'mouseX', args: [], block: null };
     case 'sprout_mouse_y':
       return { kind: 'CallExpr', callee: 'mouseY', args: [], block: null };
+    case 'sprout_get_x':
+      return { kind: 'CallExpr', callee: 'getX', args: [], block: null };
+    case 'sprout_get_y':
+      return { kind: 'CallExpr', callee: 'getY', args: [], block: null };
+    case 'sprout_get_heading':
+      return { kind: 'CallExpr', callee: 'getHeading', args: [], block: null };
     case 'sprout_list': {
       const items: Expr[] = [];
       for (const key of ['VALUE_0', 'VALUE_1', 'VALUE_2']) {
