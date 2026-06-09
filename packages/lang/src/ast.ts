@@ -73,10 +73,12 @@ export interface BlockExpr {
   readonly body: readonly Stmt[];
 }
 
-/** `repeat <count> do ... end` */
+/** `repeat <count> do ... end` or `repeat <count> with <item> do ... end` */
 export interface RepeatExpr {
   readonly kind: 'RepeatExpr';
   readonly count: Expr;
+  /** Optional 0-based index variable name; null = plain repeat. */
+  readonly item: string | null;
   readonly body: BlockExpr;
 }
 

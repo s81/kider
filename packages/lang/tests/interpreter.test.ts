@@ -40,8 +40,8 @@ const call = (callee: string, args: Expr[], block = null): Expr =>
   ({ kind: 'CallExpr', callee, args, block });
 const block = (body: Stmt[]): Expr =>
   ({ kind: 'BlockExpr', body });
-const repeat = (count: Expr, bodyStmts: Stmt[]): Expr =>
-  ({ kind: 'RepeatExpr', count, body: { kind: 'BlockExpr', body: bodyStmts } });
+const repeat = (count: Expr, bodyStmts: Stmt[], item: string | null = null): Expr =>
+  ({ kind: 'RepeatExpr', count, item, body: { kind: 'BlockExpr', body: bodyStmts } });
 const ifExpr = (cond: Expr, thenStmts: Stmt[], elseStmts: Stmt[] | null = null): Expr => ({
   kind: 'IfExpr' as const,
   cond,

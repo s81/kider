@@ -265,7 +265,7 @@ function compileRepeatExpr(block: Blockly.Block): RepeatExpr {
   const count = compileExpr(mustGetInput(block, 'COUNT'));
   const firstBodyBlock = block.getInputTargetBlock('BODY');
   const body = compileBlockExpr(firstBodyBlock);
-  return { kind: 'RepeatExpr', count, body };
+  return { kind: 'RepeatExpr', count, item: null, body };
 }
 
 function compileOnExpr(block: Blockly.Block): OnExpr {

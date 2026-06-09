@@ -89,7 +89,8 @@ export function serializeExpr(expr: Expr, indentLevel = 0): string {
     case 'RepeatExpr': {
       const countStr = serializeExpr(expr.count, indentLevel);
       const body = serializeBlock(expr.body, indentLevel + 1);
-      return `repeat ${countStr} do\n${body}\n${indent(indentLevel)}end`;
+      const withClause = expr.item !== null ? ` with ${expr.item}` : '';
+      return `repeat ${countStr}${withClause} do\n${body}\n${indent(indentLevel)}end`;
     }
 
     case 'OnExpr': {

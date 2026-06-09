@@ -9,6 +9,7 @@ export const program: Program = {
       expr: {
         kind: 'RepeatExpr',
         count: { kind: 'NumberLit', value: 8 },
+        item: null,
         body: {
           kind: 'BlockExpr',
           body: [

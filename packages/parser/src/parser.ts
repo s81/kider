@@ -246,8 +246,16 @@ class Parser {
       if (name === 'repeat') {
         this.advance();
         const count = this.parseExpr();
+        // Optional `with <ident>` — contextual keyword, not reserved.
+        let item: string | null = null;
+        const next = this.peek();
+        if (next.kind === 'IDENT' && next.name === 'with') {
+          this.advance();
+          const identToken = this.eat('IDENT') as { kind: 'IDENT'; name: string };
+          item = identToken.name;
+        }
         const body = this.parseDoBlock();
-        return { kind: 'RepeatExpr', count, body } satisfies RepeatExpr;
+        return { kind: 'RepeatExpr', count, item, body } satisfies RepeatExpr;
       }
 
       if (name === 'while') {

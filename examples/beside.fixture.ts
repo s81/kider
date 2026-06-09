@@ -15,6 +15,7 @@ export const program: Program = {
       body: {
         kind: 'RepeatExpr',
         count: { kind: 'NumberLit', value: 4 },
+        item: null,
         body: {
           kind: 'BlockExpr',
           body: [

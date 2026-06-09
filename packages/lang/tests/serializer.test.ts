@@ -17,8 +17,8 @@ const call = (callee: string, args: Expr[], block: { kind: 'BlockExpr'; body: St
   ({ kind: 'CallExpr', callee, args, block });
 const blockExpr = (body: Stmt[]): { kind: 'BlockExpr'; body: Stmt[] } =>
   ({ kind: 'BlockExpr', body });
-const repeatExpr = (count: Expr, bodyStmts: Stmt[]): Expr =>
-  ({ kind: 'RepeatExpr', count, body: { kind: 'BlockExpr', body: bodyStmts } });
+const repeatExpr = (count: Expr, bodyStmts: Stmt[], item: string | null = null): Expr =>
+  ({ kind: 'RepeatExpr', count, item, body: { kind: 'BlockExpr', body: bodyStmts } });
 const onExpr = (event: string, bodyStmts: Stmt[], interval: Expr | null = null): Expr =>
   ({ kind: 'OnExpr', event: { kind: 'SymbolLit', name: event }, body: { kind: 'BlockExpr', body: bodyStmts }, interval });
 

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { tokenize, ParseError } from '../src/lexer.js';
 import { parse } from '../src/parser.js';
+import { serialize } from '@sprout/lang';
 import type { Program, LetStmt, AssignStmt, WhileExpr, ForEachExpr } from '@sprout/lang';
 
 // Shorthand builders for expected AST values
@@ -14,8 +15,8 @@ const infix = (op: string, l: object, r: object) =>
 const callE = (callee: string, args: object[], block = null) =>
   ({ kind: 'CallExpr' as const, callee, args, block });
 const blockE = (body: object[]) => ({ kind: 'BlockExpr' as const, body });
-const repeatE = (count: object, body: object[]) =>
-  ({ kind: 'RepeatExpr' as const, count, body: blockE(body) });
+const repeatE = (count: object, body: object[], item: string | null = null) =>
+  ({ kind: 'RepeatExpr' as const, count, item, body: blockE(body) });
 const onE = (name: string, body: object[]) =>
   ({ kind: 'OnExpr' as const, event: sym(name), body: blockE(body), interval: null });
 const exprS = (expr: object) => ({ kind: 'ExprStmt' as const, expr });
@@ -272,6 +273,28 @@ describe('parse — repeat', () => {
     const inner = repeatE(num(4), [exprS(callE('forward', [num(10)]))]);
     const outer = repeatE(num(4), [exprS(inner)]);
     expect(parse(src)).toEqual(prog(exprS(outer)));
+  });
+
+  it('parses repeat with index variable', () => {
+    expect(parse('repeat 5 with i do\n  forward(i * 10)\nend')).toEqual(
+      prog(exprS(repeatE(
+        num(5),
+        [exprS(callE('forward', [infix('*', id('i'), num(10))]))],
+        'i'
+      )))
+    );
+  });
+
+  it('allows "with" as an ordinary identifier elsewhere', () => {
+    expect(parse('forward(with)')).toEqual(
+      prog(exprS(callE('forward', [id('with')])))
+    );
+  });
+
+  it('round-trips repeat-with through serialize and parse', () => {
+    const src = 'repeat 5 with i do\n  forward(i * 10)\nend';
+    const ast = parse(src);
+    expect(parse(serialize(ast))).toEqual(ast);
   });
 });
 

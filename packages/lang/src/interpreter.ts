@@ -937,7 +937,10 @@ function evalRepeat(expr: RepeatExpr, env: Env): Drawing {
   const count = Math.trunc(countVal.value);
   const drawings: Drawing[] = [];
   for (let i = 0; i < count; i++) {
-    const d = evalBlock(expr.body, env);
+    const iterEnv = expr.item !== null
+      ? envExtend(env, [[expr.item, { kind: 'number', value: i } satisfies SproutNumber]])
+      : env;
+    const d = evalBlock(expr.body, iterEnv);
     drawings.push(d);
   }
   return drawings.length === 0 ? EMPTY : mkSequence(drawings);
