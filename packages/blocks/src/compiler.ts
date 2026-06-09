@@ -34,6 +34,7 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_pen_width':
     case 'sprout_puts':
     case 'sprout_repeat':
+    case 'sprout_repeat_with':
     case 'sprout_on_event':
     case 'sprout_on_timer':
     case 'sprout_call_stmt':
@@ -171,6 +172,8 @@ function compileExprBlock(block: Blockly.Block): Expr {
     }
     case 'sprout_repeat':
       return compileRepeatExpr(block);
+    case 'sprout_repeat_with':
+      return compileRepeatWithExpr(block);
     case 'sprout_on_event':
       return compileOnExpr(block);
     case 'sprout_on_timer':
@@ -268,6 +271,14 @@ function compileRepeatExpr(block: Blockly.Block): RepeatExpr {
   return { kind: 'RepeatExpr', count, item: null, body };
 }
 
+function compileRepeatWithExpr(block: Blockly.Block): RepeatExpr {
+  const count = compileExpr(mustGetInput(block, 'COUNT'));
+  const item = block.getFieldValue('VAR') as string;
+  const firstBodyBlock = block.getInputTargetBlock('BODY');
+  const body = compileBlockExpr(firstBodyBlock);
+  return { kind: 'RepeatExpr', count, item, body };
+}
+
 function compileOnExpr(block: Blockly.Block): OnExpr {
   const eventName = block.getFieldValue('EVENT') as string;
   const event: SymbolLit = { kind: 'SymbolLit', name: eventName };
@@ -318,6 +329,10 @@ function compileExpr(block: Blockly.Block): Expr {
       const name = block.getFieldValue('NAME') as string;
       const id: Ident = { kind: 'Ident', name };
       return id;
+    }
+    case 'sprout_repeat_index': {
+      const name = block.getFieldValue('VAR') as string;
+      return { kind: 'Ident', name };
     }
     case 'sprout_infix': {
       const op = block.getFieldValue('OP') as '+' | '-' | '*' | '/';

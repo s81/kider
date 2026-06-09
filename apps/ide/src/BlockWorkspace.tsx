@@ -25,6 +25,8 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_pen_width' },
     // Control
     { kind: 'block', type: 'sprout_repeat' },
+    { kind: 'block', type: 'sprout_repeat_with' },
+    { kind: 'block', type: 'sprout_repeat_index' },
     { kind: 'block', type: 'sprout_if' },
     { kind: 'block', type: 'sprout_while' },
     { kind: 'block', type: 'sprout_for_each' },

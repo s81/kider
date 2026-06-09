@@ -1400,3 +1400,63 @@ describe('for each block', () => {
     ws.dispose();
   });
 });
+
+describe('repeat with index blocks', () => {
+  it('sprout_repeat_with compiles to RepeatExpr with item set', () => {
+    const ws = makeWorkspace();
+    const repeatBlock = ws.newBlock('sprout_repeat_with');
+    repeatBlock.setFieldValue('i', 'VAR');
+
+    const countBlock = ws.newBlock('sprout_number');
+    countBlock.setFieldValue('5', 'NUM');
+    repeatBlock.getInput('COUNT')!.connection!.connect(countBlock.outputConnection!);
+
+    const fwdBlock = ws.newBlock('sprout_forward');
+    const idxBlock = ws.newBlock('sprout_repeat_index');
+    idxBlock.setFieldValue('i', 'VAR');
+    fwdBlock.getInput('DISTANCE')!.connection!.connect(idxBlock.outputConnection!);
+    repeatBlock.getInput('BODY')!.connection!.connect(fwdBlock.previousConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'RepeatExpr',
+          count: { kind: 'NumberLit', value: 5 },
+          item: 'i',
+          body: {
+            kind: 'BlockExpr',
+            body: [{
+              kind: 'ExprStmt',
+              expr: { kind: 'CallExpr', callee: 'forward', args: [{ kind: 'Ident', name: 'i' }], block: null },
+            }],
+          },
+        },
+      }],
+    });
+    ws.dispose();
+  });
+
+  it('sprout_repeat_index respects a renamed field', () => {
+    const ws = makeWorkspace();
+    const repeatBlock = ws.newBlock('sprout_repeat_with');
+    repeatBlock.setFieldValue('n', 'VAR');
+
+    const countBlock = ws.newBlock('sprout_number');
+    countBlock.setFieldValue('3', 'NUM');
+    repeatBlock.getInput('COUNT')!.connection!.connect(countBlock.outputConnection!);
+
+    const fwdBlock = ws.newBlock('sprout_forward');
+    const idxBlock = ws.newBlock('sprout_repeat_index');
+    idxBlock.setFieldValue('n', 'VAR');
+    fwdBlock.getInput('DISTANCE')!.connection!.connect(idxBlock.outputConnection!);
+    repeatBlock.getInput('BODY')!.connection!.connect(fwdBlock.previousConnection!);
+
+    const result = compileWorkspace(ws);
+    const stmt = result.stmts[0] as { kind: 'ExprStmt'; expr: { kind: 'RepeatExpr'; item: string | null } };
+    expect(stmt.expr.item).toBe('n');
+    ws.dispose();
+  });
+});

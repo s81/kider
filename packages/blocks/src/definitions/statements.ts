@@ -173,6 +173,32 @@ export function registerStatementBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_repeat_with'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('COUNT').setCheck('Number').appendField('repeat');
+      this.appendDummyInput()
+        .appendField('with')
+        .appendField(new Blockly.FieldTextInput('i') as unknown as Blockly.Field, 'VAR');
+      this.appendStatementInput('BODY').appendField('do');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setInputsInline(true);
+      this.setColour(120);
+      this.setTooltip('Repeat with a counting variable: 0, 1, 2, ...');
+    },
+  };
+
+  Blockly.Blocks['sprout_repeat_index'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField(new Blockly.FieldTextInput('i') as unknown as Blockly.Field, 'VAR')
+        .appendField('(index)');
+      this.setOutput(true, 'Number');
+      this.setColour(120);
+      this.setTooltip('The counting variable from a "repeat with" loop');
+    },
+  };
+
   Blockly.Blocks['sprout_on_event'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput()
