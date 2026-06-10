@@ -204,8 +204,12 @@ export function App() {
     playNext();
   }
 
-  function applyHandlerDelta(result: { drawing: Drawing; hud: Record<string, string>; variables: Record<string, string> }) {
-    const { drawing: delta, hud: newHud, variables: newVars } = result;
+  function applyHandlerDelta(result: { drawing: Drawing; hud: Record<string, string>; variables: Record<string, string>; stopTimer: boolean }) {
+    const { drawing: delta, hud: newHud, variables: newVars, stopTimer } = result;
+    if (stopTimer && timerRef.current !== null) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     const deltaCommands = render(delta);
     // Handler deltas don't go through animated playback, so fire their sounds
     // immediately — this is the game path (beep on collision in a handler).
@@ -244,7 +248,7 @@ export function App() {
       const inputMap = new Map(
         Object.entries(inputValues).map(([k, v]) => [k, v] as [string, number])
       );
-      const { drawing, handlers: h, hud: newHud, variables: newVars, timerInterval } = interpretFullWithInputs(program, inputMap);
+      const { drawing, handlers: h, hud: newHud, variables: newVars, timerInterval, stopTimer } = interpretFullWithInputs(program, inputMap);
       accDrawingRef.current = drawing;
       handlersRef.current = h;
       setHandlers(h);
@@ -258,7 +262,7 @@ export function App() {
         startPlayback(cmds);
       }
       const timerFn = h.get(':timer');
-      if (timerFn) {
+      if (timerFn && !stopTimer) {
         timerRef.current = setInterval(() => {
           if (accDrawingRef.current === null) return;
           try {

@@ -35,6 +35,7 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_play_note' },
     { kind: 'block', type: 'sprout_on_event' },
     { kind: 'block', type: 'sprout_on_timer' },
+    { kind: 'block', type: 'sprout_stop_timer' },
     // Variables
     { kind: 'block', type: 'sprout_let' },
     { kind: 'block', type: 'sprout_set' },
