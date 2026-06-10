@@ -681,6 +681,18 @@ describe('math blocks', () => {
     });
   });
 
+  it('sprout_stop_timer compiles to stopTimer CallExpr statement', () => {
+    const ws = makeWorkspace();
+    ws.newBlock('sprout_stop_timer');
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: { kind: 'CallExpr', callee: 'stopTimer', args: [], block: null },
+      }],
+    });
+  });
+
   it('sprout_play_note compiles to playNote CallExpr with note string and seconds', () => {
     const ws = makeWorkspace();
     const noteBlock = ws.newBlock('sprout_play_note');

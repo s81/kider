@@ -245,6 +245,16 @@ export function registerStatementBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_stop_timer'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('stop timer');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(65);
+      this.setTooltip('Stop the timer loop — use for game over');
+    },
+  };
+
   // def name(param0, param1, param2) — up to 3 params (empty string = absent)
   Blockly.Blocks['sprout_def'] = {
     init(this: Blockly.Block) {

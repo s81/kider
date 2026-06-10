@@ -57,6 +57,7 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_wait':
     case 'sprout_beep':
     case 'sprout_play_note':
+    case 'sprout_stop_timer':
       return { kind: 'ExprStmt', expr: compileExprBlock(block) };
     case 'sprout_let':
       return compileLet(block);
@@ -262,6 +263,8 @@ function compileExprBlock(block: Blockly.Block): Expr {
     }
     case 'sprout_beep':
       return { kind: 'CallExpr', callee: 'beep', args: [], block: null };
+    case 'sprout_stop_timer':
+      return { kind: 'CallExpr', callee: 'stopTimer', args: [], block: null };
     case 'sprout_play_note': {
       const note = block.getFieldValue('NOTE') as string;
       const secs = compileExpr(mustGetInput(block, 'SECS'));
