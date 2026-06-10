@@ -339,4 +339,41 @@ export function registerStatementBlocks(): void {
       this.setColour(330);
     },
   };
+
+  Blockly.Blocks['sprout_beep'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('beep');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(330);
+      this.setTooltip('Play a short beep');
+    },
+  };
+
+  Blockly.Blocks['sprout_play_note'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('play note')
+        .appendField(
+          new Blockly.FieldDropdown([
+            ['C4', 'C4'],
+            ['D4', 'D4'],
+            ['E4', 'E4'],
+            ['F4', 'F4'],
+            ['G4', 'G4'],
+            ['A4', 'A4'],
+            ['B4', 'B4'],
+            ['C5', 'C5'],
+          ]) as unknown as Blockly.Field,
+          'NOTE',
+        );
+      this.appendValueInput('SECS').setCheck('Number').appendField('for');
+      this.appendDummyInput().appendField('seconds');
+      this.setInputsInline(true);
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(330);
+      this.setTooltip('Play a musical note for a duration');
+    },
+  };
 }

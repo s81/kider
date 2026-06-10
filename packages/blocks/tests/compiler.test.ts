@@ -615,6 +615,38 @@ describe('math blocks', () => {
     });
   });
 
+  it('sprout_beep compiles to beep CallExpr statement', () => {
+    const ws = makeWorkspace();
+    ws.newBlock('sprout_beep');
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: { kind: 'CallExpr', callee: 'beep', args: [], block: null },
+      }],
+    });
+  });
+
+  it('sprout_play_note compiles to playNote CallExpr with note string and seconds', () => {
+    const ws = makeWorkspace();
+    const noteBlock = ws.newBlock('sprout_play_note');
+    noteBlock.setFieldValue('E4', 'NOTE');
+    const secs = ws.newBlock('sprout_number');
+    secs.setFieldValue('0.5', 'NUM');
+    noteBlock.getInput('SECS')!.connection!.connect(secs.outputConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr', callee: 'playNote',
+          args: [{ kind: 'StringLit', value: 'E4' }, { kind: 'NumberLit', value: 0.5 }],
+          block: null,
+        },
+      }],
+    });
+  });
+
   it('sprout_pi compiles to pi CallExpr (0-arg pattern)', () => {
     const ws = makeWorkspace();
     const piBlock = ws.newBlock('sprout_pi');
