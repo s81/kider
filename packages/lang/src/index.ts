@@ -7,6 +7,7 @@ export type {
   ExprStmt,
   LetStmt,
   AssignStmt,
+  ReturnStmt,
   NumberLit,
   StringLit,
   SymbolLit,
