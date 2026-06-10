@@ -8,12 +8,14 @@ export interface TurtleState {
   y: number;
   /** Degrees clockwise from north: 0=up, 90=right, 180=down, 270=left */
   heading: number;
+  visible: boolean;
 }
 
 export function getTurtleState(commands: CanvasCommand[], limit: number): TurtleState {
   let x = 0;
   let y = 0;
   let heading = 0;
+  let visible = true;
 
   const end = Math.min(limit, commands.length);
   for (let i = 0; i < end; i++) {
@@ -26,15 +28,20 @@ export function getTurtleState(commands: CanvasCommand[], limit: number): Turtle
         x = cmd.x;
         y = cmd.y;
       }
+    } else if (cmd.kind === 'hideTurtle') {
+      visible = false;
+    } else if (cmd.kind === 'showTurtle') {
+      visible = true;
     }
   }
 
-  return { x, y, heading };
+  return { x, y, heading, visible };
 }
 
 const TURTLE_SIZE = 10;
 
 export function drawTurtle(ctx: CanvasRenderingContext2D, state: TurtleState): void {
+  if (!state.visible) return;
   const cx = STAGE_W / 2 + state.x;
   const cy = STAGE_H / 2 + state.y;
 
@@ -272,6 +279,8 @@ export function drawUpTo(
       }
       case 'wait':
       case 'sound':
+      case 'hideTurtle':
+      case 'showTurtle':
         break;
     }
   }

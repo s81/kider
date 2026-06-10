@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { drawUpTo, getTurtleState, buildPlayback, STAGE_W, STAGE_H } from '../src/stage-utils.js';
+import { drawUpTo, getTurtleState, drawTurtle, buildPlayback, STAGE_W, STAGE_H } from '../src/stage-utils.js';
 import type { CanvasCommand } from '@sprout/lang';
 
 function makeMockCtx() {
@@ -125,17 +125,17 @@ describe('drawUpTo', () => {
 
 describe('getTurtleState', () => {
   it('returns default state for empty commands', () => {
-    expect(getTurtleState([], 0)).toEqual({ x: 0, y: 0, heading: 0 });
+    expect(getTurtleState([], 0)).toEqual({ x: 0, y: 0, heading: 0, visible: true });
   });
 
   it('returns default state for limit 0', () => {
     const cmds: CanvasCommand[] = [{ kind: 'moveTo', x: 50, y: 50 }];
-    expect(getTurtleState(cmds, 0)).toEqual({ x: 0, y: 0, heading: 0 });
+    expect(getTurtleState(cmds, 0)).toEqual({ x: 0, y: 0, heading: 0, visible: true });
   });
 
   it('moveTo to same position does not change heading', () => {
     const cmds: CanvasCommand[] = [{ kind: 'moveTo', x: 0, y: 0 }];
-    expect(getTurtleState(cmds, 1)).toEqual({ x: 0, y: 0, heading: 0 });
+    expect(getTurtleState(cmds, 1)).toEqual({ x: 0, y: 0, heading: 0, visible: true });
   });
 
   it('lineTo moving up (y decreases) sets heading to 0', () => {
@@ -143,7 +143,7 @@ describe('getTurtleState', () => {
       { kind: 'moveTo', x: 0, y: 0 },
       { kind: 'lineTo', x: 0, y: -50 },
     ];
-    expect(getTurtleState(cmds, 2)).toEqual({ x: 0, y: -50, heading: 0 });
+    expect(getTurtleState(cmds, 2)).toEqual({ x: 0, y: -50, heading: 0, visible: true });
   });
 
   it('lineTo moving right (x increases) sets heading to 90', () => {
@@ -151,7 +151,7 @@ describe('getTurtleState', () => {
       { kind: 'moveTo', x: 0, y: 0 },
       { kind: 'lineTo', x: 50, y: 0 },
     ];
-    expect(getTurtleState(cmds, 2)).toEqual({ x: 50, y: 0, heading: 90 });
+    expect(getTurtleState(cmds, 2)).toEqual({ x: 50, y: 0, heading: 90, visible: true });
   });
 
   it('lineTo moving down (y increases) sets heading to 180', () => {
@@ -159,7 +159,7 @@ describe('getTurtleState', () => {
       { kind: 'moveTo', x: 0, y: 0 },
       { kind: 'lineTo', x: 0, y: 50 },
     ];
-    expect(getTurtleState(cmds, 2)).toEqual({ x: 0, y: 50, heading: 180 });
+    expect(getTurtleState(cmds, 2)).toEqual({ x: 0, y: 50, heading: 180, visible: true });
   });
 
   it('limit is respected — stops before later commands', () => {
@@ -169,7 +169,7 @@ describe('getTurtleState', () => {
       { kind: 'lineTo', x: 50, y: -50 },
     ];
     // limit=2: only first two commands processed, turtle at (50, 0) heading 90
-    expect(getTurtleState(cmds, 2)).toEqual({ x: 50, y: 0, heading: 90 });
+    expect(getTurtleState(cmds, 2)).toEqual({ x: 50, y: 0, heading: 90, visible: true });
   });
 
   it('penUp and penDown do not affect position or heading', () => {
@@ -179,7 +179,7 @@ describe('getTurtleState', () => {
       { kind: 'lineTo', x: 0, y: -50 },
       { kind: 'penDown' },
     ];
-    expect(getTurtleState(cmds, 4)).toEqual({ x: 0, y: -50, heading: 0 });
+    expect(getTurtleState(cmds, 4)).toEqual({ x: 0, y: -50, heading: 0, visible: true });
   });
 
   it('setColor and setLineWidth do not affect position or heading', () => {
@@ -189,7 +189,7 @@ describe('getTurtleState', () => {
       { kind: 'moveTo', x: 0, y: 0 },
       { kind: 'lineTo', x: 30, y: 0 },
     ];
-    expect(getTurtleState(cmds, 4)).toEqual({ x: 30, y: 0, heading: 90 });
+    expect(getTurtleState(cmds, 4)).toEqual({ x: 30, y: 0, heading: 90, visible: true });
   });
 
   it('heading is retained when position does not change (pen up move)', () => {
@@ -198,7 +198,7 @@ describe('getTurtleState', () => {
       { kind: 'lineTo', x: 50, y: 0 },   // heading becomes 90
       { kind: 'moveTo', x: 50, y: 0 },   // same position — heading stays 90
     ];
-    expect(getTurtleState(cmds, 3)).toEqual({ x: 50, y: 0, heading: 90 });
+    expect(getTurtleState(cmds, 3)).toEqual({ x: 50, y: 0, heading: 90, visible: true });
   });
 });
 
@@ -225,6 +225,8 @@ function makeShapeMockCtx() {
     ellipse: vi.fn(),
     closePath: vi.fn(),
     fillText: vi.fn(),
+    translate: vi.fn(),
+    rotate: vi.fn(),
     get globalAlpha() { return globalAlphaValue; },
     set globalAlpha(v: number) { globalAlphaValue = v; },
     get fillStyle() { return fillStyleValue; },
@@ -481,5 +483,50 @@ describe('drawUpTo — fillPath', () => {
     drawUpTo(ctx, commands, 1);
     expect(ctx.fill).not.toHaveBeenCalled();
     expect(ctx.moveTo).toHaveBeenLastCalledWith(STAGE_W / 2 + 0, STAGE_H / 2 - 100);
+  });
+});
+
+describe('getTurtleState — visibility', () => {
+  it('is visible by default', () => {
+    const cmds: CanvasCommand[] = [{ kind: 'lineTo', x: 10, y: 0 }];
+    expect(getTurtleState(cmds, 1).visible).toBe(true);
+  });
+
+  it('hideTurtle makes it invisible', () => {
+    const cmds: CanvasCommand[] = [
+      { kind: 'lineTo', x: 10, y: 0 },
+      { kind: 'hideTurtle' },
+    ];
+    expect(getTurtleState(cmds, 2).visible).toBe(false);
+  });
+
+  it('showTurtle after hideTurtle makes it visible again', () => {
+    const cmds: CanvasCommand[] = [
+      { kind: 'hideTurtle' },
+      { kind: 'showTurtle' },
+    ];
+    expect(getTurtleState(cmds, 2).visible).toBe(true);
+  });
+
+  it('a hideTurtle past the draw limit does not count yet', () => {
+    const cmds: CanvasCommand[] = [
+      { kind: 'lineTo', x: 10, y: 0 },
+      { kind: 'hideTurtle' },
+    ];
+    expect(getTurtleState(cmds, 1).visible).toBe(true);
+  });
+});
+
+describe('drawTurtle — visibility', () => {
+  it('draws nothing when the turtle is hidden', () => {
+    const ctx = makeShapeMockCtx();
+    drawTurtle(ctx, { x: 0, y: 0, heading: 0, visible: false });
+    expect(ctx.fill).not.toHaveBeenCalled();
+  });
+
+  it('draws the cursor when visible', () => {
+    const ctx = makeShapeMockCtx();
+    drawTurtle(ctx, { x: 0, y: 0, heading: 0, visible: true });
+    expect(ctx.fill).toHaveBeenCalled();
   });
 });
