@@ -34,6 +34,8 @@ export interface BoolLit {
 export interface Ident {
   readonly kind: 'Ident';
   readonly name: string;
+  /** 1-based source line; set by the text parser, absent for block-built ASTs. */
+  readonly line?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -65,6 +67,8 @@ export interface CallExpr {
   readonly callee: string;
   readonly args: readonly Expr[];
   readonly block: BlockExpr | null;
+  /** 1-based source line; set by the text parser, absent for block-built ASTs. */
+  readonly line?: number;
 }
 
 /** `do ... end` block — a sequence of statements used as a value */

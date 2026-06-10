@@ -70,9 +70,13 @@ import {
 // ---------------------------------------------------------------------------
 
 export class SproutRuntimeError extends Error {
-  constructor(message: string) {
-    super(message);
+  /** 1-based source line the error refers to, when known (text mode only). */
+  readonly line: number | undefined;
+
+  constructor(message: string, line?: number) {
+    super(line !== undefined ? `Line ${line}: ${message}` : message);
     this.name = 'SproutRuntimeError';
+    this.line = line;
   }
 }
 
@@ -848,7 +852,7 @@ function evalExpr(expr: Expr, env: Env): SproutValue {
     case 'Ident': {
       const val = env.get(expr.name);
       if (val === undefined) {
-        throw new SproutRuntimeError(`Unbound identifier: '${expr.name}'`);
+        throw new SproutRuntimeError(`Unbound identifier: '${expr.name}'`, expr.line);
       }
       return val.kind === 'var' ? val.cell.value : val;
     }
@@ -1052,6 +1056,19 @@ function evalRepeat(expr: RepeatExpr, env: Env): Drawing {
 }
 
 function evalCall(expr: CallExpr, env: Env): SproutValue {
+  try {
+    return evalCallInner(expr, env);
+  } catch (e) {
+    // Annotate escaping runtime errors with this call's line; the innermost
+    // call gets there first, which is the most precise location.
+    if (e instanceof SproutRuntimeError && e.line === undefined && expr.line !== undefined) {
+      throw new SproutRuntimeError(e.message, expr.line);
+    }
+    throw e;
+  }
+}
+
+function evalCallInner(expr: CallExpr, env: Env): SproutValue {
   if (expr.block !== null) {
     throw new SproutRuntimeError(`${expr.callee}: trailing do...end blocks are not supported in Phase 1`);
   }
