@@ -85,6 +85,8 @@ export type Drawing =
   | { readonly kind: 'goto';       readonly x: number; readonly y: number }
   | { readonly kind: 'home' }
   | { readonly kind: 'empty' }
+  | { readonly kind: 'hideTurtle' }
+  | { readonly kind: 'showTurtle' }
   | WaitDrawing
   | SoundDrawing
   | FillPathDrawing;
@@ -153,6 +155,10 @@ export const mkTurn = (degrees: number): Drawing =>
 export const PEN_UP: Drawing = { kind: 'penUp' };
 
 export const PEN_DOWN: Drawing = { kind: 'penDown' };
+
+export const HIDE_TURTLE: Drawing = { kind: 'hideTurtle' };
+
+export const SHOW_TURTLE: Drawing = { kind: 'showTurtle' };
 
 export const mkSequence = (steps: readonly Drawing[]): Drawing =>
   ({ kind: 'sequence', steps });

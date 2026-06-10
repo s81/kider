@@ -58,6 +58,8 @@ import {
   mkWait,
   mkSound,
   mkFillPath,
+  HIDE_TURTLE,
+  SHOW_TURTLE,
   PEN_UP,
   PEN_DOWN,
   EMPTY,
@@ -145,7 +147,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
     case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'penWidth': case 'empty':
-    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas': case 'stamp': case 'arc': case 'goto': case 'home': case 'wait': case 'sound': case 'fillPath':
+    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas': case 'stamp': case 'arc': case 'goto': case 'home': case 'wait': case 'sound': case 'fillPath': case 'hideTurtle': case 'showTurtle':
       return true;
     default:
       return false;
@@ -791,6 +793,14 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (args.length !== 0) throw new SproutRuntimeError(`stopTimer expects 0 arguments, got ${args.length}`);
     _stopTimer = true;
     return EMPTY;
+  }],
+  ['hideTurtle', (args) => {
+    if (args.length !== 0) throw new SproutRuntimeError(`hideTurtle expects 0 arguments, got ${args.length}`);
+    return HIDE_TURTLE;
+  }],
+  ['showTurtle', (args) => {
+    if (args.length !== 0) throw new SproutRuntimeError(`showTurtle expects 0 arguments, got ${args.length}`);
+    return SHOW_TURTLE;
   }],
 ]);
 

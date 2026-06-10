@@ -27,7 +27,9 @@ export type CanvasCommand =
   | { readonly kind: 'clearCanvas' }
   | { readonly kind: 'wait'; readonly durationMs: number }
   | { readonly kind: 'sound'; readonly frequency: number; readonly durationMs: number }
-  | { readonly kind: 'fillPath'; readonly points: readonly { x: number; y: number }[] };
+  | { readonly kind: 'fillPath'; readonly points: readonly { x: number; y: number }[] }
+  | { readonly kind: 'hideTurtle' }
+  | { readonly kind: 'showTurtle' };
 
 // ---------------------------------------------------------------------------
 // Turtle state (internal)
@@ -57,6 +59,8 @@ function scaleDrawing(factor: number, d: Drawing): Drawing {
     case 'color':
     case 'penWidth':
     case 'empty':
+    case 'hideTurtle':
+    case 'showTurtle':
       return d;
     case 'sequence':
       return { kind: 'sequence', steps: d.steps.map(s => scaleDrawing(factor, s)) };
@@ -264,6 +268,14 @@ function renderInto(
       return;
     }
 
+    case 'hideTurtle':
+      out.push({ kind: 'hideTurtle' });
+      return;
+
+    case 'showTurtle':
+      out.push({ kind: 'showTurtle' });
+      return;
+
     case 'arc': {
       if (drawing.angle === 0 || drawing.radius === 0) return;
       const steps = Math.max(4, Math.abs(Math.round(drawing.angle / 5)));
@@ -374,6 +386,8 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
     case 'penWidth':
     case 'wait':
     case 'sound':
+    case 'hideTurtle':
+    case 'showTurtle':
       return;
 
     case 'fillPath':

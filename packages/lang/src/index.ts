@@ -73,6 +73,8 @@ export {
   // Drawing singleton constants (zero-arg constructors replaced by constants)
   PEN_UP,
   PEN_DOWN,
+  HIDE_TURTLE,
+  SHOW_TURTLE,
   EMPTY,
 } from './values.js';
 
