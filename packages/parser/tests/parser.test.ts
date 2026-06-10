@@ -298,6 +298,41 @@ describe('parse — repeat', () => {
   });
 });
 
+describe('parse — fill', () => {
+  const fillE = (body: object[]) =>
+    ({ kind: 'FillExpr' as const, body: blockE(body) });
+
+  it('parses fill do...end', () => {
+    expect(parse('fill do\n  forward(100)\n  turn(120)\nend')).toEqual(
+      prog(exprS(fillE([
+        exprS(callE('forward', [num(100)])),
+        exprS(callE('turn', [num(120)])),
+      ])))
+    );
+  });
+
+  it('allows "fill" as an ordinary identifier elsewhere', () => {
+    expect(parse('forward(fill)')).toEqual(
+      prog(exprS(callE('forward', [id('fill')])))
+    );
+  });
+
+  it('parses fill containing a repeat (triangle)', () => {
+    const src = 'fill do\n  repeat 3 do\n    forward(100)\n    turn(120)\n  end\nend';
+    const inner = repeatE(num(3), [
+      exprS(callE('forward', [num(100)])),
+      exprS(callE('turn', [num(120)])),
+    ]);
+    expect(parse(src)).toEqual(prog(exprS(fillE([exprS(inner)]))));
+  });
+
+  it('round-trips fill through serialize and parse', () => {
+    const src = 'fill do\n  forward(100)\n  turn(120)\nend';
+    const ast = parse(src);
+    expect(parse(serialize(ast))).toEqual(ast);
+  });
+});
+
 describe('parse — on event', () => {
   it('parses on :click do...end', () => {
     expect(parse('on :click do\n  forward(20)\nend')).toEqual(

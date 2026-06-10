@@ -1,7 +1,7 @@
 import { tokenize, type Token, ParseError } from './lexer.js';
 import type {
   Program, Stmt, Expr, DefStmt,
-  BlockExpr, RepeatExpr, OnExpr, CallExpr, IfExpr, UnaryExpr,
+  BlockExpr, RepeatExpr, FillExpr, OnExpr, CallExpr, IfExpr, UnaryExpr,
   LetStmt, AssignStmt, WhileExpr, ForEachExpr,
 } from '@sprout/lang';
 
@@ -303,6 +303,14 @@ class Parser {
       }
 
       this.advance();
+
+      // Contextual keyword: `fill do ... end`. Only when directly followed by
+      // `do` (and a block call is allowed here) — otherwise `fill` stays an
+      // ordinary identifier.
+      if (name === 'fill' && !this.noBlockCall && this.checkIdent('do')) {
+        const body = this.parseDoBlock();
+        return { kind: 'FillExpr', body } satisfies FillExpr;
+      }
 
       if (this.check('LPAREN')) {
         this.advance();
