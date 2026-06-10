@@ -1,4 +1,4 @@
-export type Token =
+type TokenBase =
   | { kind: 'NUMBER'; value: number }
   | { kind: 'STRING'; value: string }
   | { kind: 'SYMBOL'; name: string }
@@ -19,22 +19,35 @@ export type Token =
   | { kind: 'NEQ' }
   | { kind: 'EOF' };
 
+/** 1-based source line where the token starts. */
+export type Token = TokenBase & { line: number };
+
 export class ParseError extends Error {
-  constructor(message: string) {
-    super(message);
+  /** 1-based source line the error refers to, when known. */
+  readonly line: number | undefined;
+
+  constructor(message: string, line?: number) {
+    super(line !== undefined ? `Line ${line}: ${message}` : message);
     this.name = 'ParseError';
+    this.line = line;
   }
 }
 
 export function tokenize(source: string): Token[] {
   const tokens: Token[] = [];
   let i = 0;
+  let line = 1;
+
+  const push = (tok: TokenBase): void => {
+    tokens.push({ ...tok, line });
+  };
 
   while (i < source.length) {
     const ch = source[i];
 
     // Whitespace (including newlines) — ignored
     if (ch === ' ' || ch === '\t' || ch === '\r' || ch === '\n') {
+      if (ch === '\n') line++;
       i++;
       continue;
     }
@@ -53,17 +66,19 @@ export function tokenize(source: string): Token[] {
         j++;
         while (j < source.length && source[j] >= '0' && source[j] <= '9') j++;
       }
-      tokens.push({ kind: 'NUMBER', value: Number(source.slice(i, j)) });
+      push({ kind: 'NUMBER', value: Number(source.slice(i, j)) });
       i = j;
       continue;
     }
 
-    // String: '"' [^"]* '"'
+    // String: '"' [^"]* '"' — attributed to its opening line
     if (ch === '"') {
       let j = i + 1;
       while (j < source.length && source[j] !== '"') j++;
-      if (j >= source.length) throw new ParseError('Unterminated string literal');
-      tokens.push({ kind: 'STRING', value: source.slice(i + 1, j) });
+      if (j >= source.length) throw new ParseError('Unterminated string literal', line);
+      const value = source.slice(i + 1, j);
+      push({ kind: 'STRING', value });
+      for (const c of value) if (c === '\n') line++;
       i = j + 1;
       continue;
     }
@@ -72,7 +87,7 @@ export function tokenize(source: string): Token[] {
     if (ch === ':' && i + 1 < source.length && isLower(source[i + 1])) {
       let j = i + 1;
       while (j < source.length && isIdentChar(source[j])) j++;
-      tokens.push({ kind: 'SYMBOL', name: source.slice(i + 1, j) });
+      push({ kind: 'SYMBOL', name: source.slice(i + 1, j) });
       i = j;
       continue;
     }
@@ -81,35 +96,35 @@ export function tokenize(source: string): Token[] {
     if (isAlpha(ch)) {
       let j = i;
       while (j < source.length && isIdentChar(source[j])) j++;
-      tokens.push({ kind: 'IDENT', name: source.slice(i, j) });
+      push({ kind: 'IDENT', name: source.slice(i, j) });
       i = j;
       continue;
     }
 
     // Two-character tokens — must be checked before single-character
-    if (ch === '<' && source[i + 1] === '=') { tokens.push({ kind: 'LTE' });  i += 2; continue; }
-    if (ch === '>' && source[i + 1] === '=') { tokens.push({ kind: 'GTE' });  i += 2; continue; }
-    if (ch === '=' && source[i + 1] === '=') { tokens.push({ kind: 'EQEQ' }); i += 2; continue; }
-    if (ch === '!' && source[i + 1] === '=') { tokens.push({ kind: 'NEQ' });  i += 2; continue; }
+    if (ch === '<' && source[i + 1] === '=') { push({ kind: 'LTE' });  i += 2; continue; }
+    if (ch === '>' && source[i + 1] === '=') { push({ kind: 'GTE' });  i += 2; continue; }
+    if (ch === '=' && source[i + 1] === '=') { push({ kind: 'EQEQ' }); i += 2; continue; }
+    if (ch === '!' && source[i + 1] === '=') { push({ kind: 'NEQ' });  i += 2; continue; }
 
     // Single-character tokens
     switch (ch) {
-      case '+': tokens.push({ kind: 'PLUS' });   i++; break;
-      case '-': tokens.push({ kind: 'MINUS' });  i++; break;
-      case '*': tokens.push({ kind: 'STAR' });   i++; break;
-      case '/': tokens.push({ kind: 'SLASH' });  i++; break;
-      case '(': tokens.push({ kind: 'LPAREN' }); i++; break;
-      case ')': tokens.push({ kind: 'RPAREN' }); i++; break;
-      case ',': tokens.push({ kind: 'COMMA' });  i++; break;
-      case '=': tokens.push({ kind: 'EQ' });     i++; break;
-      case '<': tokens.push({ kind: 'LT' });     i++; break;
-      case '>': tokens.push({ kind: 'GT' });     i++; break;
+      case '+': push({ kind: 'PLUS' });   i++; break;
+      case '-': push({ kind: 'MINUS' });  i++; break;
+      case '*': push({ kind: 'STAR' });   i++; break;
+      case '/': push({ kind: 'SLASH' });  i++; break;
+      case '(': push({ kind: 'LPAREN' }); i++; break;
+      case ')': push({ kind: 'RPAREN' }); i++; break;
+      case ',': push({ kind: 'COMMA' });  i++; break;
+      case '=': push({ kind: 'EQ' });     i++; break;
+      case '<': push({ kind: 'LT' });     i++; break;
+      case '>': push({ kind: 'GT' });     i++; break;
       default:
-        throw new ParseError(`Unexpected character: '${ch}' at position ${i}`);
+        throw new ParseError(`Unexpected character: '${ch}'`, line);
     }
   }
 
-  tokens.push({ kind: 'EOF' });
+  push({ kind: 'EOF' });
   return tokens;
 }
 

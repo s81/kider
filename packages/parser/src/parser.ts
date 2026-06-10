@@ -39,7 +39,7 @@ class Parser {
       const got = t.kind === 'IDENT'
         ? `'${(t as { kind: 'IDENT'; name: string }).name}'`
         : t.kind;
-      throw new ParseError(`Expected ${kind}, got ${got}`);
+      throw new ParseError(`Expected ${kind}, got ${got}`, t.line);
     }
     return this.advance();
   }
@@ -50,7 +50,7 @@ class Parser {
       const got = t.kind === 'IDENT'
         ? `'${(t as { kind: 'IDENT'; name: string }).name}'`
         : t.kind;
-      throw new ParseError(`Expected '${name}', got ${got}`);
+      throw new ParseError(`Expected '${name}', got ${got}`, t.line);
     }
     this.advance();
   }
@@ -355,6 +355,7 @@ class Parser {
 
     throw new ParseError(
       `Unexpected token: ${t.kind}${t.kind === 'IDENT' ? ` ('${(t as { kind: 'IDENT'; name: string }).name}')` : ''}`,
+      t.line,
     );
   }
 }

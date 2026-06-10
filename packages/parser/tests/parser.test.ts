@@ -51,64 +51,64 @@ const forEachE = (item: string, list: object, body: object[]): ForEachExpr => ({
 describe('tokenize', () => {
   it('tokenizes an integer number', () => {
     expect(tokenize('42')).toEqual([
-      { kind: 'NUMBER', value: 42 },
-      { kind: 'EOF' },
+      { kind: 'NUMBER', value: 42, line: 1 },
+      { kind: 'EOF', line: 1 },
     ]);
   });
 
   it('tokenizes a float number', () => {
     expect(tokenize('3.14')).toEqual([
-      { kind: 'NUMBER', value: 3.14 },
-      { kind: 'EOF' },
+      { kind: 'NUMBER', value: 3.14, line: 1 },
+      { kind: 'EOF', line: 1 },
     ]);
   });
 
   it('tokenizes a string literal', () => {
     expect(tokenize('"hello"')).toEqual([
-      { kind: 'STRING', value: 'hello' },
-      { kind: 'EOF' },
+      { kind: 'STRING', value: 'hello', line: 1 },
+      { kind: 'EOF', line: 1 },
     ]);
   });
 
   it('tokenizes a symbol literal', () => {
     expect(tokenize(':click')).toEqual([
-      { kind: 'SYMBOL', name: 'click' },
-      { kind: 'EOF' },
+      { kind: 'SYMBOL', name: 'click', line: 1 },
+      { kind: 'EOF', line: 1 },
     ]);
   });
 
   it('tokenizes an identifier', () => {
     expect(tokenize('forward')).toEqual([
-      { kind: 'IDENT', name: 'forward' },
-      { kind: 'EOF' },
+      { kind: 'IDENT', name: 'forward', line: 1 },
+      { kind: 'EOF', line: 1 },
     ]);
   });
 
   it('tokenizes operators', () => {
     expect(tokenize('+ - * /')).toEqual([
-      { kind: 'PLUS' },
-      { kind: 'MINUS' },
-      { kind: 'STAR' },
-      { kind: 'SLASH' },
-      { kind: 'EOF' },
+      { kind: 'PLUS', line: 1 },
+      { kind: 'MINUS', line: 1 },
+      { kind: 'STAR', line: 1 },
+      { kind: 'SLASH', line: 1 },
+      { kind: 'EOF', line: 1 },
     ]);
   });
 
   it('tokenizes punctuation', () => {
     expect(tokenize('(,)=')).toEqual([
-      { kind: 'LPAREN' },
-      { kind: 'COMMA' },
-      { kind: 'RPAREN' },
-      { kind: 'EQ' },
-      { kind: 'EOF' },
+      { kind: 'LPAREN', line: 1 },
+      { kind: 'COMMA', line: 1 },
+      { kind: 'RPAREN', line: 1 },
+      { kind: 'EQ', line: 1 },
+      { kind: 'EOF', line: 1 },
     ]);
   });
 
-  it('skips whitespace and newlines', () => {
+  it('skips whitespace and newlines, tracking the line number', () => {
     expect(tokenize('  forward\n  100\n')).toEqual([
-      { kind: 'IDENT', name: 'forward' },
-      { kind: 'NUMBER', value: 100 },
-      { kind: 'EOF' },
+      { kind: 'IDENT', name: 'forward', line: 1 },
+      { kind: 'NUMBER', value: 100, line: 2 },
+      { kind: 'EOF', line: 3 },
     ]);
   });
 
@@ -123,34 +123,34 @@ describe('tokenize', () => {
   it('tokenizes a realistic snippet', () => {
     const src = 'forward(100)';
     expect(tokenize(src)).toEqual([
-      { kind: 'IDENT', name: 'forward' },
-      { kind: 'LPAREN' },
-      { kind: 'NUMBER', value: 100 },
-      { kind: 'RPAREN' },
-      { kind: 'EOF' },
+      { kind: 'IDENT', name: 'forward', line: 1 },
+      { kind: 'LPAREN', line: 1 },
+      { kind: 'NUMBER', value: 100, line: 1 },
+      { kind: 'RPAREN', line: 1 },
+      { kind: 'EOF', line: 1 },
     ]);
   });
 
   it('tokenizes < and >', () => {
-    expect(tokenize('< >')).toEqual([{ kind: 'LT' }, { kind: 'GT' }, { kind: 'EOF' }]);
+    expect(tokenize('< >')).toEqual([{ kind: 'LT', line: 1 }, { kind: 'GT', line: 1 }, { kind: 'EOF', line: 1 }]);
   });
 
   it('tokenizes <= and >=', () => {
-    expect(tokenize('<= >=')).toEqual([{ kind: 'LTE' }, { kind: 'GTE' }, { kind: 'EOF' }]);
+    expect(tokenize('<= >=')).toEqual([{ kind: 'LTE', line: 1 }, { kind: 'GTE', line: 1 }, { kind: 'EOF', line: 1 }]);
   });
 
   it('tokenizes == and !=', () => {
-    expect(tokenize('== !=')).toEqual([{ kind: 'EQEQ' }, { kind: 'NEQ' }, { kind: 'EOF' }]);
+    expect(tokenize('== !=')).toEqual([{ kind: 'EQEQ', line: 1 }, { kind: 'NEQ', line: 1 }, { kind: 'EOF', line: 1 }]);
   });
 
   it('does not confuse = with ==', () => {
-    expect(tokenize('=')).toEqual([{ kind: 'EQ' }, { kind: 'EOF' }]);
-    expect(tokenize('==')).toEqual([{ kind: 'EQEQ' }, { kind: 'EOF' }]);
+    expect(tokenize('=')).toEqual([{ kind: 'EQ', line: 1 }, { kind: 'EOF', line: 1 }]);
+    expect(tokenize('==')).toEqual([{ kind: 'EQEQ', line: 1 }, { kind: 'EOF', line: 1 }]);
   });
 
   it('does not confuse < with <=', () => {
-    expect(tokenize('<')).toEqual([{ kind: 'LT' }, { kind: 'EOF' }]);
-    expect(tokenize('<=')).toEqual([{ kind: 'LTE' }, { kind: 'EOF' }]);
+    expect(tokenize('<')).toEqual([{ kind: 'LT', line: 1 }, { kind: 'EOF', line: 1 }]);
+    expect(tokenize('<=')).toEqual([{ kind: 'LTE', line: 1 }, { kind: 'EOF', line: 1 }]);
   });
 });
 
@@ -295,6 +295,33 @@ describe('parse — repeat', () => {
     const src = 'repeat 5 with i do\n  forward(i * 10)\nend';
     const ast = parse(src);
     expect(parse(serialize(ast))).toEqual(ast);
+  });
+});
+
+describe('parse errors — line numbers', () => {
+  it('reports the line of an unexpected token', () => {
+    expect(() => parse('forward(10)\nturn(90)\nrepeat oops oops do\nend'))
+      .toThrow(/Line 3:/);
+  });
+
+  it("reports the line of the token found where 'do' was expected", () => {
+    expect(() => parse('forward(1)\nif true\n  forward(2)\nend'))
+      .toThrow(/Line 3: Expected 'do', got 'forward'/);
+  });
+
+  it('reports the last line when end is missing at EOF', () => {
+    expect(() => parse('repeat 4 do\n  forward(10)'))
+      .toThrow(/Line 2:/);
+  });
+
+  it('reports the line of an unexpected character', () => {
+    expect(() => parse('forward(10)\n@'))
+      .toThrow(/Line 2:.*Unexpected character/);
+  });
+
+  it('lines stay correct after comments and blank lines', () => {
+    expect(() => parse('# comment\n\nforward(10)\n# more\n)'))
+      .toThrow(/Line 5:/);
   });
 });
 
