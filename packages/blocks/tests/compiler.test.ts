@@ -541,6 +541,80 @@ describe('math blocks', () => {
     });
   });
 
+  it('sprout_distance compiles to distance CallExpr (4 args)', () => {
+    const ws = makeWorkspace();
+    const distBlock = ws.newBlock('sprout_distance');
+    const coords = [0, 0, 3, 4].map((n) => {
+      const b = ws.newBlock('sprout_number');
+      b.setFieldValue(String(n), 'NUM');
+      return b;
+    });
+    distBlock.getInput('X1')!.connection!.connect(coords[0].outputConnection!);
+    distBlock.getInput('Y1')!.connection!.connect(coords[1].outputConnection!);
+    distBlock.getInput('X2')!.connection!.connect(coords[2].outputConnection!);
+    distBlock.getInput('Y2')!.connection!.connect(coords[3].outputConnection!);
+    const fwdBlock = ws.newBlock('sprout_forward');
+    fwdBlock.getInput('DISTANCE')!.connection!.connect(distBlock.outputConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr', callee: 'forward',
+          args: [{
+            kind: 'CallExpr', callee: 'distance',
+            args: [
+              { kind: 'NumberLit', value: 0 },
+              { kind: 'NumberLit', value: 0 },
+              { kind: 'NumberLit', value: 3 },
+              { kind: 'NumberLit', value: 4 },
+            ],
+            block: null,
+          }],
+          block: null,
+        },
+      }],
+    });
+  });
+
+  it('sprout_touching compiles to touching CallExpr (5 args)', () => {
+    const ws = makeWorkspace();
+    const touchBlock = ws.newBlock('sprout_touching');
+    const nums = [0, 0, 3, 4, 5].map((n) => {
+      const b = ws.newBlock('sprout_number');
+      b.setFieldValue(String(n), 'NUM');
+      return b;
+    });
+    touchBlock.getInput('X1')!.connection!.connect(nums[0].outputConnection!);
+    touchBlock.getInput('Y1')!.connection!.connect(nums[1].outputConnection!);
+    touchBlock.getInput('X2')!.connection!.connect(nums[2].outputConnection!);
+    touchBlock.getInput('Y2')!.connection!.connect(nums[3].outputConnection!);
+    touchBlock.getInput('RADIUS')!.connection!.connect(nums[4].outputConnection!);
+    const putsBlock = ws.newBlock('sprout_puts');
+    putsBlock.getInput('VALUE')!.connection!.connect(touchBlock.outputConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr', callee: 'puts',
+          args: [{
+            kind: 'CallExpr', callee: 'touching',
+            args: [
+              { kind: 'NumberLit', value: 0 },
+              { kind: 'NumberLit', value: 0 },
+              { kind: 'NumberLit', value: 3 },
+              { kind: 'NumberLit', value: 4 },
+              { kind: 'NumberLit', value: 5 },
+            ],
+            block: null,
+          }],
+          block: null,
+        },
+      }],
+    });
+  });
+
   it('sprout_pi compiles to pi CallExpr (0-arg pattern)', () => {
     const ws = makeWorkspace();
     const piBlock = ws.newBlock('sprout_pi');

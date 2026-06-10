@@ -572,6 +572,14 @@ function compileExpr(block: Blockly.Block): Expr {
     }
     case 'sprout_stamp':
       return { kind: 'CallExpr', callee: 'stamp', args: [], block: null };
+    case 'sprout_distance': {
+      const args = ['X1', 'Y1', 'X2', 'Y2'].map((name) => compileExpr(mustGetInput(block, name)));
+      return { kind: 'CallExpr', callee: 'distance', args, block: null };
+    }
+    case 'sprout_touching': {
+      const args = ['X1', 'Y1', 'X2', 'Y2', 'RADIUS'].map((name) => compileExpr(mustGetInput(block, name)));
+      return { kind: 'CallExpr', callee: 'touching', args, block: null };
+    }
     default:
       throw new Error(`Unknown value block type: ${block.type}`);
   }

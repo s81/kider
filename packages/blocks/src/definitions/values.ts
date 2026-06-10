@@ -391,4 +391,31 @@ export function registerValueBlocks(): void {
       this.setTooltip('Random number between min and max (inclusive)');
     },
   };
+
+  Blockly.Blocks['sprout_distance'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('X1').setCheck('Number').appendField('distance from x');
+      this.appendValueInput('Y1').setCheck('Number').appendField('y');
+      this.appendValueInput('X2').setCheck('Number').appendField('to x');
+      this.appendValueInput('Y2').setCheck('Number').appendField('y');
+      this.setInputsInline(true);
+      this.setOutput(true, 'Number');
+      this.setColour(230);
+      this.setTooltip('Distance between two points');
+    },
+  };
+
+  Blockly.Blocks['sprout_touching'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('X1').setCheck('Number').appendField('touching? x');
+      this.appendValueInput('Y1').setCheck('Number').appendField('y');
+      this.appendValueInput('X2').setCheck('Number').appendField('and x');
+      this.appendValueInput('Y2').setCheck('Number').appendField('y');
+      this.appendValueInput('RADIUS').setCheck('Number').appendField('within');
+      this.setInputsInline(true);
+      this.setOutput(true, 'Boolean');
+      this.setColour(230);
+      this.setTooltip('True when two points are within the given distance of each other');
+    },
+  };
 }
