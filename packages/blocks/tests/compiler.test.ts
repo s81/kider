@@ -646,6 +646,29 @@ describe('math blocks', () => {
     });
   });
 
+  it('sprout_key_down compiles to keyDown CallExpr with symbol arg', () => {
+    const ws = makeWorkspace();
+    const keyBlock = ws.newBlock('sprout_key_down');
+    keyBlock.setFieldValue('right', 'KEY');
+    const putsBlock = ws.newBlock('sprout_puts');
+    putsBlock.getInput('VALUE')!.connection!.connect(keyBlock.outputConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr', callee: 'puts',
+          args: [{
+            kind: 'CallExpr', callee: 'keyDown',
+            args: [{ kind: 'SymbolLit', name: 'right' }],
+            block: null,
+          }],
+          block: null,
+        },
+      }],
+    });
+  });
+
   it('sprout_beep compiles to beep CallExpr statement', () => {
     const ws = makeWorkspace();
     ws.newBlock('sprout_beep');

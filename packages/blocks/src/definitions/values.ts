@@ -145,6 +145,27 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_key_down'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('key')
+        .appendField(
+          new Blockly.FieldDropdown([
+            ['left',  'left'],
+            ['right', 'right'],
+            ['up',    'up'],
+            ['down',  'down'],
+            ['space', 'space'],
+          ]) as unknown as Blockly.Field,
+          'KEY',
+        )
+        .appendField('held?');
+      this.setOutput(true, 'Boolean');
+      this.setColour(230);
+      this.setTooltip('True while the key is held down');
+    },
+  };
+
   Blockly.Blocks['sprout_get_x'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput().appendField('turtle x');

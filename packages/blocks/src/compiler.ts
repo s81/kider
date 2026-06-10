@@ -590,6 +590,10 @@ function compileExpr(block: Blockly.Block): Expr {
     }
     case 'sprout_stamp':
       return { kind: 'CallExpr', callee: 'stamp', args: [], block: null };
+    case 'sprout_key_down': {
+      const key = block.getFieldValue('KEY') as string;
+      return { kind: 'CallExpr', callee: 'keyDown', args: [{ kind: 'SymbolLit', name: key }], block: null };
+    }
     case 'sprout_distance': {
       const args = ['X1', 'Y1', 'X2', 'Y2'].map((name) => compileExpr(mustGetInput(block, name)));
       return { kind: 'CallExpr', callee: 'distance', args, block: null };
