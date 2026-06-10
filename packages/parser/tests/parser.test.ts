@@ -298,6 +298,38 @@ describe('parse — repeat', () => {
   });
 });
 
+describe('parse — calls with parens in block headers', () => {
+  it('if cond can be a call: if keyDown(:left) do ... end', () => {
+    expect(parse('if keyDown(:left) do\n  forward(5)\nend')).toEqual(
+      prog(exprS({
+        kind: 'IfExpr' as const,
+        cond: callE('keyDown', [sym('left')]),
+        then: blockE([exprS(callE('forward', [num(5)]))]),
+        else: null,
+      }))
+    );
+  });
+
+  it('while cond can be a call', () => {
+    expect(parse('while keyDown(:space) do\n  forward(1)\nend')).toEqual(
+      prog(exprS({
+        kind: 'WhileExpr' as const,
+        cond: callE('keyDown', [sym('space')]),
+        body: blockE([exprS(callE('forward', [num(1)]))]),
+      }))
+    );
+  });
+
+  it('repeat count can be a call', () => {
+    expect(parse('repeat size(list(1, 2)) do\n  forward(1)\nend')).toEqual(
+      prog(exprS(repeatE(
+        callE('size', [callE('list', [num(1), num(2)])]),
+        [exprS(callE('forward', [num(1)]))]
+      )))
+    );
+  });
+});
+
 describe('parse — unary minus', () => {
   const neg = (operand: object) =>
     ({ kind: 'UnaryExpr' as const, op: '-' as const, operand });

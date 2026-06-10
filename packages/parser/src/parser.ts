@@ -185,6 +185,19 @@ class Parser {
     }
   }
 
+  /**
+   * Parse a block-header expression (if/while cond, repeat count, …) with
+   * trailing-block calls disabled, so the header's `do` is not captured as a
+   * call's `do...end` block argument.
+   */
+  private parseHeaderExpr(): Expr {
+    const prev = this.noBlockCall;
+    this.noBlockCall = true;
+    const e = this.parseExpr();
+    this.noBlockCall = prev;
+    return e;
+  }
+
   private parseAtom(): Expr {
     const t = this.peek();
 
@@ -230,7 +243,7 @@ class Parser {
 
       if (name === 'if') {
         this.advance();
-        const cond = this.parseExpr();
+        const cond = this.parseHeaderExpr();
         this.eatIdent('do');
         const thenStmts = this.parseBodyUntil(['else', 'end']);
         const thenBlock: BlockExpr = { kind: 'BlockExpr', body: thenStmts };
@@ -251,7 +264,7 @@ class Parser {
 
       if (name === 'repeat') {
         this.advance();
-        const count = this.parseExpr();
+        const count = this.parseHeaderExpr();
         // Optional `with <ident>` — contextual keyword, not reserved.
         let item: string | null = null;
         const next = this.peek();
@@ -266,7 +279,7 @@ class Parser {
 
       if (name === 'while') {
         this.advance();
-        const cond = this.parseExpr();
+        const cond = this.parseHeaderExpr();
         const body = this.parseDoBlock();
         return { kind: 'WhileExpr', cond, body } satisfies WhileExpr;
       }
