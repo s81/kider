@@ -247,6 +247,7 @@ export function drawUpTo(
         break;
       }
       case 'wait':
+      case 'sound':
         break;
     }
   }
@@ -255,7 +256,8 @@ export function drawUpTo(
 
 export type PlaybackSegment =
   | { kind: 'draw'; upTo: number }
-  | { kind: 'wait'; durationMs: number };
+  | { kind: 'wait'; durationMs: number }
+  | { kind: 'sound'; frequency: number; durationMs: number };
 
 export function buildPlayback(commands: CanvasCommand[]): PlaybackSegment[] {
   const segments: PlaybackSegment[] = [];
@@ -264,7 +266,11 @@ export function buildPlayback(commands: CanvasCommand[]): PlaybackSegment[] {
     const cmd = commands[i];
     if (cmd.kind === 'wait') {
       if (drawEnd >= 0) segments.push({ kind: 'draw', upTo: drawEnd });
-      segments.push({ kind: 'wait', durationMs: (cmd as { kind: 'wait'; durationMs: number }).durationMs });
+      segments.push({ kind: 'wait', durationMs: cmd.durationMs });
+      drawEnd = -1;
+    } else if (cmd.kind === 'sound') {
+      if (drawEnd >= 0) segments.push({ kind: 'draw', upTo: drawEnd });
+      segments.push({ kind: 'sound', frequency: cmd.frequency, durationMs: cmd.durationMs });
       drawEnd = -1;
     } else {
       drawEnd = i;

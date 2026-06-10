@@ -31,6 +31,8 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_while' },
     { kind: 'block', type: 'sprout_for_each' },
     { kind: 'block', type: 'sprout_wait' },
+    { kind: 'block', type: 'sprout_beep' },
+    { kind: 'block', type: 'sprout_play_note' },
     { kind: 'block', type: 'sprout_on_event' },
     { kind: 'block', type: 'sprout_on_timer' },
     // Variables

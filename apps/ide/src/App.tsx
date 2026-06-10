@@ -20,6 +20,7 @@ import { Stage } from './Stage.js';
 import { VariableInspector } from './VariableInspector.js';
 import { buildPlayback } from './stage-utils.js';
 import type { PlaybackSegment } from './stage-utils.js';
+import { playTone } from './audio.js';
 
 type SourceMode = 'blocks' | 'editor';
 
@@ -173,6 +174,9 @@ export function App() {
         playNext(); // continue immediately to check for next segment
       } else {
         // Hold the current view for durationMs, then continue.
+        // A sound segment also plays its tone for that duration, so
+        // consecutive playNote calls come out as a melody.
+        if (seg.kind === 'sound') playTone(seg.frequency, seg.durationMs);
         const tid = setTimeout(playNext, seg.durationMs);
         animTimeoutsRef.current.push(tid);
       }
@@ -185,6 +189,11 @@ export function App() {
   function applyHandlerDelta(result: { drawing: Drawing; hud: Record<string, string>; variables: Record<string, string> }) {
     const { drawing: delta, hud: newHud, variables: newVars } = result;
     const deltaCommands = render(delta);
+    // Handler deltas don't go through animated playback, so fire their sounds
+    // immediately — this is the game path (beep on collision in a handler).
+    for (const c of deltaCommands) {
+      if (c.kind === 'sound') playTone(c.frequency, c.durationMs);
+    }
     const usesClear = deltaCommands.some(c => c.kind === 'clearCanvas');
     if (usesClear) {
       accDrawingRef.current = delta;
@@ -226,8 +235,8 @@ export function App() {
       setHud(newHud);
       setVariables(newVars);
       setTimerIntervalMs(timerInterval);
-      const hasWait = cmds.some(c => c.kind === 'wait');
-      if (hasWait) {
+      const needsPlayback = cmds.some(c => c.kind === 'wait' || c.kind === 'sound');
+      if (needsPlayback) {
         startPlayback(cmds);
       }
       const timerFn = h.get(':timer');

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { drawUpTo, getTurtleState, STAGE_W, STAGE_H } from '../src/stage-utils.js';
+import { drawUpTo, getTurtleState, buildPlayback, STAGE_W, STAGE_H } from '../src/stage-utils.js';
 import type { CanvasCommand } from '@sprout/lang';
 
 function makeMockCtx() {
@@ -410,5 +410,48 @@ describe('clearCanvas drawing', () => {
     drawUpTo(ctx, commands, 1);
     expect(ctx.beginPath).toHaveBeenCalled();
     expect(ctx.moveTo).toHaveBeenCalledWith(STAGE_W / 2, STAGE_H / 2);
+  });
+});
+
+describe('buildPlayback — sound segments', () => {
+  const drawCmd = (i: number): CanvasCommand => ({ kind: 'lineTo', x: i, y: i });
+
+  it('sound in middle → [draw, sound, draw] with frequency carried through', () => {
+    const cmds: CanvasCommand[] = [
+      drawCmd(0),
+      { kind: 'sound', frequency: 440, durationMs: 500 },
+      drawCmd(2),
+    ];
+    expect(buildPlayback(cmds)).toEqual([
+      { kind: 'draw', upTo: 0 },
+      { kind: 'sound', frequency: 440, durationMs: 500 },
+      { kind: 'draw', upTo: 2 },
+    ]);
+  });
+
+  it('consecutive sounds each become their own segment (melody)', () => {
+    const cmds: CanvasCommand[] = [
+      { kind: 'sound', frequency: 262, durationMs: 300 },
+      { kind: 'sound', frequency: 330, durationMs: 300 },
+      { kind: 'sound', frequency: 392, durationMs: 300 },
+    ];
+    expect(buildPlayback(cmds)).toEqual([
+      { kind: 'sound', frequency: 262, durationMs: 300 },
+      { kind: 'sound', frequency: 330, durationMs: 300 },
+      { kind: 'sound', frequency: 392, durationMs: 300 },
+    ]);
+  });
+
+  it('mixed wait and sound keep their order', () => {
+    const cmds: CanvasCommand[] = [
+      drawCmd(0),
+      { kind: 'wait', durationMs: 100 },
+      { kind: 'sound', frequency: 880, durationMs: 200 },
+    ];
+    expect(buildPlayback(cmds)).toEqual([
+      { kind: 'draw', upTo: 0 },
+      { kind: 'wait', durationMs: 100 },
+      { kind: 'sound', frequency: 880, durationMs: 200 },
+    ]);
   });
 });
