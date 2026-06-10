@@ -101,6 +101,8 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_min' },
     { kind: 'block', type: 'sprout_random' },
     { kind: 'block', type: 'sprout_pi' },
+    { kind: 'block', type: 'sprout_distance' },
+    { kind: 'block', type: 'sprout_touching' },
     // Shapes
     { kind: 'block', type: 'sprout_circle' },
     { kind: 'block', type: 'sprout_rect' },
