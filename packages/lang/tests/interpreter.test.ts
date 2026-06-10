@@ -1162,6 +1162,75 @@ describe('math builtins', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Collision builtins
+// ---------------------------------------------------------------------------
+
+describe('collision builtins', () => {
+  describe('distance()', () => {
+    it('distance(0, 0, 3, 4) = 5', () => {
+      const prog = program(exprStmt(call('distance', [numLit(0), numLit(0), numLit(3), numLit(4)])));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 5 });
+    });
+
+    it('same point is 0', () => {
+      const prog = program(exprStmt(call('distance', [numLit(7), numLit(-2), numLit(7), numLit(-2)])));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 0 });
+    });
+
+    it('handles negative coordinates', () => {
+      const prog = program(exprStmt(call('distance', [numLit(-1), numLit(-1), numLit(2), numLit(3)])));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 5 });
+    });
+
+    it('throws with 3 args', () => {
+      const prog = program(exprStmt(call('distance', [numLit(0), numLit(0), numLit(3)])));
+      expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+    });
+
+    it('throws with 5 args', () => {
+      const prog = program(exprStmt(call('distance', [numLit(0), numLit(0), numLit(3), numLit(4), numLit(5)])));
+      expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+    });
+
+    it('throws on non-number arg', () => {
+      const prog = program(exprStmt(call('distance', [strLit('a'), numLit(0), numLit(3), numLit(4)])));
+      expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+    });
+  });
+
+  describe('touching()', () => {
+    it('true when inside radius', () => {
+      const prog = program(exprStmt(call('touching', [numLit(0), numLit(0), numLit(3), numLit(4), numLit(10)])));
+      expect(interpretValue(prog)).toEqual({ kind: 'bool', value: true });
+    });
+
+    it('true exactly at radius (inclusive boundary)', () => {
+      const prog = program(exprStmt(call('touching', [numLit(0), numLit(0), numLit(3), numLit(4), numLit(5)])));
+      expect(interpretValue(prog)).toEqual({ kind: 'bool', value: true });
+    });
+
+    it('false when outside radius', () => {
+      const prog = program(exprStmt(call('touching', [numLit(0), numLit(0), numLit(3), numLit(4), numLit(4.9)])));
+      expect(interpretValue(prog)).toEqual({ kind: 'bool', value: false });
+    });
+
+    it('throws with 4 args', () => {
+      const prog = program(exprStmt(call('touching', [numLit(0), numLit(0), numLit(3), numLit(4)])));
+      expect(() => interpretValue(prog)).toThrow(SproutRuntimeError);
+    });
+
+    it('works as an if condition', () => {
+      // if touching(0, 0, 1, 1, 5) do forward(10) end
+      const prog = program(exprStmt(ifExpr(
+        call('touching', [numLit(0), numLit(0), numLit(1), numLit(1), numLit(5)]),
+        [exprStmt(call('forward', [numLit(10)]))],
+      )));
+      expect(interpret(prog)).toEqual(mkSequence([mkSequence([mkForward(10)])]));
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Shape builtins
 // ---------------------------------------------------------------------------
 

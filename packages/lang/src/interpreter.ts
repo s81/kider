@@ -28,6 +28,7 @@ import {
   type SproutValue,
   type SproutNumber,
   type SproutString,
+  type SproutBool,
   type SproutVar,
   type SproutFunction,
   type SproutList,
@@ -440,6 +441,24 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     const a = assertNumber(args[0], 'min (a)');
     const b = assertNumber(args[1], 'min (b)');
     return { kind: 'number', value: Math.min(a.value, b.value) } satisfies SproutNumber;
+  }],
+  ['distance', (args) => {
+    if (args.length !== 4) throw new SproutRuntimeError(`distance expects 4 arguments, got ${args.length}`);
+    const x1 = assertNumber(args[0], 'distance (x1)');
+    const y1 = assertNumber(args[1], 'distance (y1)');
+    const x2 = assertNumber(args[2], 'distance (x2)');
+    const y2 = assertNumber(args[3], 'distance (y2)');
+    return { kind: 'number', value: Math.hypot(x2.value - x1.value, y2.value - y1.value) } satisfies SproutNumber;
+  }],
+  ['touching', (args) => {
+    if (args.length !== 5) throw new SproutRuntimeError(`touching expects 5 arguments, got ${args.length}`);
+    const x1 = assertNumber(args[0], 'touching (x1)');
+    const y1 = assertNumber(args[1], 'touching (y1)');
+    const x2 = assertNumber(args[2], 'touching (x2)');
+    const y2 = assertNumber(args[3], 'touching (y2)');
+    const radius = assertNumber(args[4], 'touching (radius)');
+    const dist = Math.hypot(x2.value - x1.value, y2.value - y1.value);
+    return { kind: 'bool', value: dist <= radius.value } satisfies SproutBool;
   }],
   ['random', (args) => {
     if (args.length !== 2) throw new SproutRuntimeError(`random expects 2 arguments, got ${args.length}`);
