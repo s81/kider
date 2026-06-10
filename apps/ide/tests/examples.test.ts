@@ -1,7 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
+// 'blockly/node.js' (not 'blockly/node') — the tsconfig paths entry maps the
+// bare subpath to a .d.ts for typechecking, and bun test honors that mapping.
+// @ts-expect-error untyped explicit-file import
+import * as Blockly from 'blockly/node.js';
 import { parse } from '@sprout/parser';
-import { interpretFull, callHandler } from '@sprout/lang';
+import { interpretFull, callHandler, serialize } from '@sprout/lang';
+import { registerAllBlocks, compileWorkspace, decompileProgram } from '@sprout/blocks';
 import { EXAMPLES } from '../src/examples.js';
+
+beforeAll(() => {
+  registerAllBlocks();
+});
 
 describe('examples gallery', () => {
   it('has at least five examples with unique names', () => {
@@ -18,6 +27,16 @@ describe('examples gallery', () => {
 
       it('interprets without error', () => {
         expect(() => interpretFull(parse(example.code))).not.toThrow();
+      });
+
+      it('decompiles to blocks and compiles back to the same program', () => {
+        const program = parse(example.code);
+        const ws1 = new Blockly.Workspace();
+        decompileProgram(ws1, program);
+        const once = compileWorkspace(ws1);
+        const ws2 = new Blockly.Workspace();
+        decompileProgram(ws2, once);
+        expect(serialize(compileWorkspace(ws2))).toBe(serialize(once));
       });
     });
   }

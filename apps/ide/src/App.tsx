@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as Blockly from 'blockly';
-import { compileWorkspace } from '@sprout/blocks';
+import { compileWorkspace, decompileProgram } from '@sprout/blocks';
 import {
   interpretFullWithInputs,
   collectInputNames,
@@ -340,9 +340,24 @@ export function App() {
   function handleLoadExample(e: React.ChangeEvent<HTMLSelectElement>) {
     const example = EXAMPLES.find(ex => ex.name === e.target.value);
     if (!example) return;
-    setEditorText(example.code);
-    setSourceMode('editor');
     // value stays "" via the controlled select, so re-picking the same example works
+    const ws = wsRef.current;
+    try {
+      if (!ws) throw new Error('workspace not ready');
+      const program = parse(example.code);
+      ws.clear();
+      decompileProgram(ws, program);
+      for (const block of ws.getAllBlocks(false)) {
+        (block as Blockly.BlockSvg).initSvg();
+      }
+      (ws as Blockly.WorkspaceSvg).render();
+      setSourceMode('blocks');
+    } catch {
+      // Not representable as blocks — fall back to the text editor.
+      ws?.clear();
+      setEditorText(example.code);
+      setSourceMode('editor');
+    }
   }
 
   function handleShare() {
