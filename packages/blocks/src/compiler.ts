@@ -611,6 +611,8 @@ function compileExpr(block: Blockly.Block): Expr {
       const args = ['X1', 'Y1', 'X2', 'Y2', 'RADIUS'].map((name) => compileExpr(mustGetInput(block, name)));
       return { kind: 'CallExpr', callee: 'touching', args, block: null };
     }
+    case 'sprout_random':
+      return { kind: 'CallExpr', callee: 'random', args: [compileExpr(mustGetInput(block, 'MIN')), compileExpr(mustGetInput(block, 'MAX'))], block: null };
     default:
       throw new Error(`Unknown value block type: ${block.type}`);
   }
