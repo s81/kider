@@ -4,7 +4,7 @@ import type {
   DefStmt, ExprStmt,
   LetStmt, AssignStmt, ReturnStmt,
   NumberLit, Ident, InfixExpr, UnaryExpr, CallExpr,
-  BlockExpr, RepeatExpr, OnExpr, IfExpr, WhileExpr, ForEachExpr, SymbolLit, BoolLit, StringLit,
+  BlockExpr, RepeatExpr, FillExpr, OnExpr, IfExpr, WhileExpr, ForEachExpr, SymbolLit, BoolLit, StringLit,
 } from '@sprout/lang';
 
 export function compileWorkspace(ws: Blockly.Workspace): Program {
@@ -35,6 +35,7 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_puts':
     case 'sprout_repeat':
     case 'sprout_repeat_with':
+    case 'sprout_fill':
     case 'sprout_on_event':
     case 'sprout_on_timer':
     case 'sprout_call_stmt':
@@ -176,6 +177,8 @@ function compileExprBlock(block: Blockly.Block): Expr {
       return compileRepeatExpr(block);
     case 'sprout_repeat_with':
       return compileRepeatWithExpr(block);
+    case 'sprout_fill':
+      return compileFillExpr(block);
     case 'sprout_on_event':
       return compileOnExpr(block);
     case 'sprout_on_timer':
@@ -286,6 +289,12 @@ function compileRepeatWithExpr(block: Blockly.Block): RepeatExpr {
   const firstBodyBlock = block.getInputTargetBlock('BODY');
   const body = compileBlockExpr(firstBodyBlock);
   return { kind: 'RepeatExpr', count, item, body };
+}
+
+function compileFillExpr(block: Blockly.Block): FillExpr {
+  const firstBodyBlock = block.getInputTargetBlock('BODY');
+  const body = compileBlockExpr(firstBodyBlock);
+  return { kind: 'FillExpr', body };
 }
 
 function compileOnExpr(block: Blockly.Block): OnExpr {

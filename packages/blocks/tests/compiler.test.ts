@@ -615,6 +615,37 @@ describe('math blocks', () => {
     });
   });
 
+  it('sprout_fill compiles to FillExpr with its body statements', () => {
+    const ws = makeWorkspace();
+    const fillBlock = ws.newBlock('sprout_fill');
+    const fwdBlock = ws.newBlock('sprout_forward');
+    const fwd100 = ws.newBlock('sprout_number');
+    fwd100.setFieldValue('100', 'NUM');
+    fwdBlock.getInput('DISTANCE')!.connection!.connect(fwd100.outputConnection!);
+    const turnBlock = ws.newBlock('sprout_turn');
+    const turn120 = ws.newBlock('sprout_number');
+    turn120.setFieldValue('120', 'NUM');
+    turnBlock.getInput('DEGREES')!.connection!.connect(turn120.outputConnection!);
+    fillBlock.getInput('BODY')!.connection!.connect(fwdBlock.previousConnection!);
+    fwdBlock.nextConnection!.connect(turnBlock.previousConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'FillExpr',
+          body: {
+            kind: 'BlockExpr',
+            body: [
+              { kind: 'ExprStmt', expr: { kind: 'CallExpr', callee: 'forward', args: [{ kind: 'NumberLit', value: 100 }], block: null } },
+              { kind: 'ExprStmt', expr: { kind: 'CallExpr', callee: 'turn', args: [{ kind: 'NumberLit', value: 120 }], block: null } },
+            ],
+          },
+        },
+      }],
+    });
+  });
+
   it('sprout_beep compiles to beep CallExpr statement', () => {
     const ws = makeWorkspace();
     ws.newBlock('sprout_beep');

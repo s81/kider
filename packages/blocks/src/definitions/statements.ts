@@ -188,6 +188,16 @@ export function registerStatementBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_fill'] = {
+    init(this: Blockly.Block) {
+      this.appendStatementInput('BODY').appendField('fill');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(160);
+      this.setTooltip('Trace a path with the turtle and fill it as a shape');
+    },
+  };
+
   Blockly.Blocks['sprout_repeat_index'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput()

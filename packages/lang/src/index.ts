@@ -17,6 +17,7 @@ export type {
   InfixExpr,
   UnaryExpr,
   RepeatExpr,
+  FillExpr,
   OnExpr,
   IfExpr,
   WhileExpr,
