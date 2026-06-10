@@ -92,6 +92,10 @@ let _hudValues: Map<string, string> = new Map();
 // Module-level timer interval — set by 'on timer every N' during each run; resets to 200 each run.
 let _timerInterval: number = 200;
 
+// Module-level stop flag — set by stopTimer(), consumed by the host after each
+// run/handler invocation.
+let _stopTimer: boolean = false;
+
 function formatValue(v: SproutValue): string {
   switch (v.kind) {
     case 'number': return String(v.value);
@@ -783,6 +787,11 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (args.length !== 0) throw new SproutRuntimeError(`beep expects 0 arguments, got ${args.length}`);
     return mkSound(880, 0.2);
   }],
+  ['stopTimer', (args) => {
+    if (args.length !== 0) throw new SproutRuntimeError(`stopTimer expects 0 arguments, got ${args.length}`);
+    _stopTimer = true;
+    return EMPTY;
+  }],
 ]);
 
 // Equal temperament: A4 = 440 Hz. Accepts "C4", "F#3", "Bb2" (letter, optional
@@ -1288,6 +1297,7 @@ const EMPTY_ENV: Env = new Map<string, SproutValue>();
 export function interpret(program: Program, initialEnv: Env = EMPTY_ENV): Drawing {
   _hudValues = new Map();
   _timerInterval = 200;
+  _stopTimer = false;
   _turtleX = 0;
   _turtleY = 0;
   _turtleHeading = 0;
@@ -1320,9 +1330,10 @@ export function interpret(program: Program, initialEnv: Env = EMPTY_ENV): Drawin
 export function interpretFull(
   program: Program,
   initialEnv: Env = EMPTY_ENV,
-): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string>; timerInterval: number } {
+): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string>; timerInterval: number; stopTimer: boolean } {
   _hudValues = new Map();
   _timerInterval = 200;
+  _stopTimer = false;
   _turtleX = 0;
   _turtleY = 0;
   _turtleHeading = 0;
@@ -1350,6 +1361,7 @@ export function interpretFull(
     hud: Object.fromEntries(_hudValues),
     variables: extractVariables(env),
     timerInterval: _timerInterval,
+    stopTimer: _stopTimer,
   };
 }
 
@@ -1357,15 +1369,16 @@ export function interpretFull(
  * Invoke a zero-parameter event handler closure and return the Drawing it
  * produces.  Returns EMPTY if the body produces a non-Drawing value.
  */
-export function callHandler(fn: SproutFunction): { drawing: Drawing; hud: Record<string, string>; variables: Record<string, string> } {
+export function callHandler(fn: SproutFunction): { drawing: Drawing; hud: Record<string, string>; variables: Record<string, string>; stopTimer: boolean } {
   _hudValues = new Map();
+  _stopTimer = false;
   try {
     const result = evalExpr(fn.body, fn.env);
     const drawing = isDrawing(result) ? result : EMPTY;
-    return { drawing, hud: Object.fromEntries(_hudValues), variables: extractVariables(fn.env) };
+    return { drawing, hud: Object.fromEntries(_hudValues), variables: extractVariables(fn.env), stopTimer: _stopTimer };
   } catch (e) {
     if (e instanceof ReturnBundle) {
-      return { drawing: e.drawing, hud: Object.fromEntries(_hudValues), variables: extractVariables(fn.env) };
+      return { drawing: e.drawing, hud: Object.fromEntries(_hudValues), variables: extractVariables(fn.env), stopTimer: _stopTimer };
     }
     throw e;
   }
@@ -1498,7 +1511,7 @@ export function interpretFullWithInputs(
   program: Program,
   inputs: ReadonlyMap<string, number>,
   initialEnv: Env = EMPTY_ENV,
-): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string>; timerInterval: number } {
+): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string>; timerInterval: number; stopTimer: boolean } {
   const prev = _inputValues;
   _inputValues = inputs;
   try {
