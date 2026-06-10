@@ -85,6 +85,8 @@ export {
   interpretWithInputs,
   interpretFullWithInputs,
   collectInputNames,
+  collectTextInputNames,
+  setTextInputs,
   callHandler,
   setMousePosition,
   setKeyState,

@@ -88,6 +88,9 @@ class ReturnBundle {
 // Module-level input values — set by interpretWithInputs before each run.
 let _inputValues: ReadonlyMap<string, number> = new Map();
 
+// Module-level text input values — set by setTextInputs before each run.
+let _textInputValues: ReadonlyMap<string, string> = new Map();
+
 // Module-level HUD values — written by show() during each run.
 let _hudValues: Map<string, string> = new Map();
 
@@ -586,6 +589,11 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (args.length !== 1) throw new SproutRuntimeError(`input expects 1 argument, got ${args.length}`);
     const name = assertString(args[0], 'input');
     return { kind: 'number', value: _inputValues.get(name.value) ?? 0 } satisfies SproutNumber;
+  }],
+  ['textInput', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`textInput expects 1 argument, got ${args.length}`);
+    const name = assertString(args[0], 'textInput');
+    return { kind: 'string', value: _textInputValues.get(name.value) ?? '' };
   }],
   ['mouseX', (args) => {
     if (args.length !== 0) throw new SproutRuntimeError(`mouseX expects 0 arguments, got ${args.length}`);
@@ -1401,10 +1409,18 @@ export function callHandler(fn: SproutFunction): { drawing: Drawing; hud: Record
 }
 
 // ---------------------------------------------------------------------------
-// Input name collection — AST scan for input("literal") calls
+// Input name collection — AST scan for <callee>("literal") calls
 // ---------------------------------------------------------------------------
 
 export function collectInputNames(program: Program): string[] {
+  return collectCalleeStringArgs(program, 'input');
+}
+
+export function collectTextInputNames(program: Program): string[] {
+  return collectCalleeStringArgs(program, 'textInput');
+}
+
+function collectCalleeStringArgs(program: Program, callee: string): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
 
@@ -1412,7 +1428,7 @@ export function collectInputNames(program: Program): string[] {
     switch (expr.kind) {
       case 'CallExpr':
         if (
-          expr.callee === 'input' &&
+          expr.callee === callee &&
           expr.args.length >= 1 &&
           expr.args[0].kind === 'StringLit'
         ) {
@@ -1521,6 +1537,10 @@ export function setMousePosition(x: number, y: number): void {
 export function setKeyState(key: string, down: boolean): void {
   if (down) _keysDown.add(key);
   else _keysDown.delete(key);
+}
+
+export function setTextInputs(values: ReadonlyMap<string, string>): void {
+  _textInputValues = values;
 }
 
 export function interpretFullWithInputs(
