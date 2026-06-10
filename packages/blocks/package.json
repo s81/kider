@@ -17,5 +17,8 @@
   "dependencies": {
     "@sprout/lang": "workspace:*",
     "blockly": "^10.4.3"
+  },
+  "devDependencies": {
+    "@sprout/parser": "workspace:*"
   }
 }
