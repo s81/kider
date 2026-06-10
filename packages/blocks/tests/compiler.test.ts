@@ -646,6 +646,29 @@ describe('math blocks', () => {
     });
   });
 
+  it('sprout_text_input compiles to textInput CallExpr with string arg', () => {
+    const ws = makeWorkspace();
+    const inputBlock = ws.newBlock('sprout_text_input');
+    inputBlock.setFieldValue('name', 'NAME');
+    const putsBlock = ws.newBlock('sprout_puts');
+    putsBlock.getInput('VALUE')!.connection!.connect(inputBlock.outputConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [{
+        kind: 'ExprStmt',
+        expr: {
+          kind: 'CallExpr', callee: 'puts',
+          args: [{
+            kind: 'CallExpr', callee: 'textInput',
+            args: [{ kind: 'StringLit', value: 'name' }],
+            block: null,
+          }],
+          block: null,
+        },
+      }],
+    });
+  });
+
   it('sprout_key_down compiles to keyDown CallExpr with symbol arg', () => {
     const ws = makeWorkspace();
     const keyBlock = ws.newBlock('sprout_key_down');

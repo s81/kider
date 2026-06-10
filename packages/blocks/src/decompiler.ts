@@ -383,6 +383,11 @@ function decompileCallExpr(ws: Blockly.Workspace, call: CallExpr): Blockly.Block
     block.setFieldValue(call.args[0].value, 'NAME');
     return block;
   }
+  if (call.callee === 'textInput' && call.args.length === 1 && call.args[0].kind === 'StringLit') {
+    const block = ws.newBlock('sprout_text_input');
+    block.setFieldValue(call.args[0].value, 'NAME');
+    return block;
+  }
   if (call.callee === 'list') {
     if (call.args.length > 3) {
       throw new DecompileError(`list: the list block supports at most 3 items, got ${call.args.length}`);

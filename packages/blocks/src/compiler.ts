@@ -498,6 +498,15 @@ function compileExpr(block: Blockly.Block): Expr {
         block: null,
       };
     }
+    case 'sprout_text_input': {
+      const name = block.getFieldValue('NAME') as string;
+      return {
+        kind: 'CallExpr',
+        callee: 'textInput',
+        args: [{ kind: 'StringLit', value: name }],
+        block: null,
+      };
+    }
     case 'sprout_mouse_x':
       return { kind: 'CallExpr', callee: 'mouseX', args: [], block: null };
     case 'sprout_mouse_y':

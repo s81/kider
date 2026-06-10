@@ -127,6 +127,17 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_text_input'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('answer')
+        .appendField(new Blockly.FieldTextInput('name'), 'NAME');
+      this.setOutput(true, 'String');
+      this.setColour(45);
+      this.setTooltip('Text typed into the Inputs panel');
+    },
+  };
+
   Blockly.Blocks['sprout_mouse_x'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput().appendField('mouseX');

@@ -104,6 +104,10 @@ describe('decompiler round-trips', () => {
   it('playNote with a non-dropdown note falls back generically', () => {
     roundTrip('playNote("F#3", 0.5)');
   });
+
+  it('textInput maps to its field-backed block', () => {
+    roundTrip('let name = textInput("name")\nputs(name)');
+  });
 });
 
 describe('decompiler errors', () => {
