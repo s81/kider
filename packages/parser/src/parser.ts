@@ -345,12 +345,12 @@ class Parser {
 
         if (!this.noBlockCall && this.checkIdent('do')) {
           const block = this.parseDoBlock();
-          return { kind: 'CallExpr', callee: name, args, block } satisfies CallExpr;
+          return { kind: 'CallExpr', callee: name, args, block, line: t.line } satisfies CallExpr;
         }
-        return { kind: 'CallExpr', callee: name, args, block: null } satisfies CallExpr;
+        return { kind: 'CallExpr', callee: name, args, block: null, line: t.line } satisfies CallExpr;
       }
 
-      return { kind: 'Ident', name };
+      return { kind: 'Ident', name, line: t.line };
     }
 
     throw new ParseError(

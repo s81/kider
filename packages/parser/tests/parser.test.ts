@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { tokenize, ParseError } from '../src/lexer.js';
-import { parse } from '../src/parser.js';
-import { serialize } from '@sprout/lang';
+import { parse as rawParse } from '../src/parser.js';
+import { serialize, interpret } from '@sprout/lang';
+
+// The parser stamps `line` on CallExpr/Ident nodes for runtime error
+// reporting. The exact-AST assertions below predate that; strip the lines so
+// they stay focused on structure. Line behavior is tested explicitly.
+const stripLines = <T>(node: T): T =>
+  JSON.parse(JSON.stringify(node, (key, value) => (key === 'line' ? undefined : value))) as T;
+const parse = (src: string) => stripLines(rawParse(src));
 import type { Program, LetStmt, AssignStmt, WhileExpr, ForEachExpr } from '@sprout/lang';
 
 // Shorthand builders for expected AST values
@@ -295,6 +302,18 @@ describe('parse — repeat', () => {
     const src = 'repeat 5 with i do\n  forward(i * 10)\nend';
     const ast = parse(src);
     expect(parse(serialize(ast))).toEqual(ast);
+  });
+});
+
+describe('runtime errors — line numbers (integration)', () => {
+  it('builtin errors point at the source line', () => {
+    expect(() => interpret(rawParse('forward(10)\nforward("x")')))
+      .toThrow('Line 2: forward: expected number');
+  });
+
+  it('unbound identifiers point at their line', () => {
+    expect(() => interpret(rawParse('forward(10)\nturn(degrees)')))
+      .toThrow("Line 2: Unbound identifier: 'degrees'");
   });
 });
 
