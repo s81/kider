@@ -22,6 +22,7 @@ import { VariableInspector } from './VariableInspector.js';
 import { buildPlayback } from './stage-utils.js';
 import type { PlaybackSegment } from './stage-utils.js';
 import { playTone } from './audio.js';
+import { EXAMPLES } from './examples.js';
 
 type SourceMode = 'blocks' | 'editor';
 
@@ -336,6 +337,14 @@ export function App() {
     e.target.value = '';
   }
 
+  function handleLoadExample(e: React.ChangeEvent<HTMLSelectElement>) {
+    const example = EXAMPLES.find(ex => ex.name === e.target.value);
+    if (!example) return;
+    setEditorText(example.code);
+    setSourceMode('editor');
+    // value stays "" via the controlled select, so re-picking the same example works
+  }
+
   function handleShare() {
     let save: SaveState;
     if (sourceMode === 'blocks' && wsRef.current) {
@@ -510,6 +519,26 @@ export function App() {
             onChange={handleFileChange}
           />
         </div>
+
+        {/* Examples gallery */}
+        <select
+          value=""
+          onChange={handleLoadExample}
+          style={{
+            padding: '4px 6px',
+            fontSize: 13,
+            background: '#fff',
+            border: '1px solid #cbd5e1',
+            borderRadius: 4,
+            cursor: 'pointer',
+            color: '#334155',
+          }}
+        >
+          <option value="" disabled>Examples…</option>
+          {EXAMPLES.map(ex => (
+            <option key={ex.name} value={ex.name}>{ex.name}</option>
+          ))}
+        </select>
 
         {/* Animation controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569' }}>
