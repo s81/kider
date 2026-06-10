@@ -47,6 +47,29 @@ describe('keyDown builtin', () => {
     expect(() => keyDownOf(symLit('banana'))).toThrow("keyDown: unknown key 'banana'");
   });
 
+  it('tracks letter keys (WASD)', () => {
+    setKeyState('w', true);
+    expect(keyDownOf(symLit('w'))).toEqual({ kind: 'bool', value: true });
+    expect(keyDownOf(symLit('s'))).toEqual({ kind: 'bool', value: false });
+    setKeyState('w', false);
+    expect(keyDownOf(symLit('w'))).toEqual({ kind: 'bool', value: false });
+  });
+
+  it('accepts any single letter a-z', () => {
+    setKeyState('z', true);
+    expect(keyDownOf(symLit('z'))).toEqual({ kind: 'bool', value: true });
+    setKeyState('z', false);
+  });
+
+  it('rejects digits and multi-letter names', () => {
+    expect(() => keyDownOf(symLit('ww'))).toThrow(SproutRuntimeError);
+    expect(() => keyDownOf(strLit('1'))).toThrow(SproutRuntimeError);
+  });
+
+  it('mentions letters in the unknown-key error', () => {
+    expect(() => keyDownOf(symLit('banana'))).toThrow(/letter a-z/);
+  });
+
   it('throws with 0 args', () => {
     expect(() => interpretValue(prog(exprStmt(call('keyDown', []))))).toThrow('keyDown expects 1 argument');
   });

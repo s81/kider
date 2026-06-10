@@ -610,8 +610,9 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (arg.kind === 'symbol') key = arg.name;
     else if (arg.kind === 'string') key = arg.value;
     else throw new SproutRuntimeError(`keyDown: expected a key name symbol or string, got ${arg.kind}`);
-    if (!(KEY_NAMES as readonly string[]).includes(key)) {
-      throw new SproutRuntimeError(`keyDown: unknown key '${key}' (expected ${KEY_NAMES.join(', ')})`);
+    const isLetter = key.length === 1 && key >= 'a' && key <= 'z';
+    if (!isLetter && !(KEY_NAMES as readonly string[]).includes(key)) {
+      throw new SproutRuntimeError(`keyDown: unknown key '${key}' (expected ${KEY_NAMES.join(', ')}, or a letter a-z)`);
     }
     return { kind: 'bool', value: _keysDown.has(key) } satisfies SproutBool;
   }],
