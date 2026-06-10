@@ -681,6 +681,20 @@ describe('math blocks', () => {
     });
   });
 
+  it('sprout_hide_turtle and sprout_show_turtle compile to 0-arg CallExprs', () => {
+    const ws = makeWorkspace();
+    const hide = ws.newBlock('sprout_hide_turtle');
+    const show = ws.newBlock('sprout_show_turtle');
+    hide.nextConnection!.connect(show.previousConnection!);
+    expect(compileWorkspace(ws)).toEqual({
+      kind: 'Program',
+      stmts: [
+        { kind: 'ExprStmt', expr: { kind: 'CallExpr', callee: 'hideTurtle', args: [], block: null } },
+        { kind: 'ExprStmt', expr: { kind: 'CallExpr', callee: 'showTurtle', args: [], block: null } },
+      ],
+    });
+  });
+
   it('sprout_stop_timer compiles to stopTimer CallExpr statement', () => {
     const ws = makeWorkspace();
     ws.newBlock('sprout_stop_timer');

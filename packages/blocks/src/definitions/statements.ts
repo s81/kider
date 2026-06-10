@@ -51,6 +51,26 @@ export function registerStatementBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_hide_turtle'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('hide turtle');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(160);
+      this.setTooltip('Hide the turtle cursor');
+    },
+  };
+
+  Blockly.Blocks['sprout_show_turtle'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('show turtle');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(160);
+      this.setTooltip('Show the turtle cursor');
+    },
+  };
+
   Blockly.Blocks['sprout_pen_up'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput().appendField('pen up');
