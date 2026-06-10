@@ -455,3 +455,31 @@ describe('buildPlayback — sound segments', () => {
     ]);
   });
 });
+
+describe('drawUpTo — fillPath', () => {
+  it('fills and outlines a 3-point path offset by canvas center', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{
+      kind: 'fillPath',
+      points: [{ x: 0, y: 0 }, { x: 0, y: -100 }, { x: 50, y: -100 }],
+    }];
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.fill).toHaveBeenCalledTimes(1);
+    expect(ctx.closePath).toHaveBeenCalled();
+    expect(ctx.lineTo).toHaveBeenCalledWith(STAGE_W / 2 + 0, STAGE_H / 2 - 100);
+    expect(ctx.lineTo).toHaveBeenCalledWith(STAGE_W / 2 + 50, STAGE_H / 2 - 100);
+    // Working path resumes at the last point.
+    expect(ctx.moveTo).toHaveBeenLastCalledWith(STAGE_W / 2 + 50, STAGE_H / 2 - 100);
+  });
+
+  it('skips fill for a path with fewer than 3 points', () => {
+    const ctx = makeShapeMockCtx();
+    const commands: CanvasCommand[] = [{
+      kind: 'fillPath',
+      points: [{ x: 0, y: 0 }, { x: 0, y: -100 }],
+    }];
+    drawUpTo(ctx, commands, 1);
+    expect(ctx.fill).not.toHaveBeenCalled();
+    expect(ctx.moveTo).toHaveBeenLastCalledWith(STAGE_W / 2 + 0, STAGE_H / 2 - 100);
+  });
+});

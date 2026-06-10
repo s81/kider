@@ -111,6 +111,7 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_ellipse' },
     { kind: 'block', type: 'sprout_triangle' },
     { kind: 'block', type: 'sprout_polygon' },
+    { kind: 'block', type: 'sprout_fill' },
     { kind: 'block', type: 'sprout_text' },
     // Display
     { kind: 'block', type: 'sprout_show' },

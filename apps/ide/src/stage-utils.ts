@@ -246,6 +246,30 @@ export function drawUpTo(
         ctx.moveTo(STAGE_W / 2, STAGE_H / 2);
         break;
       }
+      case 'fillPath': {
+        ctx.stroke();
+        const pts = cmd.points.map(p => ({ x: STAGE_W / 2 + p.x, y: STAGE_H / 2 + p.y }));
+        if (pts.length >= 3) {
+          ctx.save();
+          ctx.globalAlpha = 0.35;
+          ctx.fillStyle = ctx.strokeStyle as string;
+          ctx.beginPath();
+          ctx.moveTo(pts[0].x, pts[0].y);
+          for (let p = 1; p < pts.length; p++) ctx.lineTo(pts[p].x, pts[p].y);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+          ctx.beginPath();
+          ctx.moveTo(pts[0].x, pts[0].y);
+          for (let p = 1; p < pts.length; p++) ctx.lineTo(pts[p].x, pts[p].y);
+          ctx.closePath();
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        const last = pts[pts.length - 1];
+        ctx.moveTo(last.x, last.y);
+        break;
+      }
       case 'wait':
       case 'sound':
         break;
