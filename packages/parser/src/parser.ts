@@ -188,6 +188,12 @@ class Parser {
   private parseAtom(): Expr {
     const t = this.peek();
 
+    if (t.kind === 'MINUS') {
+      this.advance();
+      const operand = this.parseAtom();
+      return { kind: 'UnaryExpr', op: '-', operand } satisfies UnaryExpr;
+    }
+
     if (t.kind === 'NUMBER') {
       this.advance();
       return { kind: 'NumberLit', value: t.value };

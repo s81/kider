@@ -298,6 +298,40 @@ describe('parse — repeat', () => {
   });
 });
 
+describe('parse — unary minus', () => {
+  const neg = (operand: object) =>
+    ({ kind: 'UnaryExpr' as const, op: '-' as const, operand });
+
+  it('parses a negative number literal as a call argument', () => {
+    expect(parse('forward(-100)')).toEqual(
+      prog(exprS(callE('forward', [neg(num(100))])))
+    );
+  });
+
+  it('parses negation of an identifier', () => {
+    expect(parse('forward(-x)')).toEqual(
+      prog(exprS(callE('forward', [neg(id('x'))])))
+    );
+  });
+
+  it('binds tighter than infix: -2 + 3', () => {
+    expect(parse('forward(-2 + 3)')).toEqual(
+      prog(exprS(callE('forward', [infix('+', neg(num(2)), num(3))])))
+    );
+  });
+
+  it('infix minus still works: 5 - 2', () => {
+    expect(parse('forward(5 - 2)')).toEqual(
+      prog(exprS(callE('forward', [infix('-', num(5), num(2))])))
+    );
+  });
+
+  it('round-trips through serialize and parse', () => {
+    const ast = parse('forward(-100)');
+    expect(parse(serialize(ast))).toEqual(ast);
+  });
+});
+
 describe('parse — fill', () => {
   const fillE = (body: object[]) =>
     ({ kind: 'FillExpr' as const, body: blockE(body) });

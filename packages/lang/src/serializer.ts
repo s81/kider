@@ -112,7 +112,9 @@ export function serializeExpr(expr: Expr, indentLevel = 0): string {
       return serializeIfChain(expr, indentLevel, 'if');
 
     case 'UnaryExpr':
-      return `not ${serializeExpr(expr.operand, indentLevel)}`;
+      return expr.op === '-'
+        ? `-${serializeExpr(expr.operand, indentLevel)}`
+        : `not ${serializeExpr(expr.operand, indentLevel)}`;
 
     case 'WhileExpr': {
       const condStr = serializeExpr(expr.cond, indentLevel);

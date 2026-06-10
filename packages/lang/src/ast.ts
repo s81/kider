@@ -48,10 +48,10 @@ export interface InfixExpr {
   readonly right: Expr;
 }
 
-/** Prefix unary expression — currently only `not` */
+/** Prefix unary expression — boolean `not` or numeric negation `-` */
 export interface UnaryExpr {
   readonly kind: 'UnaryExpr';
-  readonly op: 'not';
+  readonly op: 'not' | '-';
   readonly operand: Expr;
 }
 

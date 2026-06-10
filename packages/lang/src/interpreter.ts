@@ -895,6 +895,12 @@ function evalExpr(expr: Expr, env: Env): SproutValue {
     // --- Unary not ---
     case 'UnaryExpr': {
       const v = evalExpr(expr.operand, env);
+      if (expr.op === '-') {
+        if (v.kind !== 'number') {
+          throw new SproutRuntimeError(`-: expected number, got ${v.kind}`);
+        }
+        return { kind: 'number', value: -v.value };
+      }
       if (v.kind !== 'bool') {
         throw new SproutRuntimeError(`not: expected bool, got ${v.kind}`);
       }
