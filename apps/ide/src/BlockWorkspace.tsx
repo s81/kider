@@ -80,6 +80,7 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     // Values
     { kind: 'block', type: 'sprout_number' },
     { kind: 'block', type: 'sprout_input' },
+    { kind: 'block', type: 'sprout_text_input' },
     { kind: 'block', type: 'sprout_mouse_x' },
     { kind: 'block', type: 'sprout_mouse_y' },
     { kind: 'block', type: 'sprout_key_down' },

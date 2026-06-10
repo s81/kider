@@ -4,6 +4,8 @@ import { compileWorkspace } from '@sprout/blocks';
 import {
   interpretFullWithInputs,
   collectInputNames,
+  collectTextInputNames,
+  setTextInputs,
   callHandler,
   render,
   mkSequence,
@@ -40,6 +42,8 @@ export function App() {
   const [shareConfirm, setShareConfirm] = useState(false);
   const [inputNames, setInputNames] = useState<string[]>([]);
   const [inputValues, setInputValues] = useState<Record<string, number>>({});
+  const [textInputNames, setTextInputNames] = useState<string[]>([]);
+  const [textInputValues, setTextInputValues] = useState<Record<string, string>>({});
   const [hud, setHud] = useState<Record<string, string>>({});
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [timerIntervalMs, setTimerIntervalMs] = useState<number>(200);
@@ -66,13 +70,20 @@ export function App() {
   useEffect(() => {
     try {
       const text = sourceMode === 'blocks' ? programText : editorText;
-      if (!text.trim()) { setInputNames([]); return; }
+      if (!text.trim()) { setInputNames([]); setTextInputNames([]); return; }
       const prog = parse(text);
       const names = collectInputNames(prog);
       setInputNames(names);
       setInputValues(prev => {
         const next: Record<string, number> = {};
         for (const name of names) next[name] = prev[name] ?? 0;
+        return next;
+      });
+      const textNames = collectTextInputNames(prog);
+      setTextInputNames(textNames);
+      setTextInputValues(prev => {
+        const next: Record<string, string> = {};
+        for (const name of textNames) next[name] = prev[name] ?? '';
         return next;
       });
     } catch {
@@ -256,6 +267,7 @@ export function App() {
       const inputMap = new Map(
         Object.entries(inputValues).map(([k, v]) => [k, v] as [string, number])
       );
+      setTextInputs(new Map(Object.entries(textInputValues)));
       const { drawing, handlers: h, hud: newHud, variables: newVars, timerInterval, stopTimer } = interpretFullWithInputs(program, inputMap);
       accDrawingRef.current = drawing;
       handlersRef.current = h;
@@ -593,7 +605,7 @@ export function App() {
           </div>
         )}
 
-        {inputNames.length > 0 && (
+        {(inputNames.length > 0 || textInputNames.length > 0) && (
           <div
             style={{
               display: 'flex',
@@ -625,6 +637,31 @@ export function App() {
                   }
                   style={{
                     width: 72,
+                    padding: '2px 6px',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: 4,
+                    fontSize: 13,
+                  }}
+                />
+              </label>
+            ))}
+            {textInputNames.map(name => (
+              <label
+                key={`text-${name}`}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}
+              >
+                <span style={{ minWidth: 80, color: '#475569' }}>{name}</span>
+                <input
+                  type="text"
+                  value={textInputValues[name] ?? ''}
+                  onChange={e =>
+                    setTextInputValues(prev => ({
+                      ...prev,
+                      [name]: e.target.value,
+                    }))
+                  }
+                  style={{
+                    flex: 1,
                     padding: '2px 6px',
                     border: '1px solid #cbd5e1',
                     borderRadius: 4,
