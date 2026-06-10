@@ -8,6 +8,7 @@ import {
   render,
   mkSequence,
   setMousePosition,
+  setKeyState,
   SproutRuntimeError,
 } from '@sprout/lang';
 import { parse, ParseError } from '@sprout/parser';
@@ -129,17 +130,34 @@ export function App() {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       const handlerKey = KEY_MAP[e.key];
       if (!handlerKey) return;
-      const fn = handlersRef.current.get(handlerKey);
-      if (!fn || accDrawingRef.current === null) return;
+      setKeyState(handlerKey.slice(1), true);
+      if (accDrawingRef.current === null) return;
+      // A program has run — keep arrows/space for the game, not page scroll.
       e.preventDefault();
+      const fn = handlersRef.current.get(handlerKey);
+      if (!fn) return;
       try {
         applyHandlerDelta(callHandler(fn));
       } catch (err) {
         setError(err instanceof SproutRuntimeError ? err.message : String(err));
       }
     }
+    function onKeyUp(e: KeyboardEvent) {
+      const handlerKey = KEY_MAP[e.key];
+      if (handlerKey) setKeyState(handlerKey.slice(1), false);
+    }
+    function onBlur() {
+      // Don't let keys stick when the window loses focus mid-hold.
+      for (const k of ['left', 'right', 'up', 'down', 'space']) setKeyState(k, false);
+    }
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
+    };
   }, []);
 
   useEffect(() => {
