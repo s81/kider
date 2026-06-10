@@ -108,6 +108,11 @@ describe('decompiler round-trips', () => {
   it('textInput maps to its field-backed block', () => {
     roundTrip('let name = textInput("name")\nputs(name)');
   });
+
+  it('keyDown(:w) maps to the dropdown block, other letters fall back', () => {
+    roundTrip('puts(keyDown(:w))');
+    roundTrip('puts(keyDown(:q))');
+  });
 });
 
 describe('decompiler errors', () => {

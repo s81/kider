@@ -101,7 +101,7 @@ const EXPR_CALL_BLOCKS: Record<string, { type: string; inputs: string[] }> = {
 const COLOR_OPTIONS = ['red', 'blue', 'green', 'orange', 'purple', 'black', 'yellow', 'pink'];
 const BACKGROUND_OPTIONS = ['white', 'black', 'red', 'blue', 'green', 'orange', 'purple', 'yellow', 'pink'];
 const NOTE_OPTIONS = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
-const KEY_OPTIONS = ['left', 'right', 'up', 'down', 'space'];
+const KEY_OPTIONS = ['left', 'right', 'up', 'down', 'space', 'w', 'a', 's', 'd'];
 const EVENT_OPTIONS = ['click', 'load', 'left', 'right', 'up', 'down', 'space'];
 
 // ---------------------------------------------------------------------------
@@ -372,11 +372,18 @@ function decompileCallExpr(ws: Blockly.Workspace, call: CallExpr): Blockly.Block
     throw new DecompileError(`${call.callee}: calls with do...end blocks have no block form`);
   }
 
-  if (call.callee === 'keyDown' && call.args.length === 1 && call.args[0].kind === 'SymbolLit'
-      && KEY_OPTIONS.includes(call.args[0].name)) {
-    const block = ws.newBlock('sprout_key_down');
-    block.setFieldValue(call.args[0].name, 'KEY');
-    return block;
+  if (call.callee === 'keyDown' && call.args.length === 1 && call.args[0].kind === 'SymbolLit') {
+    if (KEY_OPTIONS.includes(call.args[0].name)) {
+      const block = ws.newBlock('sprout_key_down');
+      block.setFieldValue(call.args[0].name, 'KEY');
+      return block;
+    }
+    // Letters outside the dropdown: keyDown treats symbol and string keys
+    // equivalently, so represent as a generic call with a string argument.
+    return genericCall(ws, {
+      ...call,
+      args: [{ kind: 'StringLit', value: call.args[0].name }],
+    }, 'sprout_call_expr');
   }
   if (call.callee === 'input' && call.args.length === 1 && call.args[0].kind === 'StringLit') {
     const block = ws.newBlock('sprout_input');

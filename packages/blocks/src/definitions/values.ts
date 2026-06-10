@@ -167,6 +167,10 @@ export function registerValueBlocks(): void {
             ['up',    'up'],
             ['down',  'down'],
             ['space', 'space'],
+            ['w',     'w'],
+            ['a',     'a'],
+            ['s',     's'],
+            ['d',     'd'],
           ]) as unknown as Blockly.Field,
           'KEY',
         )
