@@ -298,6 +298,25 @@ describe('parse — repeat', () => {
   });
 });
 
+describe('parse — def with do', () => {
+  it('def f(x) do ... end consumes the do (no spurious ident in body)', () => {
+    expect(parse('def star(size) do\n  forward(size)\nend')).toEqual(
+      prog({
+        kind: 'DefStmt' as const,
+        name: 'star',
+        params: ['size'],
+        body: blockE([exprS(callE('forward', [id('size')]))]),
+      })
+    );
+  });
+
+  it('def round-trips through serialize and parse', () => {
+    const src = 'def star(size) do\n  forward(size)\n  turn(144)\nend\n\nstar(80)';
+    const ast = parse(src);
+    expect(parse(serialize(ast))).toEqual(ast);
+  });
+});
+
 describe('parse — calls with parens in block headers', () => {
   it('if cond can be a call: if keyDown(:left) do ... end', () => {
     expect(parse('if keyDown(:left) do\n  forward(5)\nend')).toEqual(

@@ -153,6 +153,12 @@ export function serializeStmt(stmt: Stmt, indentLevel = 0): string {
         params.length === 0
           ? `def ${name}`
           : `def ${name}(${params.join(', ')})`;
+      // BlockExpr bodies flatten into the def's own do...end — nesting the
+      // block's own `do` would not parse back.
+      if (body.kind === 'BlockExpr') {
+        const bodyStr = serializeBlock(body, indentLevel + 1);
+        return `${header} do\n${bodyStr}\n${indent(indentLevel)}end`;
+      }
       const bodyStr = indent(indentLevel + 1) + serializeExpr(body, indentLevel + 1);
       return `${header}\n${bodyStr}\n${indent(indentLevel)}end`;
     }

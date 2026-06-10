@@ -96,6 +96,9 @@ class Parser {
       return { kind: 'DefStmt', name, params, body };
     }
 
+    // Optional `do` after the header: `def f(x) do ... end`.
+    if (this.checkIdent('do')) this.advance();
+
     const bodyStmts = this.parseBodyUntil(['end']);
     this.eatIdent('end');
     const body: BlockExpr = { kind: 'BlockExpr', body: bodyStmts };
