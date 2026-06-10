@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as Blockly from 'blockly';
-import { compileWorkspace, decompileProgram } from '@sprout/blocks';
+import { compileWorkspace } from '@sprout/blocks';
 import {
   interpretFullWithInputs,
   collectInputNames,
@@ -23,6 +23,7 @@ import { buildPlayback } from './stage-utils.js';
 import type { PlaybackSegment } from './stage-utils.js';
 import { playTone } from './audio.js';
 import { EXAMPLES } from './examples.js';
+import { tryLoadAsBlocks } from './loadProgram.js';
 
 type SourceMode = 'blocks' | 'editor';
 
@@ -104,8 +105,14 @@ export function App() {
     if (!saved) return;
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
     if (saved.mode === 'text') {
-      setEditorText(saved.text);
-      setSourceMode('editor');
+      // Land the receiver in blocks mode when the program is representable —
+      // the workspace exists by now (child effects run before parent effects).
+      if (wsRef.current && tryLoadAsBlocks(wsRef.current, saved.text)) {
+        setSourceMode('blocks');
+      } else {
+        setEditorText(saved.text);
+        setSourceMode('editor');
+      }
     }
     // blocks mode is handled in onWorkspaceReady (child effects run before parent effects)
   }, []);
@@ -341,20 +348,10 @@ export function App() {
     const example = EXAMPLES.find(ex => ex.name === e.target.value);
     if (!example) return;
     // value stays "" via the controlled select, so re-picking the same example works
-    const ws = wsRef.current;
-    try {
-      if (!ws) throw new Error('workspace not ready');
-      const program = parse(example.code);
-      ws.clear();
-      decompileProgram(ws, program);
-      for (const block of ws.getAllBlocks(false)) {
-        (block as Blockly.BlockSvg).initSvg();
-      }
-      (ws as Blockly.WorkspaceSvg).render();
+    if (wsRef.current && tryLoadAsBlocks(wsRef.current, example.code)) {
       setSourceMode('blocks');
-    } catch {
+    } else {
       // Not representable as blocks — fall back to the text editor.
-      ws?.clear();
       setEditorText(example.code);
       setSourceMode('editor');
     }
