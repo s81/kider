@@ -85,6 +85,7 @@ export {
   collectInputNames,
   callHandler,
   setMousePosition,
+  setKeyState,
   SproutRuntimeError,
 } from './interpreter.js';
 

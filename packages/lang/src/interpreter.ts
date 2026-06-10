@@ -123,6 +123,10 @@ function extractVariables(env: Env): Record<string, string> {
 let _mouseX: number = 0;
 let _mouseY: number = 0;
 
+// Module-level held-key state — set by setKeyState from host key events.
+const KEY_NAMES = ['left', 'right', 'up', 'down', 'space'] as const;
+const _keysDown = new Set<string>();
+
 // Module-level shadow turtle state — updated by turtle-moving builtins during each run.
 let _turtleX: number = 0;
 let _turtleY: number = 0;
@@ -584,6 +588,18 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
   ['mouseY', (args) => {
     if (args.length !== 0) throw new SproutRuntimeError(`mouseY expects 0 arguments, got ${args.length}`);
     return { kind: 'number', value: _mouseY } satisfies SproutNumber;
+  }],
+  ['keyDown', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`keyDown expects 1 argument, got ${args.length}`);
+    const arg = args[0];
+    let key: string;
+    if (arg.kind === 'symbol') key = arg.name;
+    else if (arg.kind === 'string') key = arg.value;
+    else throw new SproutRuntimeError(`keyDown: expected a key name symbol or string, got ${arg.kind}`);
+    if (!(KEY_NAMES as readonly string[]).includes(key)) {
+      throw new SproutRuntimeError(`keyDown: unknown key '${key}' (expected ${KEY_NAMES.join(', ')})`);
+    }
+    return { kind: 'bool', value: _keysDown.has(key) } satisfies SproutBool;
   }],
   // --- List builtins ---
   ['list', (args) => mkList(args)],
@@ -1471,6 +1487,11 @@ export function interpretWithInputs(
 export function setMousePosition(x: number, y: number): void {
   _mouseX = x;
   _mouseY = y;
+}
+
+export function setKeyState(key: string, down: boolean): void {
+  if (down) _keysDown.add(key);
+  else _keysDown.delete(key);
 }
 
 export function interpretFullWithInputs(
