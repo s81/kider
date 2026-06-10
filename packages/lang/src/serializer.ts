@@ -93,6 +93,11 @@ export function serializeExpr(expr: Expr, indentLevel = 0): string {
       return `repeat ${countStr}${withClause} do\n${body}\n${indent(indentLevel)}end`;
     }
 
+    case 'FillExpr': {
+      const body = serializeBlock(expr.body, indentLevel + 1);
+      return `fill do\n${body}\n${indent(indentLevel)}end`;
+    }
+
     case 'OnExpr': {
       const body = serializeBlock(expr.body, indentLevel + 1);
       if (expr.interval !== null) {

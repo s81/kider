@@ -57,6 +57,7 @@ import {
   mkList,
   mkWait,
   mkSound,
+  mkFillPath,
   PEN_UP,
   PEN_DOWN,
   EMPTY,
@@ -136,7 +137,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
     case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'penWidth': case 'empty':
-    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas': case 'stamp': case 'arc': case 'goto': case 'home': case 'wait': case 'sound':
+    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas': case 'stamp': case 'arc': case 'goto': case 'home': case 'wait': case 'sound': case 'fillPath':
       return true;
     default:
       return false;
@@ -823,6 +824,10 @@ function evalExpr(expr: Expr, env: Env): SproutValue {
       return evalRepeat(expr, env);
     }
 
+    case 'FillExpr': {
+      return mkFillPath(evalBlock(expr.body, env));
+    }
+
     // --- Call ---
     case 'CallExpr': {
       try {
@@ -1383,6 +1388,9 @@ export function collectInputNames(program: Program): string[] {
         break;
       case 'RepeatExpr':
         walkExpr(expr.count); walkBlock(expr.body);
+        break;
+      case 'FillExpr':
+        walkBlock(expr.body);
         break;
       case 'OnExpr':
         walkBlock(expr.body);

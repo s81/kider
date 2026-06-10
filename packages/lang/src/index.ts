@@ -38,6 +38,7 @@ export type {
   SproutList,
   WaitDrawing,
   SoundDrawing,
+  FillPathDrawing,
   Drawing,
   SproutValue,
   Env,
@@ -66,6 +67,7 @@ export {
   mkStamp,
   mkWait,
   mkSound,
+  mkFillPath,
   // Drawing singleton constants (zero-arg constructors replaced by constants)
   PEN_UP,
   PEN_DOWN,

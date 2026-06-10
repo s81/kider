@@ -86,7 +86,8 @@ export type Drawing =
   | { readonly kind: 'home' }
   | { readonly kind: 'empty' }
   | WaitDrawing
-  | SoundDrawing;
+  | SoundDrawing
+  | FillPathDrawing;
 
 // ---------------------------------------------------------------------------
 // SproutValue — top-level value union
@@ -119,8 +120,14 @@ export interface SoundDrawing {
   readonly seconds: number;
 }
 
+/** A filled custom shape: the traced turtle path of `drawing`, closed and filled. */
+export interface FillPathDrawing {
+  readonly kind: 'fillPath';
+  readonly drawing: Drawing;
+}
+
 // INVARIANT: Drawing.kind values ('forward','turn','penUp','penDown','sequence',
-// 'beside','above','scale','color','penWidth','empty','circle','rect','ellipse','triangle','polygon','text','background','clearCanvas','stamp','arc','goto','home','wait','sound')
+// 'beside','above','scale','color','penWidth','empty','circle','rect','ellipse','triangle','polygon','text','background','clearCanvas','stamp','arc','goto','home','wait','sound','fillPath')
 // must never match SproutNumber/String/Symbol/Bool/Function/Var/List kinds.
 export type SproutValue =
   | SproutNumber
@@ -211,4 +218,8 @@ export function mkWait(seconds: number): WaitDrawing {
 
 export function mkSound(frequency: number, seconds: number): SoundDrawing {
   return { kind: 'sound', frequency, seconds };
+}
+
+export function mkFillPath(drawing: Drawing): FillPathDrawing {
+  return { kind: 'fillPath', drawing };
 }

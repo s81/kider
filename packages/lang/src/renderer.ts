@@ -26,7 +26,8 @@ export type CanvasCommand =
   | { readonly kind: 'fillBackground'; readonly color: string }
   | { readonly kind: 'clearCanvas' }
   | { readonly kind: 'wait'; readonly durationMs: number }
-  | { readonly kind: 'sound'; readonly frequency: number; readonly durationMs: number };
+  | { readonly kind: 'sound'; readonly frequency: number; readonly durationMs: number }
+  | { readonly kind: 'fillPath'; readonly points: readonly { x: number; y: number }[] };
 
 // ---------------------------------------------------------------------------
 // Turtle state (internal)
@@ -93,6 +94,8 @@ function scaleDrawing(factor: number, d: Drawing): Drawing {
       return d;
     case 'sound':
       return d;
+    case 'fillPath':
+      return { kind: 'fillPath', drawing: scaleDrawing(factor, d.drawing) };
   }
 }
 
@@ -252,6 +255,15 @@ function renderInto(
       out.push({ kind: 'sound', frequency: drawing.frequency, durationMs: drawing.seconds * 1000 });
       return;
 
+    case 'fillPath': {
+      const points: { x: number; y: number }[] = [{ x: state.x, y: state.y }];
+      collectPathPoints(drawing.drawing, state, points);
+      out.push({ kind: 'fillPath', points });
+      // The turtle really traced the path — resume strokes from its end.
+      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      return;
+    }
+
     case 'arc': {
       if (drawing.angle === 0 || drawing.radius === 0) return;
       const steps = Math.max(4, Math.abs(Math.round(drawing.angle / 5)));
@@ -289,6 +301,62 @@ function renderInto(
 }
 
 // ---------------------------------------------------------------------------
+// collectPathPoints — simulate turtle movement inside a fillPath, collecting
+// each position change as a polygon vertex. Non-movement nodes (color, pen,
+// shapes, wait, sound, nested fillPath, beside/above/scale) add no vertices —
+// the fill is the traced path, nothing else.
+// ---------------------------------------------------------------------------
+
+function collectPathPoints(
+  drawing: Drawing,
+  state: TurtleState,
+  points: { x: number; y: number }[],
+): void {
+  switch (drawing.kind) {
+    case 'forward': {
+      const rad = state.heading * DEG_TO_RAD;
+      state.x += drawing.distance * Math.sin(rad);
+      state.y -= drawing.distance * Math.cos(rad);
+      points.push({ x: state.x, y: state.y });
+      return;
+    }
+    case 'turn':
+      state.heading = ((state.heading + drawing.degrees) % 360 + 360) % 360;
+      return;
+    case 'arc': {
+      if (drawing.angle === 0 || drawing.radius === 0) return;
+      const steps = Math.max(4, Math.abs(Math.round(drawing.angle / 5)));
+      const stepAngle = drawing.angle / steps;
+      const stepDist = (2 * Math.PI * Math.abs(drawing.radius) / 360) * Math.abs(drawing.angle / steps);
+      for (let i = 0; i < steps; i++) {
+        const rad = state.heading * DEG_TO_RAD;
+        state.x += stepDist * Math.sin(rad);
+        state.y -= stepDist * Math.cos(rad);
+        points.push({ x: state.x, y: state.y });
+        state.heading = ((state.heading + stepAngle) % 360 + 360) % 360;
+      }
+      return;
+    }
+    case 'goto':
+      state.x = drawing.x;
+      state.y = drawing.y;
+      points.push({ x: state.x, y: state.y });
+      return;
+    case 'home':
+      state.x = 0;
+      state.y = 0;
+      state.heading = 0;
+      points.push({ x: 0, y: 0 });
+      return;
+    case 'sequence':
+      for (const step of drawing.steps) collectPathPoints(step, state, points);
+      return;
+    default:
+      return;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // measureBbox / measure — bounding box without emitting commands
 //
 // TODO: renderInto and measureBbox share turtle-step math. Consider extracting
@@ -306,6 +374,10 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
     case 'penWidth':
     case 'wait':
     case 'sound':
+      return;
+
+    case 'fillPath':
+      measureInto(drawing.drawing, state, bbox);
       return;
 
     case 'turn':

@@ -82,6 +82,12 @@ export interface RepeatExpr {
   readonly body: BlockExpr;
 }
 
+/** `fill do ... end` — trace turtle movements in the body and fill the path */
+export interface FillExpr {
+  readonly kind: 'FillExpr';
+  readonly body: BlockExpr;
+}
+
 /** Event handler: `on :<event> do ... end` or `on timer every N do ... end` */
 export interface OnExpr {
   readonly kind: 'OnExpr';
@@ -130,6 +136,7 @@ export type Expr =
   | CallExpr
   | BlockExpr
   | RepeatExpr
+  | FillExpr
   | OnExpr
   | IfExpr
   | WhileExpr
