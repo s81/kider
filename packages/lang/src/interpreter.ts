@@ -56,6 +56,7 @@ import {
   mkHome,
   mkList,
   mkWait,
+  mkSound,
   PEN_UP,
   PEN_DOWN,
   EMPTY,
@@ -135,7 +136,7 @@ function isDrawing(v: SproutValue): v is Drawing {
   switch (v.kind) {
     case 'forward': case 'turn': case 'penUp': case 'penDown':
     case 'sequence': case 'beside': case 'above': case 'scale': case 'color': case 'penWidth': case 'empty':
-    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas': case 'stamp': case 'arc': case 'goto': case 'home': case 'wait':
+    case 'circle': case 'rect': case 'ellipse': case 'triangle': case 'polygon': case 'text': case 'background': case 'clearCanvas': case 'stamp': case 'arc': case 'goto': case 'home': case 'wait': case 'sound':
       return true;
     default:
       return false;
@@ -747,7 +748,37 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     if (secs.value < 0) throw new SproutRuntimeError(`wait: seconds must be non-negative, got ${secs.value}`);
     return mkWait(secs.value);
   }],
+  ['playNote', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`playNote expects 2 arguments, got ${args.length}`);
+    let frequency: number;
+    if (args[0].kind === 'string') {
+      frequency = noteToFrequency(args[0].value);
+    } else {
+      const freq = assertNumber(args[0], 'playNote (note)');
+      if (freq.value <= 0) throw new SproutRuntimeError(`playNote: frequency must be positive, got ${freq.value}`);
+      frequency = freq.value;
+    }
+    const secs = assertNumber(args[1], 'playNote (seconds)');
+    if (secs.value < 0) throw new SproutRuntimeError(`playNote: seconds must be non-negative, got ${secs.value}`);
+    return mkSound(frequency, secs.value);
+  }],
+  ['beep', (args) => {
+    if (args.length !== 0) throw new SproutRuntimeError(`beep expects 0 arguments, got ${args.length}`);
+    return mkSound(880, 0.2);
+  }],
 ]);
+
+// Equal temperament: A4 = 440 Hz. Accepts "C4", "F#3", "Bb2" (letter, optional
+// #/b, octave 0-8).
+const NOTE_SEMITONES: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+
+function noteToFrequency(note: string): number {
+  const m = /^([A-G])([#b]?)([0-8])$/.exec(note);
+  if (m === null) throw new SproutRuntimeError(`playNote: unknown note '${note}'`);
+  const semitone = NOTE_SEMITONES[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0);
+  const midi = (Number(m[3]) + 1) * 12 + semitone;
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
 
 // ---------------------------------------------------------------------------
 // Core evaluator

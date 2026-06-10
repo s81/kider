@@ -85,7 +85,8 @@ export type Drawing =
   | { readonly kind: 'goto';       readonly x: number; readonly y: number }
   | { readonly kind: 'home' }
   | { readonly kind: 'empty' }
-  | WaitDrawing;
+  | WaitDrawing
+  | SoundDrawing;
 
 // ---------------------------------------------------------------------------
 // SproutValue — top-level value union
@@ -112,8 +113,14 @@ export interface WaitDrawing {
   readonly seconds: number;
 }
 
+export interface SoundDrawing {
+  readonly kind: 'sound';
+  readonly frequency: number;
+  readonly seconds: number;
+}
+
 // INVARIANT: Drawing.kind values ('forward','turn','penUp','penDown','sequence',
-// 'beside','above','scale','color','penWidth','empty','circle','rect','ellipse','triangle','polygon','text','background','clearCanvas','stamp','arc','goto','home','wait')
+// 'beside','above','scale','color','penWidth','empty','circle','rect','ellipse','triangle','polygon','text','background','clearCanvas','stamp','arc','goto','home','wait','sound')
 // must never match SproutNumber/String/Symbol/Bool/Function/Var/List kinds.
 export type SproutValue =
   | SproutNumber
@@ -200,4 +207,8 @@ export const mkList = (items: readonly SproutValue[]): SproutList =>
 
 export function mkWait(seconds: number): WaitDrawing {
   return { kind: 'wait', seconds };
+}
+
+export function mkSound(frequency: number, seconds: number): SoundDrawing {
+  return { kind: 'sound', frequency, seconds };
 }
