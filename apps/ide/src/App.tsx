@@ -138,22 +138,30 @@ export function App() {
   const [drawLimit, setDrawLimit] = useState<number | null>(null);
 
   useEffect(() => {
-    const KEY_MAP: Record<string, string> = {
-      ArrowLeft:  ':left',
-      ArrowRight: ':right',
-      ArrowUp:    ':up',
-      ArrowDown:  ':down',
-      ' ':        ':space',
+    const SPECIAL_KEYS: Record<string, string> = {
+      ArrowLeft:  'left',
+      ArrowRight: 'right',
+      ArrowUp:    'up',
+      ArrowDown:  'down',
+      ' ':        'space',
     };
+    // Sprout key name for a KeyboardEvent.key: arrows/space plus letters
+    // (lowercased so a held Shift doesn't break tracking).
+    function keyName(eventKey: string): string | null {
+      if (SPECIAL_KEYS[eventKey]) return SPECIAL_KEYS[eventKey];
+      const lower = eventKey.toLowerCase();
+      if (lower.length === 1 && lower >= 'a' && lower <= 'z') return lower;
+      return null;
+    }
     function onKeyDown(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      const handlerKey = KEY_MAP[e.key];
-      if (!handlerKey) return;
-      setKeyState(handlerKey.slice(1), true);
+      const name = keyName(e.key);
+      if (!name) return;
+      setKeyState(name, true);
       if (accDrawingRef.current === null) return;
       // A program has run — keep arrows/space for the game, not page scroll.
       e.preventDefault();
-      const fn = handlersRef.current.get(handlerKey);
+      const fn = handlersRef.current.get(`:${name}`);
       if (!fn) return;
       try {
         applyHandlerDelta(callHandler(fn));
@@ -162,12 +170,13 @@ export function App() {
       }
     }
     function onKeyUp(e: KeyboardEvent) {
-      const handlerKey = KEY_MAP[e.key];
-      if (handlerKey) setKeyState(handlerKey.slice(1), false);
+      const name = keyName(e.key);
+      if (name) setKeyState(name, false);
     }
     function onBlur() {
       // Don't let keys stick when the window loses focus mid-hold.
       for (const k of ['left', 'right', 'up', 'down', 'space']) setKeyState(k, false);
+      for (const c of 'abcdefghijklmnopqrstuvwxyz') setKeyState(c, false);
     }
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
