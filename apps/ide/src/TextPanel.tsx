@@ -1,4 +1,10 @@
-const SHARED_STYLE: React.CSSProperties = {
+import { useEffect, useRef } from 'react';
+import type { CSSProperties } from 'react';
+import { EditorView, basicSetup } from 'codemirror';
+import { autocompletion } from '@codemirror/autocomplete';
+import { sproutLanguage, sproutCompletions } from './sprout-language.js';
+
+const SHARED_PRE_STYLE: CSSProperties = {
   flex: '1 1 0',
   background: '#1e1e1e',
   color: '#d4d4d4',
@@ -11,6 +17,33 @@ const SHARED_STYLE: React.CSSProperties = {
   minHeight: 120,
 };
 
+const EDITOR_THEME = EditorView.theme({
+  '&': {
+    background: '#1e1e1e',
+    color: '#d4d4d4',
+    borderRadius: '4px',
+    outline: '2px solid #2563eb',
+    height: '100%',
+    fontSize: '13px',
+  },
+  '.cm-content': {
+    fontFamily: '"Fira Code", "Consolas", monospace',
+    lineHeight: '1.5',
+    padding: '12px 0',
+  },
+  '.cm-gutters': {
+    background: '#1e1e1e',
+    color: '#555',
+    borderRight: '1px solid #333',
+  },
+  '.cm-activeLineGutter': { background: '#2a2a2a' },
+  '.cm-activeLine': { background: '#2a2a2a' },
+  '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
+    background: '#264f78',
+  },
+  '&.cm-focused .cm-cursor': { borderLeftColor: '#d4d4d4' },
+});
+
 interface Props {
   text: string;
   editable?: boolean;
@@ -19,22 +52,58 @@ interface Props {
 }
 
 export function TextPanel({ text, editable = false, onChange, error = null }: Props) {
+  const divRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<EditorView | null>(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  // Mount the editor once (editable mode only).
+  useEffect(() => {
+    if (!editable || !divRef.current) return;
+
+    const view = new EditorView({
+      doc: text,
+      extensions: [
+        basicSetup,
+        sproutLanguage,
+        autocompletion({ override: [sproutCompletions] }),
+        EDITOR_THEME,
+        EditorView.updateListener.of(update => {
+          if (update.docChanged) {
+            onChangeRef.current?.(update.state.doc.toString());
+          }
+        }),
+      ],
+      parent: divRef.current,
+    });
+
+    viewRef.current = view;
+    return () => {
+      view.destroy();
+      viewRef.current = null;
+    };
+    // Mount once; `text` syncs via the effect below, onChange via onChangeRef.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editable]);
+
+  // Sync externally-changed text (loading an example, share import, mode switch).
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const current = view.state.doc.toString();
+    if (current !== text) {
+      view.dispatch({
+        changes: { from: 0, to: current.length, insert: text },
+      });
+    }
+  }, [text]);
+
   if (editable) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '1 1 0', minWidth: 0 }}>
-        <textarea
-          value={text}
-          onChange={e => onChange?.(e.target.value)}
-          spellCheck={false}
-          style={{
-            ...SHARED_STYLE,
-            flex: '1 1 0',
-            resize: 'none',
-            border: 'none',
-            outline: '2px solid #2563eb',
-            cursor: 'text',
-            userSelect: 'text',
-          }}
+        <div
+          ref={divRef}
+          style={{ flex: '1 1 0', minHeight: 120, overflow: 'auto', borderRadius: 4 }}
         />
         {error && (
           <div
@@ -57,7 +126,7 @@ export function TextPanel({ text, editable = false, onChange, error = null }: Pr
   return (
     <pre
       style={{
-        ...SHARED_STYLE,
+        ...SHARED_PRE_STYLE,
         overflow: 'auto',
         userSelect: 'none',
         cursor: 'default',
