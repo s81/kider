@@ -244,11 +244,8 @@ function renderInto(
 
     case 'clearCanvas':
       out.push({ kind: 'clearCanvas' });
-      state.x = 0;
-      state.y = 0;
-      state.heading = 0;
       state.penDown = true;
-      out.push({ kind: 'moveTo', x: 0, y: 0 });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y });
       return;
 
     case 'wait':
@@ -515,9 +512,6 @@ function measureInto(drawing: Drawing, state: TurtleState, bbox: BBox): void {
       return;
 
     case 'clearCanvas':
-      state.x = 0;
-      state.y = 0;
-      state.heading = 0;
       state.penDown = true;
       return;
 

@@ -302,7 +302,8 @@ export function drawSprites(
   for (const s of sprites) {
     if (!s.visible) continue;
     const cmds = render(s.costume).filter(
-      c => c.kind !== 'clearCanvas' && c.kind !== 'fillBackground',
+      c => c.kind !== 'clearCanvas' && c.kind !== 'fillBackground'
+        && c.kind !== 'moveTo' && c.kind !== 'lineTo',
     );
     ctx.save();
     ctx.translate(STAGE_W / 2 + s.x, STAGE_H / 2 + s.y);

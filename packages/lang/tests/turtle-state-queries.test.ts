@@ -199,32 +199,33 @@ describe('arc updates heading', () => {
 // 8. clearCanvas resets turtle shadow state
 // ---------------------------------------------------------------------------
 
-describe('clearCanvas resets turtle state', () => {
-  it('getX returns 0 after clearCanvas even after forward', () => {
+describe('clearCanvas preserves turtle state', () => {
+  it('getX is preserved after clearCanvas', () => {
     const prog = program(
-      exprStmt(call('forward', [numLit(100)])),
+      exprStmt(call('turn', [numLit(90)])),
+      exprStmt(call('forward', [numLit(50)])),
       exprStmt(call('clearCanvas', [])),
       letStmt('result', call('getX', [])),
     );
-    expect(runAndGetVar(prog)).toBeCloseTo(0, 1);
+    expect(runAndGetVar(prog)).toBeCloseTo(50, 1);
   });
 
-  it('getY returns 0 after clearCanvas', () => {
+  it('getY is preserved after clearCanvas', () => {
     const prog = program(
       exprStmt(call('forward', [numLit(100)])),
       exprStmt(call('clearCanvas', [])),
       letStmt('result', call('getY', [])),
     );
-    expect(runAndGetVar(prog)).toBeCloseTo(0, 1);
+    expect(runAndGetVar(prog)).toBeCloseTo(-100, 1);
   });
 
-  it('getHeading returns 0 after clearCanvas', () => {
+  it('getHeading is preserved after clearCanvas', () => {
     const prog = program(
       exprStmt(call('turn', [numLit(90)])),
       exprStmt(call('clearCanvas', [])),
       letStmt('result', call('getHeading', [])),
     );
-    expect(runAndGetVar(prog)).toBeCloseTo(0, 1);
+    expect(runAndGetVar(prog)).toBeCloseTo(90, 1);
   });
 });
 

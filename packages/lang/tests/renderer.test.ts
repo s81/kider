@@ -577,12 +577,12 @@ describe('clearCanvas rendering', () => {
     ]);
   });
 
-  it('sequence [forward(50), clearCanvas, forward(30)] — second forward restarts from (0,0)', () => {
+  it('sequence [forward(50), clearCanvas, forward(30)] — second forward continues from current position', () => {
     expect(render(mkSequence([mkForward(50), mkClearCanvas(), mkForward(30)]))).toEqual([
       { kind: 'lineTo', x: 0, y: -50 },
       { kind: 'clearCanvas' },
-      { kind: 'moveTo', x: 0, y: 0 },
-      { kind: 'lineTo', x: 0, y: -30 },
+      { kind: 'moveTo', x: 0, y: -50 },
+      { kind: 'lineTo', x: 0, y: -80 },
     ]);
   });
 
