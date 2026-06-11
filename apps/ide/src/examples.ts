@@ -131,4 +131,17 @@ on timer every 50 do
   end
 end`,
   },
+  {
+    name: 'Bouncing Ball',
+    code: `# A ball bouncing around the stage
+hideTurtle()
+sprite("ball", circle(20))
+turnSprite("ball", 45)
+
+on timer every 30 do
+  clearCanvas()
+  moveSprite("ball", 5)
+  bounceSprite("ball")
+end`,
+  },
 ];
