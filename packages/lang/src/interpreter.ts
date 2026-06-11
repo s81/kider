@@ -169,6 +169,9 @@ type SpriteState = {
 
 const _sprites = new Map<string, SpriteState>();
 
+// Per-base-name clone counters for cloneSprite() — reset alongside _sprites.
+const _cloneCounters = new Map<string, number>();
+
 // ---------------------------------------------------------------------------
 // Type guards
 // ---------------------------------------------------------------------------
@@ -624,6 +627,18 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
       s.heading = ((180 - s.heading) % 360 + 360) % 360;
     }
     return EMPTY;
+  }],
+  ['cloneSprite', (args) => {
+    if (args.length !== 1)
+      throw new SproutRuntimeError(`cloneSprite expects 1 argument, got ${args.length}`);
+    const name = assertString(args[0], 'cloneSprite');
+    const s = _sprites.get(name.value);
+    if (!s) throw new SproutRuntimeError(`cloneSprite: no sprite named '${name.value}'`);
+    const n = (_cloneCounters.get(name.value) ?? 0) + 1;
+    _cloneCounters.set(name.value, n);
+    const cloneName = `${name.value}-${n}`;
+    _sprites.set(cloneName, { ...s });
+    return { kind: 'string' as const, value: cloneName };
   }],
   ['random', (args) => {
     if (args.length !== 2) throw new SproutRuntimeError(`random expects 2 arguments, got ${args.length}`);
@@ -1511,6 +1526,7 @@ export function interpret(program: Program, initialEnv: Env = EMPTY_ENV): Drawin
   _turtleY = 0;
   _turtleHeading = 0;
   _sprites.clear();
+  _cloneCounters.clear();
   let env: Env = initialEnv;
   const drawings: Drawing[] = [];
 
@@ -1548,6 +1564,7 @@ export function interpretFull(
   _turtleY = 0;
   _turtleHeading = 0;
   _sprites.clear();
+  _cloneCounters.clear();
   let env: Env = initialEnv;
   const drawings: Drawing[] = [];
 
@@ -1693,6 +1710,7 @@ export function interpretValue(
   initialEnv: Env = EMPTY_ENV,
 ): SproutValue {
   _sprites.clear();
+  _cloneCounters.clear();
   let env: Env = initialEnv;
   let lastValue: SproutValue = EMPTY;
 
