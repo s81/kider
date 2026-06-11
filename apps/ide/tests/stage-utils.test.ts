@@ -547,9 +547,21 @@ describe('drawSprites', () => {
       snap({ name: 'cat', x: 10, y: -20 }),
       snap({ name: 'dog', x: -5, y: 5 }),
     ]);
-    expect(ctx.translate).toHaveBeenNthCalledWith(1, 10, -20);
-    expect(ctx.translate).toHaveBeenNthCalledWith(2, -5, 5);
+    // Two translates per sprite: to canvas pos, then back-offset
+    expect(ctx.translate).toHaveBeenNthCalledWith(1, STAGE_W / 2 + 10, STAGE_H / 2 - 20);
+    expect(ctx.translate).toHaveBeenNthCalledWith(2, -STAGE_W / 2, -STAGE_H / 2);
+    expect(ctx.translate).toHaveBeenNthCalledWith(3, STAGE_W / 2 - 5, STAGE_H / 2 + 5);
+    expect(ctx.translate).toHaveBeenNthCalledWith(4, -STAGE_W / 2, -STAGE_H / 2);
     expect(calls(ctx.save).length).toBe(calls(ctx.restore).length);
+  });
+
+  it('rotates costume around sprite centre by heading', () => {
+    const ctx = makeShapeMockCtx();
+    drawSprites(ctx, [snap({ name: 'cat', x: 10, y: -20, heading: 90 })]);
+    // Compound transform: translate to canvas position, rotate, translate back
+    expect(ctx.translate).toHaveBeenNthCalledWith(1, STAGE_W / 2 + 10, STAGE_H / 2 + (-20));
+    expect(ctx.rotate).toHaveBeenNthCalledWith(1, 90 * Math.PI / 180);
+    expect(ctx.translate).toHaveBeenNthCalledWith(2, -STAGE_W / 2, -STAGE_H / 2);
   });
 
   it('skips hidden sprites', () => {

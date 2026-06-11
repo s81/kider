@@ -305,7 +305,9 @@ export function drawSprites(
       c => c.kind !== 'clearCanvas' && c.kind !== 'fillBackground',
     );
     ctx.save();
-    ctx.translate(s.x, s.y);
+    ctx.translate(STAGE_W / 2 + s.x, STAGE_H / 2 + s.y);
+    ctx.rotate(s.heading * Math.PI / 180);
+    ctx.translate(-STAGE_W / 2, -STAGE_H / 2);
     replayCommands(ctx, cmds, cmds.length);
     ctx.restore();
   }
