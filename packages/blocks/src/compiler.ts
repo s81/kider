@@ -60,6 +60,15 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_stop_timer':
     case 'sprout_hide_turtle':
     case 'sprout_show_turtle':
+    case 'sprout_sprite':
+    case 'sprout_move_sprite':
+    case 'sprout_turn_sprite':
+    case 'sprout_goto_sprite':
+    case 'sprout_change_sprite_x':
+    case 'sprout_change_sprite_y':
+    case 'sprout_hide_sprite':
+    case 'sprout_show_sprite':
+    case 'sprout_remove_sprite':
       return { kind: 'ExprStmt', expr: compileExprBlock(block) };
     case 'sprout_let':
       return compileLet(block);
@@ -130,6 +139,13 @@ function compileBlockExpr(firstBlock: Blockly.Block | null): BlockExpr {
     cur = cur.getNextBlock();
   }
   return { kind: 'BlockExpr', body: stmts };
+}
+
+function spriteCall(block: Blockly.Block, callee: string, inputs: string[]): CallExpr {
+  const name = block.getFieldValue('NAME') as string;
+  const args: Expr[] = [{ kind: 'StringLit', value: name }];
+  for (const input of inputs) args.push(compileExpr(mustGetInput(block, input)));
+  return { kind: 'CallExpr', callee, args, block: null };
 }
 
 function compileExprBlock(block: Blockly.Block): Expr {
@@ -280,6 +296,27 @@ function compileExprBlock(block: Blockly.Block): Expr {
       return compileForEachExpr(block);
     case 'sprout_random':
       return { kind: 'CallExpr', callee: 'random', args: [compileExpr(mustGetInput(block, 'MIN')), compileExpr(mustGetInput(block, 'MAX'))], block: null };
+    case 'sprout_sprite': {
+      const name = block.getFieldValue('NAME') as string;
+      const costume = compileExpr(mustGetInput(block, 'COSTUME'));
+      return { kind: 'CallExpr', callee: 'sprite', args: [{ kind: 'StringLit', value: name }, costume], block: null };
+    }
+    case 'sprout_move_sprite':
+      return spriteCall(block, 'moveSprite', ['DIST']);
+    case 'sprout_turn_sprite':
+      return spriteCall(block, 'turnSprite', ['DEG']);
+    case 'sprout_goto_sprite':
+      return spriteCall(block, 'gotoSprite', ['X', 'Y']);
+    case 'sprout_change_sprite_x':
+      return spriteCall(block, 'changeSpriteX', ['AMOUNT']);
+    case 'sprout_change_sprite_y':
+      return spriteCall(block, 'changeSpriteY', ['AMOUNT']);
+    case 'sprout_hide_sprite':
+      return spriteCall(block, 'hideSprite', []);
+    case 'sprout_show_sprite':
+      return spriteCall(block, 'showSprite', []);
+    case 'sprout_remove_sprite':
+      return spriteCall(block, 'removeSprite', []);
     default:
       throw new Error(`Block type cannot be compiled as expression: ${block.type}`);
   }
@@ -626,6 +663,15 @@ function compileExpr(block: Blockly.Block): Expr {
     }
     case 'sprout_random':
       return { kind: 'CallExpr', callee: 'random', args: [compileExpr(mustGetInput(block, 'MIN')), compileExpr(mustGetInput(block, 'MAX'))], block: null };
+    case 'sprout_sprite_x':
+      return spriteCall(block, 'spriteX', []);
+    case 'sprout_sprite_y':
+      return spriteCall(block, 'spriteY', []);
+    case 'sprout_sprites_touching': {
+      const a = block.getFieldValue('NAME_A') as string;
+      const b = block.getFieldValue('NAME_B') as string;
+      return { kind: 'CallExpr', callee: 'spritesTouching', args: [{ kind: 'StringLit', value: a }, { kind: 'StringLit', value: b }], block: null };
+    }
     default:
       throw new Error(`Unknown value block type: ${block.type}`);
   }
