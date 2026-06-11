@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import * as Blockly from 'blockly/node';
+import { serialize } from '@sprout/lang';
+import { parse } from '@sprout/parser';
 import { registerAllBlocks } from '../src/definitions/index.js';
 import { compileWorkspace } from '../src/compiler.js';
+import { decompileProgram } from '../src/decompiler.js';
 
 beforeAll(() => {
   registerAllBlocks();
@@ -140,5 +143,63 @@ describe('sprite value blocks compile', () => {
         block: null,
       },
     });
+  });
+});
+
+function roundTrip(source: string): void {
+  const program = parse(source);
+  const ws1 = makeWorkspace();
+  decompileProgram(ws1, program);
+  const once = compileWorkspace(ws1);
+
+  const ws2 = makeWorkspace();
+  decompileProgram(ws2, once);
+  const twice = compileWorkspace(ws2);
+
+  expect(serialize(twice)).toBe(serialize(once));
+}
+
+describe('sprite decompile round-trips', () => {
+  it('every sprite statement maps to its dedicated block', () => {
+    const src = [
+      'sprite("cat", circle(15))',
+      'moveSprite("cat", 10)',
+      'turnSprite("cat", 90)',
+      'gotoSprite("cat", 10, 20)',
+      'changeSpriteX("cat", -5)',
+      'changeSpriteY("cat", 5)',
+      'hideSprite("cat")',
+      'showSprite("cat")',
+      'removeSprite("cat")',
+    ].join('\n');
+    roundTrip(src);
+    const ws = makeWorkspace();
+    decompileProgram(ws, parse(src));
+    for (const type of [
+      'sprout_sprite', 'sprout_move_sprite', 'sprout_turn_sprite', 'sprout_goto_sprite',
+      'sprout_change_sprite_x', 'sprout_change_sprite_y',
+      'sprout_hide_sprite', 'sprout_show_sprite', 'sprout_remove_sprite',
+    ]) {
+      expect(ws.getBlocksByType(type, false), type).toHaveLength(1);
+    }
+  });
+
+  it('sprite value calls map to their blocks', () => {
+    const src = 'let hit = spritesTouching("cat", "dog")\nlet px = spriteX("cat")\nlet py = spriteY("cat")';
+    roundTrip(src);
+    const ws = makeWorkspace();
+    decompileProgram(ws, parse(src));
+    expect(ws.getBlocksByType('sprout_sprites_touching', false)).toHaveLength(1);
+    expect(ws.getBlocksByType('sprout_sprite_x', false)).toHaveLength(1);
+    expect(ws.getBlocksByType('sprout_sprite_y', false)).toHaveLength(1);
+  });
+
+  it('computed sprite names fall back to generic call blocks', () => {
+    const src = 'let n = "cat"\nmoveSprite(n, 5)';
+    roundTrip(src);
+    const ws = makeWorkspace();
+    decompileProgram(ws, parse(src));
+    expect(ws.getBlocksByType('sprout_move_sprite', false)).toHaveLength(0);
+    expect(ws.getBlocksByType('sprout_call_stmt', false)).toHaveLength(1);
   });
 });

@@ -10,7 +10,7 @@
 import * as Blockly from 'blockly/node';
 import type {
   Program, Stmt, Expr,
-  DefStmt, CallExpr, InfixExpr,
+  DefStmt, CallExpr, InfixExpr, StringLit,
   BlockExpr, RepeatExpr, FillExpr, OnExpr, IfExpr, WhileExpr, ForEachExpr,
 } from '@sprout/lang';
 
@@ -96,6 +96,48 @@ const EXPR_CALL_BLOCKS: Record<string, { type: string; inputs: string[] }> = {
   distance:   { type: 'sprout_distance',   inputs: ['X1', 'Y1', 'X2', 'Y2'] },
   touching:   { type: 'sprout_touching',   inputs: ['X1', 'Y1', 'X2', 'Y2', 'RADIUS'] },
 };
+
+// ---------------------------------------------------------------------------
+// Sprite blocks — leading string-literal args become text fields. Computed
+// names fail the gate and fall through to the generic call blocks.
+// ---------------------------------------------------------------------------
+
+type SpriteBlockSpec = { type: string; fields: string[]; inputs: string[] };
+
+const SPRITE_STMT_BLOCKS: Record<string, SpriteBlockSpec> = {
+  sprite:        { type: 'sprout_sprite',           fields: ['NAME'], inputs: ['COSTUME'] },
+  moveSprite:    { type: 'sprout_move_sprite',      fields: ['NAME'], inputs: ['DIST'] },
+  turnSprite:    { type: 'sprout_turn_sprite',      fields: ['NAME'], inputs: ['DEG'] },
+  gotoSprite:    { type: 'sprout_goto_sprite',      fields: ['NAME'], inputs: ['X', 'Y'] },
+  changeSpriteX: { type: 'sprout_change_sprite_x',  fields: ['NAME'], inputs: ['AMOUNT'] },
+  changeSpriteY: { type: 'sprout_change_sprite_y',  fields: ['NAME'], inputs: ['AMOUNT'] },
+  hideSprite:    { type: 'sprout_hide_sprite',      fields: ['NAME'], inputs: [] },
+  showSprite:    { type: 'sprout_show_sprite',      fields: ['NAME'], inputs: [] },
+  removeSprite:  { type: 'sprout_remove_sprite',    fields: ['NAME'], inputs: [] },
+};
+
+const SPRITE_EXPR_BLOCKS: Record<string, SpriteBlockSpec> = {
+  spriteX:         { type: 'sprout_sprite_x',         fields: ['NAME'], inputs: [] },
+  spriteY:         { type: 'sprout_sprite_y',         fields: ['NAME'], inputs: [] },
+  spritesTouching: { type: 'sprout_sprites_touching', fields: ['NAME_A', 'NAME_B'], inputs: [] },
+};
+
+function trySpriteBlock(
+  ws: Blockly.Workspace,
+  call: CallExpr,
+  table: Record<string, SpriteBlockSpec>,
+): Blockly.Block | null {
+  const mapped = table[call.callee];
+  if (!mapped) return null;
+  if (call.args.length !== mapped.fields.length + mapped.inputs.length) return null;
+  const leading = call.args.slice(0, mapped.fields.length);
+  if (!leading.every((a): a is StringLit => a.kind === 'StringLit')) return null;
+  const block = ws.newBlock(mapped.type);
+  mapped.fields.forEach((f, i) => block.setFieldValue((call.args[i] as StringLit).value, f));
+  mapped.inputs.forEach((input, i) =>
+    connectInput(ws, block, input, call.args[mapped.fields.length + i]));
+  return block;
+}
 
 // Dropdown option sets — field-backed blocks are only used when the literal
 // argument is one of the dropdown's options.
@@ -284,6 +326,9 @@ function decompileCallStmt(ws: Blockly.Workspace, call: CallExpr): Blockly.Block
     return block;
   }
 
+  const spriteStmtBlock = trySpriteBlock(ws, call, SPRITE_STMT_BLOCKS);
+  if (spriteStmtBlock) return spriteStmtBlock;
+
   const mapped = STMT_CALL_BLOCKS[call.callee];
   if (mapped && mapped.inputs.length === call.args.length) {
     const block = ws.newBlock(mapped.type);
@@ -404,6 +449,9 @@ function decompileCallExpr(ws: Blockly.Workspace, call: CallExpr): Blockly.Block
     call.args.forEach((arg, i) => connectInput(ws, block, `VALUE_${i}`, arg));
     return block;
   }
+
+  const spriteExprBlock = trySpriteBlock(ws, call, SPRITE_EXPR_BLOCKS);
+  if (spriteExprBlock) return spriteExprBlock;
 
   const mapped = EXPR_CALL_BLOCKS[call.callee];
   if (mapped && mapped.inputs.length === call.args.length) {
