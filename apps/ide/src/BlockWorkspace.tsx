@@ -43,6 +43,7 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
         { kind: 'block', type: 'sprout_change_sprite_x' },
         { kind: 'block', type: 'sprout_change_sprite_y' },
         { kind: 'block', type: 'sprout_bounce_sprite' },
+        { kind: 'block', type: 'sprout_clone_sprite' },
         { kind: 'block', type: 'sprout_sprite_x' },
         { kind: 'block', type: 'sprout_sprite_y' },
         { kind: 'block', type: 'sprout_sprites_touching' },
@@ -54,6 +55,7 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     {
       kind: 'category', name: 'Control', colour: '120',
       contents: [
+        { kind: 'block', type: 'sprout_loop_forever' },
         { kind: 'block', type: 'sprout_repeat' },
         { kind: 'block', type: 'sprout_repeat_with' },
         { kind: 'block', type: 'sprout_repeat_index' },

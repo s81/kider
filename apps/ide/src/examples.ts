@@ -138,7 +138,7 @@ hideTurtle()
 sprite("ball", circle(20))
 turnSprite("ball", 45)
 
-on timer every 30 do
+loop forever do
   clearCanvas()
   moveSprite("ball", 5)
   bounceSprite("ball")
