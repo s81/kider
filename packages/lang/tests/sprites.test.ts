@@ -181,7 +181,7 @@ describe('bounceSprite', () => {
       exprStmt(call('turnSprite', [strLit('b'), numLit(270)])),
       exprStmt(call('bounceSprite', [strLit('b')])),
     ));
-    expect(result.sprites[0].x).toBe(-250);
+    expect(result.sprites[0].x).toBe(-235);
     expect(result.sprites[0].heading).toBeCloseTo(90);
   });
 
@@ -193,7 +193,7 @@ describe('bounceSprite', () => {
       exprStmt(call('turnSprite', [strLit('b'), numLit(90)])),
       exprStmt(call('bounceSprite', [strLit('b')])),
     ));
-    expect(result.sprites[0].x).toBe(250);
+    expect(result.sprites[0].x).toBe(235);
     expect(result.sprites[0].heading).toBeCloseTo(270);
   });
 
@@ -204,7 +204,7 @@ describe('bounceSprite', () => {
       exprStmt(call('gotoSprite', [strLit('b'), numLit(0), numLit(-260)])),
       exprStmt(call('bounceSprite', [strLit('b')])),
     ));
-    expect(result.sprites[0].y).toBe(-250);
+    expect(result.sprites[0].y).toBe(-235);
     expect(result.sprites[0].heading).toBeCloseTo(180);
   });
 
@@ -216,7 +216,7 @@ describe('bounceSprite', () => {
       exprStmt(call('turnSprite', [strLit('b'), numLit(180)])),
       exprStmt(call('bounceSprite', [strLit('b')])),
     ));
-    expect(result.sprites[0].y).toBe(250);
+    expect(result.sprites[0].y).toBe(235);
     expect(result.sprites[0].heading).toBeCloseTo(0);
   });
 
@@ -230,8 +230,8 @@ describe('bounceSprite', () => {
       exprStmt(call('turnSprite', [strLit('b'), numLit(45)])),
       exprStmt(call('bounceSprite', [strLit('b')])),
     ));
-    expect(result.sprites[0].x).toBe(250);
-    expect(result.sprites[0].y).toBe(-250);
+    expect(result.sprites[0].x).toBe(235);
+    expect(result.sprites[0].y).toBe(-235);
     expect(result.sprites[0].heading).toBeCloseTo(225);
   });
 

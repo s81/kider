@@ -608,20 +608,22 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
   ['bounceSprite', (args) => {
     if (args.length !== 1) throw new SproutRuntimeError(`bounceSprite expects 1 argument, got ${args.length}`);
     const s = getSprite(args[0], 'bounceSprite');
-    const HALF_W = 250;
-    const HALF_H = 250;
-    if (s.x < -HALF_W) {
-      s.x = -HALF_W;
+    // 250 = STAGE_W/2 from apps/ide/src/stage-utils.ts — must stay in sync
+    const r = spriteRadius(s);
+    const limX = 250 - r;
+    const limY = 250 - r;
+    if (s.x < -limX) {
+      s.x = -limX;
       s.heading = ((360 - s.heading) % 360 + 360) % 360;
-    } else if (s.x > HALF_W) {
-      s.x = HALF_W;
+    } else if (s.x > limX) {
+      s.x = limX;
       s.heading = ((360 - s.heading) % 360 + 360) % 360;
     }
-    if (s.y < -HALF_H) {
-      s.y = -HALF_H;
+    if (s.y < -limY) {
+      s.y = -limY;
       s.heading = ((180 - s.heading) % 360 + 360) % 360;
-    } else if (s.y > HALF_H) {
-      s.y = HALF_H;
+    } else if (s.y > limY) {
+      s.y = limY;
       s.heading = ((180 - s.heading) % 360 + 360) % 360;
     }
     return EMPTY;
