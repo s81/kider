@@ -1,5 +1,7 @@
 // Tree-walking interpreter for the Sprout visual programming language.
 
+import { measure } from './renderer.js';
+
 import type {
   Program,
   Stmt,
@@ -224,6 +226,11 @@ function getSprite(v: SproutValue, context: string): SpriteState {
   const s = _sprites.get(name.value);
   if (!s) throw new SproutRuntimeError(`${context}: no sprite named '${name.value}'`);
   return s;
+}
+
+function spriteRadius(s: SpriteState): number {
+  const { width, height } = measure(s.costume);
+  return Math.max(width, height) / 2;
 }
 
 function toStr(v: SproutValue, context: string): string {
@@ -514,6 +521,7 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     const name = assertString(args[0], 'sprite');
     const costume = assertDrawing(args[1], 'sprite');
     const existing = _sprites.get(name.value);
+    // Re-create: preserve position/heading/visibility, swap costume only.
     if (existing) {
       existing.costume = costume;
     } else {
@@ -547,6 +555,49 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
   ['spriteY', (args) => {
     if (args.length !== 1) throw new SproutRuntimeError(`spriteY expects 1 argument, got ${args.length}`);
     return { kind: 'number', value: getSprite(args[0], 'spriteY').y } satisfies SproutNumber;
+  }],
+  ['moveSprite', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`moveSprite expects 2 arguments, got ${args.length}`);
+    const s = getSprite(args[0], 'moveSprite');
+    const d = assertNumber(args[1], 'moveSprite');
+    const rad = s.heading * Math.PI / 180;
+    s.x += d.value * Math.sin(rad);
+    s.y -= d.value * Math.cos(rad);
+    return EMPTY;
+  }],
+  ['turnSprite', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`turnSprite expects 2 arguments, got ${args.length}`);
+    const s = getSprite(args[0], 'turnSprite');
+    const deg = assertNumber(args[1], 'turnSprite');
+    s.heading = ((s.heading + deg.value) % 360 + 360) % 360;
+    return EMPTY;
+  }],
+  ['spritesTouching', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`spritesTouching expects 2 arguments, got ${args.length}`);
+    const a = getSprite(args[0], 'spritesTouching');
+    const b = getSprite(args[1], 'spritesTouching');
+    if (!a.visible || !b.visible) return { kind: 'bool', value: false } satisfies SproutBool;
+    const dist = Math.hypot(b.x - a.x, b.y - a.y);
+    return { kind: 'bool', value: dist <= spriteRadius(a) + spriteRadius(b) } satisfies SproutBool;
+  }],
+  ['hideSprite', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`hideSprite expects 1 argument, got ${args.length}`);
+    getSprite(args[0], 'hideSprite').visible = false;
+    return EMPTY;
+  }],
+  ['showSprite', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`showSprite expects 1 argument, got ${args.length}`);
+    getSprite(args[0], 'showSprite').visible = true;
+    return EMPTY;
+  }],
+  ['removeSprite', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`removeSprite expects 1 argument, got ${args.length}`);
+    const name = assertString(args[0], 'removeSprite');
+    if (!_sprites.has(name.value)) {
+      throw new SproutRuntimeError(`removeSprite: no sprite named '${name.value}'`);
+    }
+    _sprites.delete(name.value);
+    return EMPTY;
   }],
   ['random', (args) => {
     if (args.length !== 2) throw new SproutRuntimeError(`random expects 2 arguments, got ${args.length}`);
