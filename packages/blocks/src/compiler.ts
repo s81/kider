@@ -4,7 +4,7 @@ import type {
   DefStmt, ExprStmt,
   LetStmt, AssignStmt, ReturnStmt,
   NumberLit, Ident, InfixExpr, UnaryExpr, CallExpr,
-  BlockExpr, RepeatExpr, FillExpr, OnExpr, IfExpr, WhileExpr, ForEachExpr, SymbolLit, BoolLit, StringLit,
+  BlockExpr, RepeatExpr, FillExpr, OnExpr, IfExpr, WhileExpr, ForEachExpr, LoopForeverExpr, SymbolLit, BoolLit, StringLit,
 } from '@sprout/lang';
 
 export function compileWorkspace(ws: Blockly.Workspace): Program {
@@ -38,6 +38,7 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_fill':
     case 'sprout_on_event':
     case 'sprout_on_timer':
+    case 'sprout_loop_forever':
     case 'sprout_call_stmt':
     case 'sprout_beside':
     case 'sprout_above':
@@ -203,6 +204,11 @@ function compileExprBlock(block: Blockly.Block): Expr {
       return compileOnExpr(block);
     case 'sprout_on_timer':
       return compileOnTimerExpr(block);
+    case 'sprout_loop_forever':
+      return {
+        kind: 'LoopForeverExpr',
+        body: compileBlockExpr(block.getInputTargetBlock('BODY')),
+      } satisfies LoopForeverExpr;
     case 'sprout_call_stmt':
       return compileCallBlock(block);
     case 'sprout_beside': {

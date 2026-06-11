@@ -2,6 +2,7 @@ import * as Blockly from 'blockly/node';
 import { describe, it, expect, beforeAll } from 'vitest';
 import { registerAllBlocks } from '../src/definitions/index.js';
 import { compileWorkspace } from '../src/compiler.js';
+import { decompileProgram } from '../src/decompiler.js';
 import type { LetStmt, AssignStmt, WhileExpr, ForEachExpr } from '@sprout/lang';
 import { program as squareProgram } from '../../../examples/square.fixture.js';
 import { program as polygonProgram } from '../../../examples/polygon.fixture.js';
@@ -1690,5 +1691,48 @@ describe('repeat with index blocks', () => {
     const stmt = result.stmts[0] as { kind: 'ExprStmt'; expr: { kind: 'RepeatExpr'; item: string | null } };
     expect(stmt.expr.item).toBe('n');
     ws.dispose();
+  });
+});
+
+describe('sprout_loop_forever round-trips', () => {
+  function buildLoopForeverWorkspace(ws: Blockly.Workspace): void {
+    const loopBlock = ws.newBlock('sprout_loop_forever');
+    const fwdBlock = ws.newBlock('sprout_forward');
+    const dist = ws.newBlock('sprout_number');
+    dist.setFieldValue('5', 'NUM');
+    fwdBlock.getInput('DISTANCE')!.connection!.connect(dist.outputConnection!);
+    loopBlock.getInput('BODY')!.connection!.connect(fwdBlock.previousConnection!);
+  }
+
+  it('compiles sprout_loop_forever → LoopForeverExpr', () => {
+    const ws = makeWorkspace();
+    buildLoopForeverWorkspace(ws);
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'ExprStmt',
+      expr: {
+        kind: 'LoopForeverExpr',
+        body: {
+          kind: 'BlockExpr',
+          body: [{
+            kind: 'ExprStmt',
+            expr: { kind: 'CallExpr', callee: 'forward', args: [{ kind: 'NumberLit', value: 5 }], block: null },
+          }],
+        },
+      },
+    });
+  });
+
+  it('decompiles LoopForeverExpr → sprout_loop_forever with body intact', () => {
+    const source = makeWorkspace();
+    buildLoopForeverWorkspace(source);
+    const ast = compileWorkspace(source);
+
+    const target = makeWorkspace();
+    decompileProgram(target, ast);
+    const top = target.getTopBlocks(true)[0];
+    expect(top.type).toBe('sprout_loop_forever');
+    expect(top.getInputTargetBlock('BODY')?.type).toBe('sprout_forward');
+    expect(compileWorkspace(target)).toEqual(ast);
   });
 });

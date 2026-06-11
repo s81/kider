@@ -11,7 +11,7 @@ import * as Blockly from 'blockly/node';
 import type {
   Program, Stmt, Expr,
   DefStmt, CallExpr, InfixExpr, StringLit,
-  BlockExpr, RepeatExpr, FillExpr, OnExpr, IfExpr, WhileExpr, ForEachExpr,
+  BlockExpr, RepeatExpr, FillExpr, OnExpr, IfExpr, WhileExpr, ForEachExpr, LoopForeverExpr,
 } from '@sprout/lang';
 
 export class DecompileError extends Error {}
@@ -216,6 +216,8 @@ function decompileExprStmt(ws: Blockly.Workspace, expr: Expr): Blockly.Block {
       return decompileFill(ws, expr);
     case 'OnExpr':
       return decompileOn(ws, expr);
+    case 'LoopForeverExpr':
+      return decompileLoopForever(ws, expr);
     case 'IfExpr':
       return decompileIf(ws, expr);
     case 'WhileExpr':
@@ -263,6 +265,12 @@ function decompileOn(ws: Blockly.Workspace, expr: OnExpr): Blockly.Block {
   }
   const block = ws.newBlock('sprout_on_event');
   block.setFieldValue(expr.event.name, 'EVENT');
+  connectBody(ws, block, 'BODY', expr.body.body);
+  return block;
+}
+
+function decompileLoopForever(ws: Blockly.Workspace, expr: LoopForeverExpr): Blockly.Block {
+  const block = ws.newBlock('sprout_loop_forever');
   connectBody(ws, block, 'BODY', expr.body.body);
   return block;
 }

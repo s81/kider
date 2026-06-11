@@ -265,6 +265,17 @@ export function registerStatementBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_loop_forever'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('loop forever');
+      this.appendStatementInput('BODY').appendField('do');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(120);
+      this.setTooltip('Repeat the body forever at ~60fps. Use stop timer to stop.');
+    },
+  };
+
   Blockly.Blocks['sprout_stop_timer'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput().appendField('stop timer');
