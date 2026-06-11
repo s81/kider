@@ -69,6 +69,7 @@ function compileStmt(block: Blockly.Block): Stmt {
     case 'sprout_hide_sprite':
     case 'sprout_show_sprite':
     case 'sprout_remove_sprite':
+    case 'sprout_bounce_sprite':
       return { kind: 'ExprStmt', expr: compileExprBlock(block) };
     case 'sprout_let':
       return compileLet(block);
@@ -317,6 +318,8 @@ function compileExprBlock(block: Blockly.Block): Expr {
       return spriteCall(block, 'showSprite', []);
     case 'sprout_remove_sprite':
       return spriteCall(block, 'removeSprite', []);
+    case 'sprout_bounce_sprite':
+      return spriteCall(block, 'bounceSprite', []);
     default:
       throw new Error(`Block type cannot be compiled as expression: ${block.type}`);
   }

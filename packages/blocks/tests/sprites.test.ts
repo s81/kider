@@ -90,9 +90,10 @@ describe('sprite statement blocks compile', () => {
   });
 
   it.each([
-    ['sprout_hide_sprite',   'hideSprite'],
-    ['sprout_show_sprite',   'showSprite'],
-    ['sprout_remove_sprite', 'removeSprite'],
+    ['sprout_hide_sprite',    'hideSprite'],
+    ['sprout_show_sprite',    'showSprite'],
+    ['sprout_remove_sprite',  'removeSprite'],
+    ['sprout_bounce_sprite',  'bounceSprite'],
   ])('%s → %s("cat")', (blockType, callee) => {
     const ws = makeWorkspace();
     const block = ws.newBlock(blockType);
@@ -201,5 +202,14 @@ describe('sprite decompile round-trips', () => {
     decompileProgram(ws, parse(src));
     expect(ws.getBlocksByType('sprout_move_sprite', false)).toHaveLength(0);
     expect(ws.getBlocksByType('sprout_call_stmt', false)).toHaveLength(1);
+  });
+
+  it('bounceSprite round-trips through decompile→compile', () => {
+    const src = 'bounceSprite("ball")';
+    const prog = parse(src);
+    const ws = makeWorkspace();
+    decompileProgram(ws, prog);
+    const result = compileWorkspace(ws);
+    expect(serialize(result)).toBe(src);
   });
 });

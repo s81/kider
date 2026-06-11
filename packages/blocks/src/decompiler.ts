@@ -114,6 +114,7 @@ const SPRITE_STMT_BLOCKS: Record<string, SpriteBlockSpec> = {
   hideSprite:    { type: 'sprout_hide_sprite',      fields: ['NAME'], inputs: [] },
   showSprite:    { type: 'sprout_show_sprite',      fields: ['NAME'], inputs: [] },
   removeSprite:  { type: 'sprout_remove_sprite',    fields: ['NAME'], inputs: [] },
+  bounceSprite:  { type: 'sprout_bounce_sprite',    fields: ['NAME'], inputs: [] },
 };
 
 const SPRITE_EXPR_BLOCKS: Record<string, SpriteBlockSpec> = {

@@ -127,6 +127,16 @@ export function registerSpriteBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_bounce_sprite'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput().appendField('bounce sprite').appendField(nameField(), 'NAME');
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(SPRITE_COLOUR);
+      this.setTooltip('Reflect a sprite off the stage edges');
+    },
+  };
+
   Blockly.Blocks['sprout_sprite_x'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput().appendField('x of sprite').appendField(nameField(), 'NAME');
