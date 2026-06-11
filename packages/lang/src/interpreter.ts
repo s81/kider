@@ -233,6 +233,12 @@ function spriteRadius(s: SpriteState): number {
   return Math.max(width, height) / 2;
 }
 
+function spriteSnapshots(): SpriteSnapshot[] {
+  return [..._sprites.entries()].map(([name, s]) => ({
+    name, x: s.x, y: s.y, heading: s.heading, costume: s.costume, visible: s.visible,
+  }));
+}
+
 function toStr(v: SproutValue, context: string): string {
   if (v.kind === 'string') return v.value;
   if (v.kind === 'number') return String(v.value);
@@ -1500,7 +1506,7 @@ export function interpret(program: Program, initialEnv: Env = EMPTY_ENV): Drawin
 export function interpretFull(
   program: Program,
   initialEnv: Env = EMPTY_ENV,
-): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string>; timerInterval: number; stopTimer: boolean } {
+): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string>; timerInterval: number; stopTimer: boolean; sprites: SpriteSnapshot[] } {
   _hudValues = new Map();
   _timerInterval = 200;
   _stopTimer = false;
@@ -1533,6 +1539,7 @@ export function interpretFull(
     variables: extractVariables(env),
     timerInterval: _timerInterval,
     stopTimer: _stopTimer,
+    sprites: spriteSnapshots(),
   };
 }
 
@@ -1540,16 +1547,16 @@ export function interpretFull(
  * Invoke a zero-parameter event handler closure and return the Drawing it
  * produces.  Returns EMPTY if the body produces a non-Drawing value.
  */
-export function callHandler(fn: SproutFunction): { drawing: Drawing; hud: Record<string, string>; variables: Record<string, string>; stopTimer: boolean } {
+export function callHandler(fn: SproutFunction): { drawing: Drawing; hud: Record<string, string>; variables: Record<string, string>; stopTimer: boolean; sprites: SpriteSnapshot[] } {
   _hudValues = new Map();
   _stopTimer = false;
   try {
     const result = evalExpr(fn.body, fn.env);
     const drawing = isDrawing(result) ? result : EMPTY;
-    return { drawing, hud: Object.fromEntries(_hudValues), variables: extractVariables(fn.env), stopTimer: _stopTimer };
+    return { drawing, hud: Object.fromEntries(_hudValues), variables: extractVariables(fn.env), stopTimer: _stopTimer, sprites: spriteSnapshots() };
   } catch (e) {
     if (e instanceof ReturnBundle) {
-      return { drawing: e.drawing, hud: Object.fromEntries(_hudValues), variables: extractVariables(fn.env), stopTimer: _stopTimer };
+      return { drawing: e.drawing, hud: Object.fromEntries(_hudValues), variables: extractVariables(fn.env), stopTimer: _stopTimer, sprites: spriteSnapshots() };
     }
     throw e;
   }
@@ -1695,7 +1702,7 @@ export function interpretFullWithInputs(
   program: Program,
   inputs: ReadonlyMap<string, number>,
   initialEnv: Env = EMPTY_ENV,
-): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string>; timerInterval: number; stopTimer: boolean } {
+): { drawing: Drawing; handlers: Map<string, SproutFunction>; hud: Record<string, string>; variables: Record<string, string>; timerInterval: number; stopTimer: boolean; sprites: SpriteSnapshot[] } {
   const prev = _inputValues;
   _inputValues = inputs;
   try {

@@ -78,6 +78,8 @@ export {
   EMPTY,
 } from './values.js';
 
+export type { SpriteSnapshot } from './interpreter.js';
+
 export {
   interpret,
   interpretFull,

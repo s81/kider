@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { interpretValue } from '../src/interpreter.js';
+import { interpretValue, interpretFull, callHandler } from '../src/interpreter.js';
 import type { Program, Stmt, Expr } from '../src/ast.js';
 
 const numLit = (value: number): Expr => ({ kind: 'NumberLit', value });
@@ -160,5 +160,66 @@ describe('removeSprite', () => {
   it('removing an unknown sprite throws', () => {
     expect(() => interpretValue(prog(exprStmt(call('removeSprite', [strLit('ghost-c')])))))
       .toThrow("removeSprite: no sprite named 'ghost-c'");
+  });
+});
+
+const letStmt = (name: string, init: Expr): Stmt => ({ kind: 'LetStmt', name, init });
+
+describe('sprite snapshots', () => {
+  it('interpretFull returns sprites in creation order', () => {
+    const result = interpretFull(prog(
+      mkSprite('cat', 15),
+      mkSprite('dog', 10),
+      exprStmt(call('gotoSprite', [strLit('cat'), numLit(5), numLit(6)])),
+      exprStmt(call('hideSprite', [strLit('dog')])),
+    ));
+    expect(result.sprites.map(s => s.name)).toEqual(['cat', 'dog']);
+    expect(result.sprites[0]).toMatchObject({ x: 5, y: 6, heading: 0, visible: true });
+    expect(result.sprites[0].costume).toEqual({ kind: 'circle', radius: 15 });
+    expect(result.sprites[1].visible).toBe(false);
+  });
+
+  it('re-creating a sprite swaps costume but keeps position', () => {
+    const result = interpretFull(prog(
+      mkSprite('cat', 15),
+      exprStmt(call('gotoSprite', [strLit('cat'), numLit(50), numLit(60)])),
+      mkSprite('cat', 99),
+    ));
+    expect(result.sprites).toHaveLength(1);
+    expect(result.sprites[0]).toMatchObject({
+      name: 'cat', x: 50, y: 60,
+      costume: { kind: 'circle', radius: 99 },
+    });
+  });
+
+  it('interpretFull resets the registry between runs', () => {
+    interpretFull(prog(mkSprite('leftover')));
+    const result = interpretFull(prog(mkSprite('fresh')));
+    expect(result.sprites.map(s => s.name)).toEqual(['fresh']);
+  });
+
+  it('callHandler does not reset; its snapshot sees handler mutations', () => {
+    const onExpr: Expr = {
+      kind: 'OnExpr',
+      event: { kind: 'SymbolLit', name: 'timer' },
+      body: {
+        kind: 'BlockExpr',
+        body: [exprStmt(call('changeSpriteX', [strLit('cat'), numLit(5)]))],
+      },
+      interval: null,
+    };
+    const result = interpretFull(prog(mkSprite('cat'), exprStmt(onExpr)));
+    const timerFn = result.handlers.get(':timer')!;
+    const tick1 = callHandler(timerFn);
+    expect(tick1.sprites[0].x).toBe(5);
+    const tick2 = callHandler(timerFn);
+    expect(tick2.sprites[0].x).toBe(10);
+  });
+
+  it('snapshots are copies — mutating one does not affect the registry', () => {
+    const result = interpretFull(prog(mkSprite('cat')));
+    (result.sprites[0] as { x: number }).x = 999;
+    const again = interpretFull(prog(mkSprite('cat')));
+    expect(again.sprites[0].x).toBe(0);
   });
 });
