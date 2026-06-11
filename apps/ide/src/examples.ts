@@ -97,6 +97,7 @@ end`,
   {
     name: 'Sprite Chase',
     code: `# Catch the mouse! Arrow keys. Catch 5 to win.
+hideTurtle()
 sprite("cat", text("🐱", 40))
 sprite("mouse", text("🐭", 30))
 gotoSprite("mouse", random(-200, 200), random(-200, 200))
