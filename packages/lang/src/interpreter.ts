@@ -145,6 +145,28 @@ let _turtleX: number = 0;
 let _turtleY: number = 0;
 let _turtleHeading: number = 0; // degrees clockwise from north
 
+// Module-level sprite registry — created by sprite(), mutated by sprite
+// builtins, drawn by the host each frame. Insertion order = draw order.
+export type SpriteSnapshot = {
+  readonly name: string;
+  readonly x: number;
+  readonly y: number;
+  readonly heading: number;
+  readonly costume: Drawing;
+  readonly visible: boolean;
+};
+
+type SpriteState = {
+  x: number;
+  y: number;
+  /** Degrees clockwise from north (0 = up) — same convention as the turtle. */
+  heading: number;
+  costume: Drawing;
+  visible: boolean;
+};
+
+const _sprites = new Map<string, SpriteState>();
+
 // ---------------------------------------------------------------------------
 // Type guards
 // ---------------------------------------------------------------------------
@@ -195,6 +217,13 @@ function assertList(v: SproutValue, context: string): SproutList {
     );
   }
   return v;
+}
+
+function getSprite(v: SproutValue, context: string): SpriteState {
+  const name = assertString(v, context);
+  const s = _sprites.get(name.value);
+  if (!s) throw new SproutRuntimeError(`${context}: no sprite named '${name.value}'`);
+  return s;
 }
 
 function toStr(v: SproutValue, context: string): string {
@@ -478,6 +507,46 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     const radius = assertNumber(args[4], 'touching (radius)');
     const dist = Math.hypot(x2.value - x1.value, y2.value - y1.value);
     return { kind: 'bool', value: dist <= radius.value } satisfies SproutBool;
+  }],
+  // --- Sprite builtins (retained game entities — see 2026-06-11-sprites-design.md) ---
+  ['sprite', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`sprite expects 2 arguments, got ${args.length}`);
+    const name = assertString(args[0], 'sprite');
+    const costume = assertDrawing(args[1], 'sprite');
+    const existing = _sprites.get(name.value);
+    if (existing) {
+      existing.costume = costume;
+    } else {
+      _sprites.set(name.value, { x: 0, y: 0, heading: 0, costume, visible: true });
+    }
+    return EMPTY;
+  }],
+  ['gotoSprite', (args) => {
+    if (args.length !== 3) throw new SproutRuntimeError(`gotoSprite expects 3 arguments, got ${args.length}`);
+    const s = getSprite(args[0], 'gotoSprite');
+    s.x = assertNumber(args[1], 'gotoSprite (x)').value;
+    s.y = assertNumber(args[2], 'gotoSprite (y)').value;
+    return EMPTY;
+  }],
+  ['changeSpriteX', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`changeSpriteX expects 2 arguments, got ${args.length}`);
+    const s = getSprite(args[0], 'changeSpriteX');
+    s.x += assertNumber(args[1], 'changeSpriteX').value;
+    return EMPTY;
+  }],
+  ['changeSpriteY', (args) => {
+    if (args.length !== 2) throw new SproutRuntimeError(`changeSpriteY expects 2 arguments, got ${args.length}`);
+    const s = getSprite(args[0], 'changeSpriteY');
+    s.y += assertNumber(args[1], 'changeSpriteY').value;
+    return EMPTY;
+  }],
+  ['spriteX', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`spriteX expects 1 argument, got ${args.length}`);
+    return { kind: 'number', value: getSprite(args[0], 'spriteX').x } satisfies SproutNumber;
+  }],
+  ['spriteY', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`spriteY expects 1 argument, got ${args.length}`);
+    return { kind: 'number', value: getSprite(args[0], 'spriteY').y } satisfies SproutNumber;
   }],
   ['random', (args) => {
     if (args.length !== 2) throw new SproutRuntimeError(`random expects 2 arguments, got ${args.length}`);
@@ -1350,6 +1419,7 @@ export function interpret(program: Program, initialEnv: Env = EMPTY_ENV): Drawin
   _turtleX = 0;
   _turtleY = 0;
   _turtleHeading = 0;
+  _sprites.clear();
   let env: Env = initialEnv;
   const drawings: Drawing[] = [];
 
@@ -1386,6 +1456,7 @@ export function interpretFull(
   _turtleX = 0;
   _turtleY = 0;
   _turtleHeading = 0;
+  _sprites.clear();
   let env: Env = initialEnv;
   const drawings: Drawing[] = [];
 
@@ -1526,6 +1597,7 @@ export function interpretValue(
   program: Program,
   initialEnv: Env = EMPTY_ENV,
 ): SproutValue {
+  _sprites.clear();
   let env: Env = initialEnv;
   let lastValue: SproutValue = EMPTY;
 
