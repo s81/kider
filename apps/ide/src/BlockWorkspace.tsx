@@ -57,6 +57,7 @@ const TOOLBOX: Blockly.utils.toolbox.ToolboxDefinition = {
     { kind: 'block', type: 'sprout_get' },
     { kind: 'block', type: 'sprout_first' },
     { kind: 'block', type: 'sprout_last' },
+    { kind: 'block', type: 'sprout_pick' },
     { kind: 'block', type: 'sprout_index_of' },
     { kind: 'block', type: 'sprout_slice' },
     // Lists — Query
