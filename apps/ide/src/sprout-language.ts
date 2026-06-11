@@ -49,8 +49,8 @@ export const SPROUT_BUILTINS: readonly string[] = [
 
 const SPROUT_SYMBOLS: readonly string[] = [
   ':red', ':orange', ':yellow', ':green', ':blue', ':purple',
-  ':white', ':black', ':gray', ':pink', ':cyan',
-  ':left', ':right', ':up', ':down', ':space', ':enter', ':timer',
+  ':white', ':black', ':pink',
+  ':left', ':right', ':up', ':down', ':space', ':timer',
 ];
 
 // ---------------------------------------------------------------------------

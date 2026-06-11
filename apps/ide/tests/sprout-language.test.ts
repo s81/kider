@@ -82,4 +82,15 @@ describe('sproutCompletions', () => {
     const result = sproutCompletions(makeContext('', 0, false));
     expect(result).toBeNull();
   });
+
+  it('symbol completions only offer values the interpreter accepts', () => {
+    const result = sproutCompletions(makeContext(':', 1));
+    const labels = (result as { options: { label: string }[] }).options.map(o => o.label);
+    // Colors from the interpreter's COLOR_MAP + keys from KEY_NAMES + :timer
+    expect(labels).toEqual([
+      ':red', ':orange', ':yellow', ':green', ':blue', ':purple',
+      ':white', ':black', ':pink',
+      ':left', ':right', ':up', ':down', ':space', ':timer',
+    ]);
+  });
 });
