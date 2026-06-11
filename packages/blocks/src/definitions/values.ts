@@ -281,6 +281,16 @@ export function registerValueBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_pick'] = {
+    init(this: Blockly.Block) {
+      this.appendValueInput('LIST').setCheck(null).appendField('pick from');
+      this.setOutput(true, null);
+      this.setInputsInline(true);
+      this.setColour(180);
+      this.setTooltip('Pick a random item from a list');
+    },
+  };
+
   Blockly.Blocks['sprout_last'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('LIST').setCheck(null).appendField('last of');

@@ -109,6 +109,13 @@ describe('decompiler round-trips', () => {
     roundTrip('let name = textInput("name")\nputs(name)');
   });
 
+  it('pick maps to its value block', () => {
+    roundTrip('let chosen = pick(list(1, 2, 3))\nforward(chosen)');
+    const ws = makeWorkspace();
+    decompileProgram(ws, parse('let chosen = pick(list(1, 2, 3))'));
+    expect(ws.getBlocksByType('sprout_pick', false)).toHaveLength(1);
+  });
+
   it('keyDown(:w) maps to the dropdown block, other letters fall back', () => {
     roundTrip('puts(keyDown(:w))');
     roundTrip('puts(keyDown(:q))');

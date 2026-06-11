@@ -24,7 +24,7 @@ No parser, serializer, AST, or renderer changes — it's a plain call.
 ## Blocks (packages/blocks)
 
 - New value block `sprout_pick`: `pick from [LIST]`, output unchecked
-  (element can be any kind), colour 260 (list colour, same as `sprout_first`).
+  (element can be any kind), colour 180 (list colour, same as `sprout_first`).
 - Compiler: `sprout_pick` → `CallExpr pick(LIST)` (mirrors `sprout_first`).
 - Decompiler: `pick: { type: 'sprout_pick', inputs: ['LIST'] }` in
   EXPR_CALL_BLOCKS.

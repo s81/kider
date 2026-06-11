@@ -1462,6 +1462,29 @@ describe('new list blocks', () => {
     });
   });
 
+  it('sprout_pick compiles to pick(list)', () => {
+    const ws = makeWorkspace();
+    const pickBlock = ws.newBlock('sprout_pick');
+    const listIdent = ws.newBlock('sprout_ident');
+    listIdent.setFieldValue('items', 'NAME');
+    pickBlock.getInput('LIST')!.connection!.connect(listIdent.outputConnection!);
+
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('chosen', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(pickBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 'chosen',
+      init: {
+        kind: 'CallExpr', callee: 'pick',
+        args: [{ kind: 'Ident', name: 'items' }],
+        block: null,
+      },
+    });
+  });
+
   it('sprout_last compiles to last(list)', () => {
     const ws = makeWorkspace();
     const lastBlock = ws.newBlock('sprout_last');

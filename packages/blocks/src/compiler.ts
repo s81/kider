@@ -573,6 +573,10 @@ function compileExpr(block: Blockly.Block): Expr {
       const lst = compileExpr(mustGetInput(block, 'LIST'));
       return { kind: 'CallExpr', callee: 'last', args: [lst], block: null };
     }
+    case 'sprout_pick': {
+      const lst = compileExpr(mustGetInput(block, 'LIST'));
+      return { kind: 'CallExpr', callee: 'pick', args: [lst], block: null };
+    }
     case 'sprout_pop': {
       const lst = compileExpr(mustGetInput(block, 'LIST'));
       return { kind: 'CallExpr', callee: 'pop', args: [lst], block: null };

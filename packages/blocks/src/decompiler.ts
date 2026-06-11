@@ -85,6 +85,7 @@ const EXPR_CALL_BLOCKS: Record<string, { type: string; inputs: string[] }> = {
   filter:     { type: 'sprout_filter',     inputs: ['LIST', 'FN'] },
   reduce:     { type: 'sprout_reduce',     inputs: ['LIST', 'FN', 'INIT'] },
   first:      { type: 'sprout_first',      inputs: ['LIST'] },
+  pick:       { type: 'sprout_pick',       inputs: ['LIST'] },
   last:       { type: 'sprout_last',       inputs: ['LIST'] },
   pop:        { type: 'sprout_pop',        inputs: ['LIST'] },
   concat:     { type: 'sprout_concat',     inputs: ['LIST1', 'LIST2'] },
