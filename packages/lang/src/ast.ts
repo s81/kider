@@ -125,6 +125,14 @@ export interface ForEachExpr {
   readonly body: BlockExpr;
 }
 
+/** `loop forever do ... end` — registers a ~60fps timer loop; stops with stopTimer() */
+export interface LoopForeverExpr {
+  readonly kind: 'LoopForeverExpr';
+  readonly body: BlockExpr;
+  /** 1-based source line; set by the text parser, absent for block-built ASTs. */
+  readonly line?: number;
+}
+
 // ---------------------------------------------------------------------------
 // Expr union
 // ---------------------------------------------------------------------------
@@ -144,7 +152,8 @@ export type Expr =
   | OnExpr
   | IfExpr
   | WhileExpr
-  | ForEachExpr;
+  | ForEachExpr
+  | LoopForeverExpr;
 
 // ---------------------------------------------------------------------------
 // Statement nodes

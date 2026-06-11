@@ -108,6 +108,11 @@ export function serializeExpr(expr: Expr, indentLevel = 0): string {
       return `on ${eventStr} do\n${body}\n${indent(indentLevel)}end`;
     }
 
+    case 'LoopForeverExpr': {
+      const body = serializeBlock(expr.body, indentLevel + 1);
+      return `loop forever do\n${body}\n${indent(indentLevel)}end`;
+    }
+
     case 'IfExpr':
       return serializeIfChain(expr, indentLevel, 'if');
 

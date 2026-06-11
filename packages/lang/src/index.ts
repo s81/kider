@@ -23,6 +23,7 @@ export type {
   IfExpr,
   WhileExpr,
   ForEachExpr,
+  LoopForeverExpr,
   // Unions
   Expr,
   Stmt,

@@ -1081,6 +1081,9 @@ function evalExpr(expr: Expr, env: Env): SproutValue {
     case 'WhileExpr':
       return evalWhile(expr, env);
 
+    case 'LoopForeverExpr':
+      throw new SproutRuntimeError('loop forever may only appear as a top-level statement');
+
     default: {
       // TypeScript exhaustiveness check
       const _exhaustive: never = expr;
@@ -1401,6 +1404,17 @@ function evalStmtWithEnv(stmt: Stmt, env: Env): [SproutValue | null, Env] {
         const newEnv = envExtend(env, [[key, handler]]);
         return [null, newEnv];
       }
+      if (stmt.expr.kind === 'LoopForeverExpr') {
+        _timerInterval = 16;
+        const handler: SproutFunction = {
+          kind: 'function',
+          params: [],
+          body: stmt.expr.body,
+          env,
+        };
+        const newEnv = envExtend(env, [[':timer', handler]]);
+        return [null, newEnv];
+      }
       // Direct function call: catch ReturnBundle to emit its drawings.
       if (stmt.expr.kind === 'CallExpr') {
         try {
@@ -1628,6 +1642,9 @@ function collectCalleeStringArgs(program: Program, callee: string): string[] {
         walkBlock(expr.body);
         break;
       case 'OnExpr':
+        walkBlock(expr.body);
+        break;
+      case 'LoopForeverExpr':
         walkBlock(expr.body);
         break;
       case 'IfExpr':
