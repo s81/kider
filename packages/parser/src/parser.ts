@@ -2,7 +2,7 @@ import { tokenize, type Token, ParseError } from './lexer.js';
 import type {
   Program, Stmt, Expr, DefStmt,
   BlockExpr, RepeatExpr, FillExpr, OnExpr, CallExpr, IfExpr, UnaryExpr,
-  LetStmt, AssignStmt, WhileExpr, ForEachExpr,
+  LetStmt, AssignStmt, WhileExpr, ForEachExpr, LoopForeverExpr,
 } from '@sprout/lang';
 
 class Parser {
@@ -309,6 +309,13 @@ class Parser {
         const event = { kind: 'SymbolLit' as const, name: symTok.name };
         const body = this.parseDoBlock();
         return { kind: 'OnExpr', event, body, interval: null } satisfies OnExpr;
+      }
+
+      if (name === 'loop') {
+        this.advance();
+        this.eatIdent('forever');
+        const body = this.parseDoBlock();
+        return { kind: 'LoopForeverExpr', body } satisfies LoopForeverExpr;
       }
 
       if (name === 'for') {
