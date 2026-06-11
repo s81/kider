@@ -129,8 +129,6 @@ export interface ForEachExpr {
 export interface LoopForeverExpr {
   readonly kind: 'LoopForeverExpr';
   readonly body: BlockExpr;
-  /** 1-based source line; set by the text parser, absent for block-built ASTs. */
-  readonly line?: number;
 }
 
 // ---------------------------------------------------------------------------
