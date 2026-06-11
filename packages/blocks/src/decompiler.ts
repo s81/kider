@@ -120,6 +120,7 @@ const SPRITE_STMT_BLOCKS: Record<string, SpriteBlockSpec> = {
 const SPRITE_EXPR_BLOCKS: Record<string, SpriteBlockSpec> = {
   spriteX:         { type: 'sprout_sprite_x',         fields: ['NAME'], inputs: [] },
   spriteY:         { type: 'sprout_sprite_y',         fields: ['NAME'], inputs: [] },
+  cloneSprite:     { type: 'sprout_clone_sprite',     fields: ['NAME'], inputs: [] },
   spritesTouching: { type: 'sprout_sprites_touching', fields: ['NAME_A', 'NAME_B'], inputs: [] },
 };
 

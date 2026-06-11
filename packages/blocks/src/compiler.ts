@@ -676,6 +676,8 @@ function compileExpr(block: Blockly.Block): Expr {
       return spriteCall(block, 'spriteX', []);
     case 'sprout_sprite_y':
       return spriteCall(block, 'spriteY', []);
+    case 'sprout_clone_sprite':
+      return spriteCall(block, 'cloneSprite', []);
     case 'sprout_sprites_touching': {
       const a = block.getFieldValue('NAME_A') as string;
       const b = block.getFieldValue('NAME_B') as string;

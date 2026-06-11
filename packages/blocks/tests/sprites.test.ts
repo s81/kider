@@ -213,3 +213,37 @@ describe('sprite decompile round-trips', () => {
     expect(serialize(result)).toBe(src);
   });
 });
+
+describe('sprout_clone_sprite round-trips', () => {
+  it('compiles sprout_clone_sprite inside sprout_let → LetStmt { init: cloneSprite("cat") }', () => {
+    const ws = makeWorkspace();
+    const letBlock = ws.newBlock('sprout_let');
+    letBlock.setFieldValue('c', 'NAME');
+    const cloneBlock = ws.newBlock('sprout_clone_sprite');
+    cloneBlock.setFieldValue('cat', 'NAME');
+    letBlock.getInput('INIT')!.connection!.connect(cloneBlock.outputConnection!);
+
+    const result = compileWorkspace(ws);
+    expect(result.stmts[0]).toEqual({
+      kind: 'LetStmt',
+      name: 'c',
+      init: {
+        kind: 'CallExpr',
+        callee: 'cloneSprite',
+        args: [{ kind: 'StringLit', value: 'cat' }],
+        block: null,
+      },
+    });
+  });
+
+  it('decompiles cloneSprite("cat") → sprout_clone_sprite', () => {
+    const ast = parse('let c = cloneSprite("cat")');
+    const ws = makeWorkspace();
+    decompileProgram(ws, ast);
+    const top = ws.getTopBlocks(true)[0];
+    expect(top.type).toBe('sprout_let');
+    const initBlock = top.getInputTargetBlock('INIT');
+    expect(initBlock?.type).toBe('sprout_clone_sprite');
+    expect(initBlock?.getFieldValue('NAME')).toBe('cat');
+  });
+});

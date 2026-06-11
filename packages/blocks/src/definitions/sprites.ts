@@ -137,6 +137,17 @@ export function registerSpriteBlocks(): void {
     },
   };
 
+  Blockly.Blocks['sprout_clone_sprite'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('clone sprite')
+        .appendField(nameField(), 'NAME');
+      this.setOutput(true, null);
+      this.setColour(SPRITE_COLOUR);
+      this.setTooltip('Create a copy of a sprite and return its name as a string');
+    },
+  };
+
   Blockly.Blocks['sprout_sprite_x'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput().appendField('x of sprite').appendField(nameField(), 'NAME');
