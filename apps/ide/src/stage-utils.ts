@@ -1,4 +1,5 @@
-import type { CanvasCommand } from '@sprout/lang';
+import type { CanvasCommand, SpriteSnapshot } from '@sprout/lang';
+import { render } from '@sprout/lang';
 
 export const STAGE_W = 500;
 export const STAGE_H = 500;
@@ -68,7 +69,14 @@ export function drawUpTo(
 ): void {
   ctx.clearRect(0, 0, STAGE_W, STAGE_H);
   if (limit === 0) return;
+  replayCommands(ctx, commands, limit);
+}
 
+function replayCommands(
+  ctx: CanvasRenderingContext2D,
+  commands: CanvasCommand[],
+  limit: number,
+): void {
   ctx.strokeStyle = '#2563eb';
   ctx.lineWidth = 2;
   ctx.lineCap = 'round';
@@ -285,6 +293,22 @@ export function drawUpTo(
     }
   }
   ctx.stroke();
+}
+
+export function drawSprites(
+  ctx: CanvasRenderingContext2D,
+  sprites: readonly SpriteSnapshot[],
+): void {
+  for (const s of sprites) {
+    if (!s.visible) continue;
+    const cmds = render(s.costume).filter(
+      c => c.kind !== 'clearCanvas' && c.kind !== 'fillBackground',
+    );
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    replayCommands(ctx, cmds, cmds.length);
+    ctx.restore();
+  }
 }
 
 export type PlaybackSegment =

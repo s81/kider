@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { drawUpTo, getTurtleState, drawTurtle, buildPlayback, STAGE_W, STAGE_H } from '../src/stage-utils.js';
-import type { CanvasCommand } from '@sprout/lang';
+import { drawUpTo, drawSprites, getTurtleState, drawTurtle, buildPlayback, STAGE_W, STAGE_H } from '../src/stage-utils.js';
+import type { CanvasCommand, SpriteSnapshot } from '@sprout/lang';
 
 function makeMockCtx() {
   return {
@@ -528,5 +528,45 @@ describe('drawTurtle — visibility', () => {
     const ctx = makeShapeMockCtx();
     drawTurtle(ctx, { x: 0, y: 0, heading: 0, visible: true });
     expect(ctx.fill).toHaveBeenCalled();
+  });
+});
+
+describe('drawSprites', () => {
+  const snap = (over: Partial<SpriteSnapshot> & { name: string }): SpriteSnapshot => ({
+    x: 0, y: 0, heading: 0,
+    costume: { kind: 'circle', radius: 15 },
+    visible: true,
+    ...over,
+  });
+
+  const calls = (fn: unknown) => (fn as ReturnType<typeof vi.fn>).mock.calls;
+
+  it('translates to each sprite position in order, save/restore balanced', () => {
+    const ctx = makeShapeMockCtx();
+    drawSprites(ctx, [
+      snap({ name: 'cat', x: 10, y: -20 }),
+      snap({ name: 'dog', x: -5, y: 5 }),
+    ]);
+    expect(ctx.translate).toHaveBeenNthCalledWith(1, 10, -20);
+    expect(ctx.translate).toHaveBeenNthCalledWith(2, -5, 5);
+    expect(calls(ctx.save).length).toBe(calls(ctx.restore).length);
+  });
+
+  it('skips hidden sprites', () => {
+    const ctx = makeShapeMockCtx();
+    drawSprites(ctx, [snap({ name: 'cat', visible: false })]);
+    expect(ctx.translate).not.toHaveBeenCalled();
+  });
+
+  it('draws a circle costume via arc', () => {
+    const ctx = makeShapeMockCtx();
+    drawSprites(ctx, [snap({ name: 'cat' })]);
+    expect(ctx.arc).toHaveBeenCalled();
+  });
+
+  it('ignores clearCanvas inside a costume', () => {
+    const ctx = makeShapeMockCtx();
+    drawSprites(ctx, [snap({ name: 'cat', costume: { kind: 'clearCanvas' } })]);
+    expect(ctx.clearRect).not.toHaveBeenCalled();
   });
 });
