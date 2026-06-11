@@ -2198,6 +2198,59 @@ describe('list builtins', () => {
     });
   });
 
+  describe('pick()', () => {
+    it('always returns an element of the list', () => {
+      for (let i = 0; i < 50; i++) {
+        const prog = program(exprStmt(
+          call('pick', [call('list', [numLit(10), numLit(20), numLit(30)])])
+        ));
+        const result = interpretValue(prog);
+        expect(result.kind).toBe('number');
+        expect([10, 20, 30]).toContain((result as { kind: 'number'; value: number }).value);
+      }
+    });
+
+    it('returns the only item in a singleton list', () => {
+      const prog = program(exprStmt(
+        call('pick', [call('list', [numLit(42)])])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'number', value: 42 });
+    });
+
+    it('eventually returns different elements', () => {
+      const seen = new Set<number>();
+      for (let i = 0; i < 200 && seen.size < 3; i++) {
+        const prog = program(exprStmt(
+          call('pick', [call('list', [numLit(1), numLit(2), numLit(3)])])
+        ));
+        seen.add((interpretValue(prog) as { kind: 'number'; value: number }).value);
+      }
+      expect(seen.size).toBe(3);
+    });
+
+    it('works on mixed-kind lists', () => {
+      const prog = program(exprStmt(
+        call('pick', [call('list', [strLit('red')])])
+      ));
+      expect(interpretValue(prog)).toEqual({ kind: 'string', value: 'red' });
+    });
+
+    it('throws on empty list', () => {
+      const prog = program(exprStmt(call('pick', [call('list', [])])));
+      expect(() => interpretValue(prog)).toThrow('pick: list is empty');
+    });
+
+    it('throws if arg is not a list', () => {
+      const prog = program(exprStmt(call('pick', [numLit(5)])));
+      expect(() => interpretValue(prog)).toThrow('pick: expected list, got number');
+    });
+
+    it('throws on wrong arity', () => {
+      const prog = program(exprStmt(call('pick', [])));
+      expect(() => interpretValue(prog)).toThrow('pick expects 1 argument, got 0');
+    });
+  });
+
   describe('last()', () => {
     it('returns the last item', () => {
       const prog = program(exprStmt(
