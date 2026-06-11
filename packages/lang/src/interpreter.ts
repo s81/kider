@@ -605,6 +605,27 @@ const BUILTINS: ReadonlyMap<string, BuiltinFn> = new Map<string, BuiltinFn>([
     _sprites.delete(name.value);
     return EMPTY;
   }],
+  ['bounceSprite', (args) => {
+    if (args.length !== 1) throw new SproutRuntimeError(`bounceSprite expects 1 argument, got ${args.length}`);
+    const s = getSprite(args[0], 'bounceSprite');
+    const HALF_W = 250;
+    const HALF_H = 250;
+    if (s.x < -HALF_W) {
+      s.x = -HALF_W;
+      s.heading = ((360 - s.heading) % 360 + 360) % 360;
+    } else if (s.x > HALF_W) {
+      s.x = HALF_W;
+      s.heading = ((360 - s.heading) % 360 + 360) % 360;
+    }
+    if (s.y < -HALF_H) {
+      s.y = -HALF_H;
+      s.heading = ((180 - s.heading) % 360 + 360) % 360;
+    } else if (s.y > HALF_H) {
+      s.y = HALF_H;
+      s.heading = ((180 - s.heading) % 360 + 360) % 360;
+    }
+    return EMPTY;
+  }],
   ['random', (args) => {
     if (args.length !== 2) throw new SproutRuntimeError(`random expects 2 arguments, got ${args.length}`);
     const min = assertNumber(args[0], 'random');

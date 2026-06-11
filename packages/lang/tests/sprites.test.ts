@@ -163,6 +163,89 @@ describe('removeSprite', () => {
   });
 });
 
+describe('bounceSprite', () => {
+  it('no-op when sprite is inside bounds', () => {
+    const result = interpretFull(prog(
+      mkSprite('b'),
+      exprStmt(call('gotoSprite', [strLit('b'), numLit(100), numLit(50)])),
+      exprStmt(call('bounceSprite', [strLit('b')])),
+    ));
+    expect(result.sprites[0]).toMatchObject({ x: 100, y: 50, heading: 0 });
+  });
+
+  it('reflects heading off left wall and clamps x', () => {
+    // heading 270 = facing left → after bounce: (360 - 270) % 360 = 90 (facing right)
+    const result = interpretFull(prog(
+      mkSprite('b'),
+      exprStmt(call('gotoSprite', [strLit('b'), numLit(-260), numLit(0)])),
+      exprStmt(call('turnSprite', [strLit('b'), numLit(270)])),
+      exprStmt(call('bounceSprite', [strLit('b')])),
+    ));
+    expect(result.sprites[0].x).toBe(-250);
+    expect(result.sprites[0].heading).toBeCloseTo(90);
+  });
+
+  it('reflects heading off right wall and clamps x', () => {
+    // heading 90 = facing right → after bounce: (360 - 90) % 360 = 270 (facing left)
+    const result = interpretFull(prog(
+      mkSprite('b'),
+      exprStmt(call('gotoSprite', [strLit('b'), numLit(260), numLit(0)])),
+      exprStmt(call('turnSprite', [strLit('b'), numLit(90)])),
+      exprStmt(call('bounceSprite', [strLit('b')])),
+    ));
+    expect(result.sprites[0].x).toBe(250);
+    expect(result.sprites[0].heading).toBeCloseTo(270);
+  });
+
+  it('reflects heading off top wall and clamps y', () => {
+    // heading 0 = facing up → after bounce: (180 - 0 + 360) % 360 = 180 (facing down)
+    const result = interpretFull(prog(
+      mkSprite('b'),
+      exprStmt(call('gotoSprite', [strLit('b'), numLit(0), numLit(-260)])),
+      exprStmt(call('bounceSprite', [strLit('b')])),
+    ));
+    expect(result.sprites[0].y).toBe(-250);
+    expect(result.sprites[0].heading).toBeCloseTo(180);
+  });
+
+  it('reflects heading off bottom wall and clamps y', () => {
+    // heading 180 = facing down → after bounce: (180 - 180 + 360) % 360 = 0 (facing up)
+    const result = interpretFull(prog(
+      mkSprite('b'),
+      exprStmt(call('gotoSprite', [strLit('b'), numLit(0), numLit(260)])),
+      exprStmt(call('turnSprite', [strLit('b'), numLit(180)])),
+      exprStmt(call('bounceSprite', [strLit('b')])),
+    ));
+    expect(result.sprites[0].y).toBe(250);
+    expect(result.sprites[0].heading).toBeCloseTo(0);
+  });
+
+  it('corner hit reflects both axes', () => {
+    // heading 45 (NE) hits top-right corner
+    // x-reflect: (360 - 45) % 360 = 315 (NW)
+    // y-reflect of 315: (180 - 315 + 360) % 360 = 225 (SW)
+    const result = interpretFull(prog(
+      mkSprite('b'),
+      exprStmt(call('gotoSprite', [strLit('b'), numLit(260), numLit(-260)])),
+      exprStmt(call('turnSprite', [strLit('b'), numLit(45)])),
+      exprStmt(call('bounceSprite', [strLit('b')])),
+    ));
+    expect(result.sprites[0].x).toBe(250);
+    expect(result.sprites[0].y).toBe(-250);
+    expect(result.sprites[0].heading).toBeCloseTo(225);
+  });
+
+  it('throws for wrong arity', () => {
+    expect(() => interpretValue(prog(exprStmt(call('bounceSprite', [])))))
+      .toThrow('bounceSprite expects 1 argument, got 0');
+  });
+
+  it('throws for unknown sprite', () => {
+    expect(() => interpretValue(prog(exprStmt(call('bounceSprite', [strLit('ghost')])))))
+      .toThrow("bounceSprite: no sprite named 'ghost'");
+  });
+});
+
 const letStmt = (name: string, init: Expr): Stmt => ({ kind: 'LetStmt', name, init });
 
 describe('sprite snapshots', () => {
