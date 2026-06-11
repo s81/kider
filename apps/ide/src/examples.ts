@@ -94,4 +94,40 @@ on timer every 50 do
   end
 end`,
   },
+  {
+    name: 'Sprite Chase',
+    code: `# Catch the mouse! Arrow keys. Catch 5 to win.
+sprite("cat", text("🐱", 40))
+sprite("mouse", text("🐭", 30))
+gotoSprite("mouse", random(-200, 200), random(-200, 200))
+let score = 0
+
+on timer every 50 do
+  if keyDown(:left) do
+    changeSpriteX("cat", -5)
+  end
+  if keyDown(:right) do
+    changeSpriteX("cat", 5)
+  end
+  if keyDown(:up) do
+    changeSpriteY("cat", -5)
+  end
+  if keyDown(:down) do
+    changeSpriteY("cat", 5)
+  end
+
+  if spritesTouching("cat", "mouse") do
+    beep()
+    set score = score + 1
+    gotoSprite("mouse", random(-200, 200), random(-200, 200))
+  end
+
+  show("score", score)
+
+  if score == 5 do
+    text("YOU WIN!", 40)
+    stopTimer()
+  end
+end`,
+  },
 ];

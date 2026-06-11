@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import type { CanvasCommand } from '@sprout/lang';
-import { drawUpTo, getTurtleState, drawTurtle, STAGE_W, STAGE_H } from './stage-utils.js';
+import type { CanvasCommand, SpriteSnapshot } from '@sprout/lang';
+import { drawUpTo, drawSprites, getTurtleState, drawTurtle, STAGE_W, STAGE_H } from './stage-utils.js';
 
 interface Props {
   commands: CanvasCommand[];
@@ -10,9 +10,10 @@ interface Props {
   onClick?: () => void;
   onMouseMove?: (x: number, y: number) => void;
   hud?: Record<string, string>;
+  sprites?: readonly SpriteSnapshot[];
 }
 
-export function Stage({ commands, animated = false, stepsPerFrame = 3, drawLimit = null, onClick, onMouseMove, hud }: Props) {
+export function Stage({ commands, animated = false, stepsPerFrame = 3, drawLimit = null, onClick, onMouseMove, hud, sprites = [] }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -23,6 +24,7 @@ export function Stage({ commands, animated = false, stepsPerFrame = 3, drawLimit
     if (drawLimit !== null) {
       const limit = drawLimit;
       drawUpTo(ctx, commands, limit);
+      drawSprites(ctx, sprites);
       drawTurtle(ctx, getTurtleState(commands, limit));
       return;
     }
@@ -30,6 +32,7 @@ export function Stage({ commands, animated = false, stepsPerFrame = 3, drawLimit
     if (!animated || commands.length === 0) {
       const limit = commands.length;
       drawUpTo(ctx, commands, limit);
+      drawSprites(ctx, sprites);
       drawTurtle(ctx, getTurtleState(commands, limit));
       return;
     }
@@ -40,6 +43,7 @@ export function Stage({ commands, animated = false, stepsPerFrame = 3, drawLimit
     function tick() {
       step = Math.min(step + stepsPerFrame, commands.length);
       drawUpTo(ctx, commands, step);
+      drawSprites(ctx, sprites);
       drawTurtle(ctx, getTurtleState(commands, step));
       if (step < commands.length) {
         rafId = requestAnimationFrame(tick);
@@ -48,7 +52,7 @@ export function Stage({ commands, animated = false, stepsPerFrame = 3, drawLimit
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [commands, animated, stepsPerFrame, drawLimit]);
+  }, [commands, animated, stepsPerFrame, drawLimit, sprites]);
 
   const hudEntries = hud ? Object.entries(hud) : [];
 

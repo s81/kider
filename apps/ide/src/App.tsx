@@ -14,7 +14,7 @@ import {
   SproutRuntimeError,
 } from '@sprout/lang';
 import { parse, ParseError } from '@sprout/parser';
-import type { CanvasCommand, Drawing, SproutFunction } from '@sprout/lang';
+import type { CanvasCommand, Drawing, SproutFunction, SpriteSnapshot } from '@sprout/lang';
 import { parseSave, buildBlocksSave, buildTextSave, encodeShare, decodeShare } from './storage.js';
 import type { SaveState } from './storage.js';
 import { BlockWorkspace } from './BlockWorkspace.js';
@@ -46,6 +46,7 @@ export function App() {
   const [textInputValues, setTextInputValues] = useState<Record<string, string>>({});
   const [hud, setHud] = useState<Record<string, string>>({});
   const [variables, setVariables] = useState<Record<string, string>>({});
+  const [sprites, setSprites] = useState<SpriteSnapshot[]>([]);
   const [timerIntervalMs, setTimerIntervalMs] = useState<number>(200);
 
   useEffect(() => {
@@ -232,8 +233,8 @@ export function App() {
     playNext();
   }
 
-  function applyHandlerDelta(result: { drawing: Drawing; hud: Record<string, string>; variables: Record<string, string>; stopTimer: boolean }) {
-    const { drawing: delta, hud: newHud, variables: newVars, stopTimer } = result;
+  function applyHandlerDelta(result: { drawing: Drawing; hud: Record<string, string>; variables: Record<string, string>; stopTimer: boolean; sprites: SpriteSnapshot[] }) {
+    const { drawing: delta, hud: newHud, variables: newVars, stopTimer, sprites: newSprites } = result;
     if (stopTimer && timerRef.current !== null) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -255,6 +256,7 @@ export function App() {
     }
     setHud(newHud);
     setVariables(newVars);
+    setSprites(newSprites);
   }
 
   function handleRun() {
@@ -277,7 +279,7 @@ export function App() {
         Object.entries(inputValues).map(([k, v]) => [k, v] as [string, number])
       );
       setTextInputs(new Map(Object.entries(textInputValues)));
-      const { drawing, handlers: h, hud: newHud, variables: newVars, timerInterval, stopTimer } = interpretFullWithInputs(program, inputMap);
+      const { drawing, handlers: h, hud: newHud, variables: newVars, timerInterval, stopTimer, sprites: newSprites } = interpretFullWithInputs(program, inputMap);
       accDrawingRef.current = drawing;
       handlersRef.current = h;
       setHandlers(h);
@@ -285,6 +287,7 @@ export function App() {
       setCommands(cmds);
       setHud(newHud);
       setVariables(newVars);
+      setSprites(newSprites);
       setTimerIntervalMs(timerInterval);
       const needsPlayback = cmds.some(c => c.kind === 'wait' || c.kind === 'sound');
       if (needsPlayback) {
@@ -317,6 +320,7 @@ export function App() {
       setHandlers(new Map());
       handlersRef.current = new Map();
       accDrawingRef.current = null;
+      setSprites([]);
     }
   }
 
@@ -696,6 +700,7 @@ export function App() {
           onClick={hasClickHandler ? handleCanvasClick : undefined}
           onMouseMove={setMousePosition}
           hud={hud}
+          sprites={sprites}
         />
         <VariableInspector variables={variables} />
 
