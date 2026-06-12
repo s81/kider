@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import { EditorView, basicSetup } from 'codemirror';
 import { keymap } from '@codemirror/view';
@@ -6,7 +6,7 @@ import { Prec } from '@codemirror/state';
 import { autocompletion } from '@codemirror/autocomplete';
 import { sproutLanguage, sproutCompletions } from './sprout-language.js';
 import { sproutLinter } from './sprout-lint.js';
-import { makeRunCommand } from './editor-utils.js';
+import { lineToPos, makeRunCommand } from './editor-utils.js';
 
 const SHARED_PRE_STYLE: CSSProperties = {
   flex: '1 1 0',
@@ -48,6 +48,10 @@ const EDITOR_THEME = EditorView.theme({
   '&.cm-focused .cm-cursor': { borderLeftColor: '#d4d4d4' },
 });
 
+export interface EditorHandle {
+  jumpToLine(line: number): void;
+}
+
 interface Props {
   text: string;
   editable?: boolean;
@@ -56,13 +60,26 @@ interface Props {
   onRun?: () => void;
 }
 
-export function TextPanel({ text, editable = false, onChange, error = null, onRun }: Props) {
+export const TextPanel = forwardRef<EditorHandle, Props>(function TextPanel(
+  { text, editable = false, onChange, error = null, onRun }: Props,
+  ref,
+) {
   const divRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const onRunRef = useRef(onRun);
   onRunRef.current = onRun;
+
+  useImperativeHandle(ref, () => ({
+    jumpToLine(line: number) {
+      const view = viewRef.current;
+      if (!view) return;
+      const pos = lineToPos(view.state, line);
+      view.dispatch({ selection: { anchor: pos }, scrollIntoView: true });
+      view.focus();
+    },
+  }), []);
 
   // Mount the editor once (editable mode only).
   useEffect(() => {
@@ -147,4 +164,4 @@ export function TextPanel({ text, editable = false, onChange, error = null, onRu
       {text || '// drag blocks to start'}
     </pre>
   );
-}
+});

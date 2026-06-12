@@ -18,7 +18,7 @@ import type { CanvasCommand, Drawing, SproutFunction, SpriteSnapshot } from '@sp
 import { parseSave, buildBlocksSave, buildTextSave, encodeShare, decodeShare } from './storage.js';
 import type { SaveState } from './storage.js';
 import { BlockWorkspace } from './BlockWorkspace.js';
-import { TextPanel } from './TextPanel.js';
+import { TextPanel, type EditorHandle } from './TextPanel.js';
 import { Stage } from './Stage.js';
 import { VariableInspector } from './VariableInspector.js';
 import { buildPlayback } from './stage-utils.js';
@@ -29,13 +29,22 @@ import { tryLoadAsBlocks } from './loadProgram.js';
 
 type SourceMode = 'blocks' | 'editor';
 
+type RunError = { message: string; line: number | null };
+
+function toRunError(e: unknown): RunError {
+  if (e instanceof SproutRuntimeError || e instanceof ParseError) {
+    return { message: e.message, line: e.line ?? null };
+  }
+  return { message: String(e), line: null };
+}
+
 export function App() {
   const wsRef = useRef<Blockly.Workspace | null>(null);
   const [programText, setProgramText] = useState('');
   const [editorText, setEditorText] = useState('');
   const [sourceMode, setSourceMode] = useState<SourceMode>('blocks');
   const [commands, setCommands] = useState<CanvasCommand[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<RunError | null>(null);
   const [animated, setAnimated] = useState(false);
   const [stepsPerFrame, setStepsPerFrame] = useState(3);
   const [editorParseError, setEditorParseError] = useState<string | null>(null);
@@ -130,6 +139,7 @@ export function App() {
   }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<EditorHandle>(null);
   const accDrawingRef = useRef<Drawing | null>(null);
   const [handlers, setHandlers] = useState<Map<string, SproutFunction>>(new Map());
   const handlersRef = useRef<Map<string, SproutFunction>>(new Map());
@@ -167,7 +177,7 @@ export function App() {
       try {
         applyHandlerDelta(callHandler(fn));
       } catch (err) {
-        setError(err instanceof SproutRuntimeError ? err.message : String(err));
+        setError(toRunError(err));
       }
     }
     function onKeyUp(e: KeyboardEvent) {
@@ -300,7 +310,7 @@ export function App() {
           try {
             applyHandlerDelta(callHandler(timerFn));
           } catch (e) {
-            setError(e instanceof SproutRuntimeError ? e.message : String(e));
+            setError(toRunError(e));
             if (timerRef.current !== null) {
               clearInterval(timerRef.current);
               timerRef.current = null;
@@ -311,11 +321,7 @@ export function App() {
         }, timerInterval);
       }
     } catch (e) {
-      if (e instanceof SproutRuntimeError || e instanceof ParseError) {
-        setError(e.message);
-      } else {
-        setError(String(e));
-      }
+      setError(toRunError(e));
       setCommands([]);
       setHandlers(new Map());
       handlersRef.current = new Map();
@@ -330,7 +336,7 @@ export function App() {
     try {
       applyHandlerDelta(callHandler(clickFn));
     } catch (e) {
-      setError(e instanceof SproutRuntimeError ? e.message : String(e));
+      setError(toRunError(e));
     }
   }
 
@@ -686,6 +692,7 @@ export function App() {
           </div>
         )}
         <TextPanel
+          ref={editorRef}
           text={sourceMode === 'blocks' ? programText : editorText}
           editable={sourceMode === 'editor'}
           onChange={setEditorText}
@@ -706,7 +713,7 @@ export function App() {
         <VariableInspector variables={variables} />
 
         {error && (
-          <pre
+          <div
             style={{
               background: '#fef2f2',
               color: '#dc2626',
@@ -717,8 +724,25 @@ export function App() {
               whiteSpace: 'pre-wrap',
             }}
           >
-            {error}
-          </pre>
+            <div>{error.message}</div>
+            {error.line != null && sourceMode === 'editor' && (
+              <button
+                onClick={() => editorRef.current?.jumpToLine(error.line!)}
+                style={{
+                  marginTop: 4,
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  color: '#2563eb',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                }}
+              >
+                Line {error.line} · click to go there
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
