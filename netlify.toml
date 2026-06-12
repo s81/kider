@@ -1,8 +1,8 @@
 [build]
-  base      = "apps/ide"
-  command   = "cd ../.. && bun install && bun run --cwd apps/ide build"
-  publish   = "apps/ide/dist"
+  command = "bun install && bun run build"
+  publish = "apps/ide/dist"
 
-[build.environment]
-  BUN_VERSION  = "1"
-  NODE_VERSION = "20"
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
