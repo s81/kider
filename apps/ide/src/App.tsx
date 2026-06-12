@@ -690,6 +690,7 @@ export function App() {
           editable={sourceMode === 'editor'}
           onChange={setEditorText}
           error={sourceMode === 'editor' ? editorParseError : null}
+          onRun={handleRun}
         />
 
         <Stage

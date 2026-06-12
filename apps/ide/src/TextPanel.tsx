@@ -1,9 +1,12 @@
 import { useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import { EditorView, basicSetup } from 'codemirror';
+import { keymap } from '@codemirror/view';
+import { Prec } from '@codemirror/state';
 import { autocompletion } from '@codemirror/autocomplete';
 import { sproutLanguage, sproutCompletions } from './sprout-language.js';
 import { sproutLinter } from './sprout-lint.js';
+import { makeRunCommand } from './editor-utils.js';
 
 const SHARED_PRE_STYLE: CSSProperties = {
   flex: '1 1 0',
@@ -50,13 +53,16 @@ interface Props {
   editable?: boolean;
   onChange?: (text: string) => void;
   error?: string | null;
+  onRun?: () => void;
 }
 
-export function TextPanel({ text, editable = false, onChange, error = null }: Props) {
+export function TextPanel({ text, editable = false, onChange, error = null, onRun }: Props) {
   const divRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const onRunRef = useRef(onRun);
+  onRunRef.current = onRun;
 
   // Mount the editor once (editable mode only).
   useEffect(() => {
@@ -65,6 +71,9 @@ export function TextPanel({ text, editable = false, onChange, error = null }: Pr
     const view = new EditorView({
       doc: text,
       extensions: [
+        Prec.highest(keymap.of([
+          { key: 'Mod-Enter', run: makeRunCommand(() => onRunRef.current) },
+        ])),
         basicSetup,
         sproutLanguage,
         autocompletion({ override: [sproutCompletions] }),
@@ -107,6 +116,7 @@ export function TextPanel({ text, editable = false, onChange, error = null }: Pr
           ref={divRef}
           style={{ flex: '1 1 0', minHeight: 120, overflow: 'auto', borderRadius: 4 }}
         />
+        <div style={{ fontSize: 11, color: '#94a3b8' }}>Press Ctrl/⌘+Enter to run</div>
         {error && (
           <div
             style={{
