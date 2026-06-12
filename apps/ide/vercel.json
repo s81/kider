@@ -1,5 +1,6 @@
 {
   "installCommand": "cd ../.. && bun install",
   "buildCommand": "cd ../.. && bun run --cwd apps/ide build",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
