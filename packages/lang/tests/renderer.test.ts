@@ -20,6 +20,8 @@ import {
   mkArc,
   mkGoto,
   mkHome,
+  mkCircle,
+  tagLines,
 } from '../src/values.js';
 import type { CanvasCommand } from '../src/renderer.js';
 
@@ -718,5 +720,35 @@ describe('home rendering', () => {
 
   it('scale(2, home) leaves it unchanged', () => {
     expect(render({ kind: 'scale', factor: 2, drawing: mkHome() })).toEqual([moveTo(0, 0)]);
+  });
+});
+
+describe('render carries Drawing.line onto commands', () => {
+  it('emits commands with line === undefined when drawing is untagged', () => {
+    const cmds = render(mkForward(10));
+    for (const c of cmds) {
+      expect((c as { line?: number }).line).toBeUndefined();
+    }
+  });
+
+  it('a line-tagged forward emits a lineTo whose line === source line', () => {
+    const tagged = tagLines(mkForward(10), 5);
+    const cmds = render(tagged);
+    const lineTo = cmds.find(c => c.kind === 'lineTo')!;
+    expect((lineTo as { line?: number }).line).toBe(5);
+  });
+
+  it('a line-tagged circle emits a drawCircle whose line === source line', () => {
+    const tagged = tagLines(mkCircle(20), 8);
+    const cmds = render(tagged);
+    const draw = cmds.find(c => c.kind === 'drawCircle')!;
+    expect((draw as { line?: number }).line).toBe(8);
+  });
+
+  it('scale preserves the line on its scaled primitive', () => {
+    const tagged = mkScale(2, tagLines(mkForward(10), 4));
+    const cmds = render(tagged);
+    const lineTo = cmds.find(c => c.kind === 'lineTo')!;
+    expect((lineTo as { line?: number }).line).toBe(4);
   });
 });

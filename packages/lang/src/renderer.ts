@@ -10,26 +10,26 @@ import type { Drawing } from './values.js';
 // ---------------------------------------------------------------------------
 
 export type CanvasCommand =
-  | { readonly kind: 'moveTo'; readonly x: number; readonly y: number }
-  | { readonly kind: 'lineTo'; readonly x: number; readonly y: number }
-  | { readonly kind: 'penDown' }
-  | { readonly kind: 'penUp' }
-  | { readonly kind: 'setColor'; readonly color: string }
-  | { readonly kind: 'setLineWidth'; readonly width: number }
-  | { readonly kind: 'drawCircle';   readonly x: number; readonly y: number; readonly radius: number }
-  | { readonly kind: 'drawRect';     readonly x: number; readonly y: number; readonly width: number; readonly height: number }
-  | { readonly kind: 'drawEllipse';  readonly x: number; readonly y: number; readonly rx: number; readonly ry: number }
-  | { readonly kind: 'drawTriangle'; readonly x: number; readonly y: number; readonly size: number }
-  | { readonly kind: 'drawPolygon';  readonly x: number; readonly y: number; readonly n: number; readonly size: number }
-  | { readonly kind: 'drawText';     readonly x: number; readonly y: number; readonly str: string; readonly size: number }
-  | { readonly kind: 'drawStamp'; readonly x: number; readonly y: number; readonly heading: number }
-  | { readonly kind: 'fillBackground'; readonly color: string }
-  | { readonly kind: 'clearCanvas' }
-  | { readonly kind: 'wait'; readonly durationMs: number }
-  | { readonly kind: 'sound'; readonly frequency: number; readonly durationMs: number }
-  | { readonly kind: 'fillPath'; readonly points: readonly { x: number; y: number }[] }
-  | { readonly kind: 'hideTurtle' }
-  | { readonly kind: 'showTurtle' };
+  | { readonly kind: 'moveTo'; readonly x: number; readonly y: number; readonly line?: number }
+  | { readonly kind: 'lineTo'; readonly x: number; readonly y: number; readonly line?: number }
+  | { readonly kind: 'penDown'; readonly line?: number }
+  | { readonly kind: 'penUp'; readonly line?: number }
+  | { readonly kind: 'setColor'; readonly color: string; readonly line?: number }
+  | { readonly kind: 'setLineWidth'; readonly width: number; readonly line?: number }
+  | { readonly kind: 'drawCircle';   readonly x: number; readonly y: number; readonly radius: number; readonly line?: number }
+  | { readonly kind: 'drawRect';     readonly x: number; readonly y: number; readonly width: number; readonly height: number; readonly line?: number }
+  | { readonly kind: 'drawEllipse';  readonly x: number; readonly y: number; readonly rx: number; readonly ry: number; readonly line?: number }
+  | { readonly kind: 'drawTriangle'; readonly x: number; readonly y: number; readonly size: number; readonly line?: number }
+  | { readonly kind: 'drawPolygon';  readonly x: number; readonly y: number; readonly n: number; readonly size: number; readonly line?: number }
+  | { readonly kind: 'drawText';     readonly x: number; readonly y: number; readonly str: string; readonly size: number; readonly line?: number }
+  | { readonly kind: 'drawStamp'; readonly x: number; readonly y: number; readonly heading: number; readonly line?: number }
+  | { readonly kind: 'fillBackground'; readonly color: string; readonly line?: number }
+  | { readonly kind: 'clearCanvas'; readonly line?: number }
+  | { readonly kind: 'wait'; readonly durationMs: number; readonly line?: number }
+  | { readonly kind: 'sound'; readonly frequency: number; readonly durationMs: number; readonly line?: number }
+  | { readonly kind: 'fillPath'; readonly points: readonly { x: number; y: number }[]; readonly line?: number }
+  | { readonly kind: 'hideTurtle'; readonly line?: number }
+  | { readonly kind: 'showTurtle'; readonly line?: number };
 
 // ---------------------------------------------------------------------------
 // Turtle state (internal)
@@ -52,7 +52,7 @@ const DEG_TO_RAD = Math.PI / 180;
 function scaleDrawing(factor: number, d: Drawing): Drawing {
   switch (d.kind) {
     case 'forward':
-      return { kind: 'forward', distance: d.distance * factor };
+      return { ...d, distance: d.distance * factor };
     case 'turn':
     case 'penUp':
     case 'penDown':
@@ -63,29 +63,29 @@ function scaleDrawing(factor: number, d: Drawing): Drawing {
     case 'showTurtle':
       return d;
     case 'sequence':
-      return { kind: 'sequence', steps: d.steps.map(s => scaleDrawing(factor, s)) };
+      return { ...d, steps: d.steps.map(s => scaleDrawing(factor, s)) };
     case 'beside':
-      return { kind: 'beside', left: scaleDrawing(factor, d.left), right: scaleDrawing(factor, d.right) };
+      return { ...d, left: scaleDrawing(factor, d.left), right: scaleDrawing(factor, d.right) };
     case 'above':
-      return { kind: 'above', top: scaleDrawing(factor, d.top), bottom: scaleDrawing(factor, d.bottom) };
+      return { ...d, top: scaleDrawing(factor, d.top), bottom: scaleDrawing(factor, d.bottom) };
     case 'scale':
-      return { kind: 'scale', factor: d.factor * factor, drawing: d.drawing };
+      return { ...d, factor: d.factor * factor };
     case 'circle':
-      return { kind: 'circle', radius: d.radius * factor };
+      return { ...d, radius: d.radius * factor };
     case 'rect':
-      return { kind: 'rect', width: d.width * factor, height: d.height * factor };
+      return { ...d, width: d.width * factor, height: d.height * factor };
     case 'ellipse':
-      return { kind: 'ellipse', rx: d.rx * factor, ry: d.ry * factor };
+      return { ...d, rx: d.rx * factor, ry: d.ry * factor };
     case 'triangle':
-      return { kind: 'triangle', size: d.size * factor };
+      return { ...d, size: d.size * factor };
     case 'polygon':
-      return { kind: 'polygon', n: d.n, size: d.size * factor };
+      return { ...d, size: d.size * factor };
     case 'text':
-      return { kind: 'text', str: d.str, size: d.size * factor };
+      return { ...d, size: d.size * factor };
     case 'stamp':
       return d;
     case 'arc':
-      return { kind: 'arc', radius: d.radius * factor, angle: d.angle };
+      return { ...d, radius: d.radius * factor };
     case 'background':
       return d;
     case 'clearCanvas':
@@ -99,7 +99,7 @@ function scaleDrawing(factor: number, d: Drawing): Drawing {
     case 'sound':
       return d;
     case 'fillPath':
-      return { kind: 'fillPath', drawing: scaleDrawing(factor, d.drawing) };
+      return { ...d, drawing: scaleDrawing(factor, d.drawing) };
   }
 }
 
@@ -120,23 +120,23 @@ function renderInto(
       return;
 
     case 'penUp':
-      out.push({ kind: 'penUp' });
+      out.push({ kind: 'penUp', line: drawing.line });
       state.penDown = false;
       return;
 
     case 'penDown':
-      out.push({ kind: 'penDown' });
+      out.push({ kind: 'penDown', line: drawing.line });
       state.penDown = true;
       return;
 
     case 'color':
-      out.push({ kind: 'setColor', color: drawing.color });
-      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      out.push({ kind: 'setColor', color: drawing.color, line: drawing.line });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y, line: drawing.line });
       return;
 
     case 'penWidth':
-      out.push({ kind: 'setLineWidth', width: drawing.width });
-      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      out.push({ kind: 'setLineWidth', width: drawing.width, line: drawing.line });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y, line: drawing.line });
       return;
 
     case 'turn':
@@ -148,9 +148,9 @@ function renderInto(
       const newX = state.x + drawing.distance * Math.sin(rad);
       const newY = state.y - drawing.distance * Math.cos(rad);
       if (state.penDown) {
-        out.push({ kind: 'lineTo', x: newX, y: newY });
+        out.push({ kind: 'lineTo', x: newX, y: newY, line: drawing.line });
       } else {
-        out.push({ kind: 'moveTo', x: newX, y: newY });
+        out.push({ kind: 'moveTo', x: newX, y: newY, line: drawing.line });
       }
       state.x = newX;
       state.y = newY;
@@ -204,73 +204,73 @@ function renderInto(
       return;
 
     case 'circle':
-      out.push({ kind: 'drawCircle', x: state.x, y: state.y, radius: drawing.radius });
-      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      out.push({ kind: 'drawCircle', x: state.x, y: state.y, radius: drawing.radius, line: drawing.line });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y, line: drawing.line });
       return;
 
     case 'rect':
-      out.push({ kind: 'drawRect', x: state.x, y: state.y, width: drawing.width, height: drawing.height });
-      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      out.push({ kind: 'drawRect', x: state.x, y: state.y, width: drawing.width, height: drawing.height, line: drawing.line });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y, line: drawing.line });
       return;
 
     case 'ellipse':
-      out.push({ kind: 'drawEllipse', x: state.x, y: state.y, rx: drawing.rx, ry: drawing.ry });
-      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      out.push({ kind: 'drawEllipse', x: state.x, y: state.y, rx: drawing.rx, ry: drawing.ry, line: drawing.line });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y, line: drawing.line });
       return;
 
     case 'triangle':
-      out.push({ kind: 'drawTriangle', x: state.x, y: state.y, size: drawing.size });
-      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      out.push({ kind: 'drawTriangle', x: state.x, y: state.y, size: drawing.size, line: drawing.line });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y, line: drawing.line });
       return;
 
     case 'polygon':
-      out.push({ kind: 'drawPolygon', x: state.x, y: state.y, n: drawing.n, size: drawing.size });
-      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      out.push({ kind: 'drawPolygon', x: state.x, y: state.y, n: drawing.n, size: drawing.size, line: drawing.line });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y, line: drawing.line });
       return;
 
     case 'text':
-      out.push({ kind: 'drawText', x: state.x, y: state.y, str: drawing.str, size: drawing.size });
-      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      out.push({ kind: 'drawText', x: state.x, y: state.y, str: drawing.str, size: drawing.size, line: drawing.line });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y, line: drawing.line });
       return;
 
     case 'stamp':
-      out.push({ kind: 'drawStamp', x: state.x, y: state.y, heading: state.heading });
-      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      out.push({ kind: 'drawStamp', x: state.x, y: state.y, heading: state.heading, line: drawing.line });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y, line: drawing.line });
       return;
 
     case 'background':
-      out.push({ kind: 'fillBackground', color: drawing.color });
+      out.push({ kind: 'fillBackground', color: drawing.color, line: drawing.line });
       return;
 
     case 'clearCanvas':
-      out.push({ kind: 'clearCanvas' });
+      out.push({ kind: 'clearCanvas', line: drawing.line });
       state.penDown = true;
-      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y, line: drawing.line });
       return;
 
     case 'wait':
-      out.push({ kind: 'wait', durationMs: drawing.seconds * 1000 });
+      out.push({ kind: 'wait', durationMs: drawing.seconds * 1000, line: drawing.line });
       return;
 
     case 'sound':
-      out.push({ kind: 'sound', frequency: drawing.frequency, durationMs: drawing.seconds * 1000 });
+      out.push({ kind: 'sound', frequency: drawing.frequency, durationMs: drawing.seconds * 1000, line: drawing.line });
       return;
 
     case 'fillPath': {
       const points: { x: number; y: number }[] = [{ x: state.x, y: state.y }];
       collectPathPoints(drawing.drawing, state, points);
-      out.push({ kind: 'fillPath', points });
+      out.push({ kind: 'fillPath', points, line: drawing.line });
       // The turtle really traced the path — resume strokes from its end.
-      out.push({ kind: 'moveTo', x: state.x, y: state.y });
+      out.push({ kind: 'moveTo', x: state.x, y: state.y, line: drawing.line });
       return;
     }
 
     case 'hideTurtle':
-      out.push({ kind: 'hideTurtle' });
+      out.push({ kind: 'hideTurtle', line: drawing.line });
       return;
 
     case 'showTurtle':
-      out.push({ kind: 'showTurtle' });
+      out.push({ kind: 'showTurtle', line: drawing.line });
       return;
 
     case 'arc': {
@@ -283,9 +283,9 @@ function renderInto(
         const newX = state.x + stepDist * Math.sin(rad);
         const newY = state.y - stepDist * Math.cos(rad);
         if (state.penDown) {
-          out.push({ kind: 'lineTo', x: newX, y: newY });
+          out.push({ kind: 'lineTo', x: newX, y: newY, line: drawing.line });
         } else {
-          out.push({ kind: 'moveTo', x: newX, y: newY });
+          out.push({ kind: 'moveTo', x: newX, y: newY, line: drawing.line });
         }
         state.x = newX;
         state.y = newY;
@@ -297,14 +297,14 @@ function renderInto(
     case 'goto':
       state.x = drawing.x;
       state.y = drawing.y;
-      out.push({ kind: 'moveTo', x: drawing.x, y: drawing.y });
+      out.push({ kind: 'moveTo', x: drawing.x, y: drawing.y, line: drawing.line });
       return;
 
     case 'home':
       state.x = 0;
       state.y = 0;
       state.heading = 0;
-      out.push({ kind: 'moveTo', x: 0, y: 0 });
+      out.push({ kind: 'moveTo', x: 0, y: 0, line: drawing.line });
       return;
   }
 }
