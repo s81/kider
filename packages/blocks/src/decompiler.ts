@@ -91,6 +91,7 @@ const EXPR_CALL_BLOCKS: Record<string, { type: string; inputs: string[] }> = {
   concat:     { type: 'sprout_concat',     inputs: ['LIST1', 'LIST2'] },
   reverse:    { type: 'sprout_reverse',    inputs: ['LIST'] },
   indexOf:    { type: 'sprout_index_of',   inputs: ['LIST', 'ITEM'] },
+  contains:   { type: 'sprout_contains',   inputs: ['LIST', 'ITEM'] },
   slice:      { type: 'sprout_slice',      inputs: ['LIST', 'START', 'END'] },
   sort:       { type: 'sprout_sort',       inputs: ['LIST'] },
   distance:   { type: 'sprout_distance',   inputs: ['X1', 'Y1', 'X2', 'Y2'] },

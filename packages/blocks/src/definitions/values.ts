@@ -86,17 +86,6 @@ export function registerValueBlocks(): void {
     },
   };
 
-  Blockly.Blocks['sprout_contains'] = {
-    init(this: Blockly.Block) {
-      this.appendValueInput('STR').setCheck('String').appendField('contains');
-      this.appendValueInput('SUB').setCheck('String').appendField('in');
-      this.setOutput(true, 'Boolean');
-      this.setInputsInline(true);
-      this.setColour(160);
-      this.setTooltip('Check if a string contains a substring');
-    },
-  };
-
   Blockly.Blocks['sprout_to_upper'] = {
     init(this: Blockly.Block) {
       this.appendValueInput('STR').setCheck('String').appendField('toUpper');
