@@ -236,3 +236,27 @@ export function mkSound(frequency: number, seconds: number): SoundDrawing {
 export function mkFillPath(drawing: Drawing): FillPathDrawing {
   return { kind: 'fillPath', drawing };
 }
+
+/**
+ * Stamp `line` onto every node of a drawing that doesn't already carry one.
+ * Innermost tag wins: an already-tagged subtree (from a nested statement) is
+ * returned untouched. Used by the interpreter to attribute a statement's
+ * drawing output to its source line.
+ */
+export function tagLines(d: Drawing, line: number): Drawing {
+  if (d.line !== undefined) return d;
+  switch (d.kind) {
+    case 'sequence':
+      return { ...d, line, steps: d.steps.map(s => tagLines(s, line)) };
+    case 'beside':
+      return { ...d, line, left: tagLines(d.left, line), right: tagLines(d.right, line) };
+    case 'above':
+      return { ...d, line, top: tagLines(d.top, line), bottom: tagLines(d.bottom, line) };
+    case 'scale':
+      return { ...d, line, drawing: tagLines(d.drawing, line) };
+    case 'fillPath':
+      return { ...d, line, drawing: tagLines(d.drawing, line) };
+    default:
+      return { ...d, line };
+  }
+}
