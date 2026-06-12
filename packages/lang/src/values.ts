@@ -61,7 +61,7 @@ export interface SproutFunction {
 // `empty`    is the identity element for composition.
 // ---------------------------------------------------------------------------
 
-export type Drawing =
+export type DrawingNode =
   | { readonly kind: 'forward';  readonly distance: number }
   | { readonly kind: 'turn';     readonly degrees: number }
   | { readonly kind: 'penUp' }
@@ -90,6 +90,13 @@ export type Drawing =
   | WaitDrawing
   | SoundDrawing
   | FillPathDrawing;
+
+/**
+ * A Drawing carries an optional 1-based source line, distributed across every
+ * member of the union. Set by the interpreter on each statement's output so
+ * the IDE can highlight the running line.
+ */
+export type Drawing = DrawingNode & { readonly line?: number };
 
 // ---------------------------------------------------------------------------
 // SproutValue — top-level value union
