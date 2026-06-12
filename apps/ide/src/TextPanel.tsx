@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { EditorView, basicSetup } from 'codemirror';
 import { autocompletion } from '@codemirror/autocomplete';
 import { sproutLanguage, sproutCompletions } from './sprout-language.js';
+import { sproutLinter } from './sprout-lint.js';
 
 const SHARED_PRE_STYLE: CSSProperties = {
   flex: '1 1 0',
@@ -67,6 +68,7 @@ export function TextPanel({ text, editable = false, onChange, error = null }: Pr
         basicSetup,
         sproutLanguage,
         autocompletion({ override: [sproutCompletions] }),
+        sproutLinter,
         EDITOR_THEME,
         EditorView.updateListener.of(update => {
           if (update.docChanged) {
