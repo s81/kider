@@ -7,6 +7,7 @@ import { autocompletion } from '@codemirror/autocomplete';
 import { sproutLanguage, sproutCompletions } from './sprout-language.js';
 import { sproutLinter } from './sprout-lint.js';
 import { lineToPos, makeRunCommand } from './editor-utils.js';
+import { runLineHighlight, setActiveLine } from './run-line-highlight.js';
 
 const SHARED_PRE_STYLE: CSSProperties = {
   flex: '1 1 0',
@@ -42,6 +43,7 @@ const EDITOR_THEME = EditorView.theme({
   },
   '.cm-activeLineGutter': { background: '#2a2a2a' },
   '.cm-activeLine': { background: '#2a2a2a' },
+  '.cm-activeRunLine': { background: 'rgba(255, 213, 0, 0.18)' },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
     background: '#264f78',
   },
@@ -50,6 +52,8 @@ const EDITOR_THEME = EditorView.theme({
 
 export interface EditorHandle {
   jumpToLine(line: number): void;
+  /** Highlight (or clear) the given 1-based source line as currently drawing. */
+  highlightLine(line: number | null): void;
 }
 
 interface Props {
@@ -79,6 +83,11 @@ export const TextPanel = forwardRef<EditorHandle, Props>(function TextPanel(
       view.dispatch({ selection: { anchor: pos }, scrollIntoView: true });
       view.focus();
     },
+    highlightLine(line: number | null) {
+      const view = viewRef.current;
+      if (!view) return;
+      view.dispatch({ effects: setActiveLine.of(line) });
+    },
   }), []);
 
   // Mount the editor once (editable mode only).
@@ -95,6 +104,7 @@ export const TextPanel = forwardRef<EditorHandle, Props>(function TextPanel(
         sproutLanguage,
         autocompletion({ override: [sproutCompletions] }),
         sproutLinter,
+        ...runLineHighlight,
         EDITOR_THEME,
         EditorView.updateListener.of(update => {
           if (update.docChanged) {
