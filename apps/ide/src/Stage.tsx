@@ -11,21 +11,39 @@ interface Props {
   onMouseMove?: (x: number, y: number) => void;
   hud?: Record<string, string>;
   sprites?: readonly SpriteSnapshot[];
+  /** Called with the 1-based source line of the command just drawn, or null to clear. */
+  onActiveLine?: (line: number | null) => void;
 }
 
-export function Stage({ commands, animated = false, stepsPerFrame = 3, drawLimit = null, onClick, onMouseMove, hud, sprites = [] }: Props) {
+export function Stage({
+  commands,
+  animated = false,
+  stepsPerFrame = 3,
+  drawLimit = null,
+  onClick,
+  onMouseMove,
+  hud,
+  sprites = [],
+  onActiveLine,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Most-recently emitted line, so steps that have no `line` (or no command emitted) don't flicker.
+  const lastLine = useRef<number | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext('2d')!;
 
-    // drawLimit overrides: used by wait-playback to freeze the view at a specific command index.
     if (drawLimit !== null) {
       const limit = drawLimit;
       drawUpTo(ctx, commands, limit);
       drawSprites(ctx, sprites);
       drawTurtle(ctx, getTurtleState(commands, limit));
+      const line = (commands[limit - 1] as { line?: number } | undefined)?.line;
+      if (line !== undefined && line !== lastLine.current) {
+        lastLine.current = line;
+        onActiveLine?.(line);
+      }
       return;
     }
 
@@ -34,6 +52,8 @@ export function Stage({ commands, animated = false, stepsPerFrame = 3, drawLimit
       drawUpTo(ctx, commands, limit);
       drawSprites(ctx, sprites);
       drawTurtle(ctx, getTurtleState(commands, limit));
+      lastLine.current = null;
+      onActiveLine?.(null);
       return;
     }
 
@@ -45,14 +65,26 @@ export function Stage({ commands, animated = false, stepsPerFrame = 3, drawLimit
       drawUpTo(ctx, commands, step);
       drawSprites(ctx, sprites);
       drawTurtle(ctx, getTurtleState(commands, step));
+      const line = (commands[step - 1] as { line?: number } | undefined)?.line;
+      if (line !== undefined && line !== lastLine.current) {
+        lastLine.current = line;
+        onActiveLine?.(line);
+      }
       if (step < commands.length) {
         rafId = requestAnimationFrame(tick);
+      } else {
+        lastLine.current = null;
+        onActiveLine?.(null);
       }
     }
 
     rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, [commands, animated, stepsPerFrame, drawLimit, sprites]);
+    return () => {
+      cancelAnimationFrame(rafId);
+      lastLine.current = null;
+      onActiveLine?.(null);
+    };
+  }, [commands, animated, stepsPerFrame, drawLimit, sprites, onActiveLine]);
 
   const hudEntries = hud ? Object.entries(hud) : [];
 

@@ -709,6 +709,7 @@ export function App() {
           onMouseMove={setMousePosition}
           hud={hud}
           sprites={sprites}
+          onActiveLine={(line) => editorRef.current?.highlightLine(line)}
         />
         <VariableInspector variables={variables} />
 
