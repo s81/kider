@@ -65,7 +65,16 @@ import {
   PEN_UP,
   PEN_DOWN,
   EMPTY,
+  tagLines,
 } from './values.js';
+
+/** Source line of a statement, if it's a top-level CallExpr/Ident. */
+function stmtLine(stmt: Stmt): number | undefined {
+  if (stmt.kind === 'ExprStmt' && (stmt.expr.kind === 'CallExpr' || stmt.expr.kind === 'Ident')) {
+    return stmt.expr.line;
+  }
+  return undefined;
+}
 
 // ---------------------------------------------------------------------------
 // Runtime error
@@ -1206,7 +1215,8 @@ function evalBlock(block: BlockExpr, env: Env): Drawing {
     const [val, newEnv] = evalStmtWithEnv(stmt, currentEnv);
     currentEnv = newEnv;
     if (val !== null && isDrawing(val)) {
-      drawings.push(val);
+      const line = stmtLine(stmt);
+      drawings.push(line !== undefined ? tagLines(val, line) : val);
     }
   }
   return drawings.length === 0 ? EMPTY : mkSequence(drawings);
@@ -1536,7 +1546,8 @@ export function interpret(program: Program, initialEnv: Env = EMPTY_ENV): Drawin
       env = newEnv;
       // null → no visual contribution (DefStmt / OnExpr)
       if (val !== null && isDrawing(val)) {
-        drawings.push(val);
+        const line = stmtLine(stmt);
+        drawings.push(line !== undefined ? tagLines(val, line) : val);
       }
     }
   } catch (e) {
@@ -1572,7 +1583,8 @@ export function interpretFull(
     const [val, newEnv] = evalStmtWithEnv(stmt, env);
     env = newEnv;
     if (val !== null && isDrawing(val)) {
-      drawings.push(val);
+      const line = stmtLine(stmt);
+      drawings.push(line !== undefined ? tagLines(val, line) : val);
     }
   }
 
